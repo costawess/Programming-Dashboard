@@ -19,13 +19,137 @@ int D_TOMATO      = 3;
 int D_CHOCOLATE   = 4;
 
 // Start
-int state = S_IDLE;
+int state = S_SELECT;
 int drink = D_NONE;
 
 // Customization
 int  sugarLevel    = 0;   // 0=no sugar, 1=low, 2=medium, 3=high
 int  strengthLevel = 0;   // 0=mild, 1=medium, 2=strong
 bool withMilk      = false;
+
+// Returns one of D_ESPRESSO, D_CAPPUCCINO, D_TOMATO, D_CHOCOLATE, or D_NONE
+int decodeSelectedDrink(const String& line) {
+  if (!line.startsWith("SELECTED:")) {
+    return D_NONE;
+  }
+
+  String name = line.substring(9); // part after "SELECTED:"
+  name.trim();
+  name.toUpperCase();
+
+  if (name == "ESPRESSO")     return D_ESPRESSO;
+  if (name == "CAPPUCCINO")   return D_CAPPUCCINO;
+  if (name == "TOMATO_SOUP")  return D_TOMATO;
+  if (name == "CHOCOLATE")    return D_CHOCOLATE;
+
+  return D_NONE;
+}
+
+int waitForDrinkFromGame() {
+  while (true) {
+    String line = readLine();          // uses your existing readLine()
+    int d = decodeSelectedDrink(line);
+    if (d != D_NONE) {
+      return d;
+    }
+    // optional debug
+    Serial.print("Ignoring invalid command: ");
+    Serial.println(line);
+  }
+}
+
+// --------- CUSTOMIZATION DECODERS (SUGAR / STRENGTH / MILK) ----------
+
+int decodeSugarLevel(const String &line) {
+  if (!line.startsWith("SUGAR:")) return -1;
+
+  String v = line.substring(6);
+  v.trim();
+  v.toUpperCase();
+
+  if (v == "NO_SUGAR") return 0;
+  if (v == "LOW")      return 1;
+  if (v == "MEDIUM")   return 2;
+  if (v == "HIGH")     return 3;
+
+  return -1;
+}
+
+int decodeStrengthLevel(const String &line) {
+  if (!line.startsWith("STRENGTH:")) return -1;
+
+  String v = line.substring(9);
+  v.trim();
+  v.toUpperCase();
+
+  if (v == "MILD")    return 0;
+  if (v == "MEDIUM")  return 1;
+  if (v == "STRONG")  return 2;
+
+  return -1;
+}
+
+int decodeMilk(const String &line) {
+  if (!line.startsWith("MILK:")) return -1;
+
+  String v = line.substring(5);
+  v.trim();
+  v.toUpperCase();
+
+  if (v == "YES") return 1;
+  if (v == "NO")  return 0;
+
+  return -1;
+}
+
+// Espera até receber um comando SUGAR:... válido
+void waitSugarFromGame() {
+  while (true) {
+    String line = readLine();
+    int v = decodeSugarLevel(line);
+    if (v >= 0) {
+      sugarLevel = v;
+      Serial.print("Sugar from game: ");
+      Serial.println(line);
+      return;
+    }
+    Serial.print("Ignoring customization cmd (sugar): ");
+    Serial.println(line);
+  }
+}
+
+// Espera até receber um comando STRENGTH:... válido
+void waitStrengthFromGame() {
+  while (true) {
+    String line = readLine();
+    int v = decodeStrengthLevel(line);
+    if (v >= 0) {
+      strengthLevel = v;
+      Serial.print("Strength from game: ");
+      Serial.println(line);
+      return;
+    }
+    Serial.print("Ignoring customization cmd (strength): ");
+    Serial.println(line);
+  }
+}
+
+// Espera até receber um comando MILK:... válido
+void waitMilkFromGame() {
+  while (true) {
+    String line = readLine();
+    int v = decodeMilk(line);
+    if (v >= 0) {
+      withMilk = (v == 1);
+      Serial.print("Milk from game: ");
+      Serial.println(line);
+      return;
+    }
+    Serial.print("Ignoring customization cmd (milk): ");
+    Serial.println(line);
+  }
+}
+
 
 // function to read User Serial input (reads keyboard)
 String readLine() {
@@ -102,9 +226,6 @@ void setup() {
   // leds off
   allDrinkLEDsOff();
   digitalWrite(LEDs[3], LOW);
-
-  Serial.println("Hanze Coffee Machine");
-  Serial.println("Available: 1) Espresso  2) Cappuccino  3) Tomato Soup");
 }
 
 // Loop
@@ -132,40 +253,42 @@ void loop() {
 
     // S_SELECT State --------------------------------------
     case S_SELECT: {
-      // choose a drink
-      Serial.print("Select drink: 1=Espresso, 2=Cappuccino, 3=Tomato Soup");
-      drink = readIntInRange(1, 3);
+      // Serial.println("Waiting drink selection from game (SELECTED:ESPRESSO, ...)");
+      
+      // 1) Wait until PC/game sends a valid SELECTED:... command
+      drink = waitForDrinkFromGame();
 
-      // led for the drink
+      // 2) Turn on the LED for that drink
       indicateSelectedDrink(drink);
 
-      // tomato soups doesnt require custom.
-      if (drink == D_TOMATO) {  
+      // 3) Decide next state and INFORM the game
+      if (drink == D_TOMATO) {
         state = S_PREPARE;
+        Serial.println("STATE:PREPARE");    // game can read this and change screen
       } else {
         state = S_CUSTOMIZE;
+        Serial.println("STATE:CUSTOMIZE");  // game knows it should go to customize UI
       }
-    } break;
+      } break;
 
     // S_CUSTOMIZE State --------------------------------------
+        // S_CUSTOMIZE State --------------------------------------
     case S_CUSTOMIZE: {
-      Serial.println("\n-- Customization :p --");
+      Serial.println("\n-- Customization from game --");
+      Serial.println("Waiting SUGAR:...");
+      waitSugarFromGame();        // recebe SUGAR:NO_SUGAR / LOW / MEDIUM / HIGH
 
-      // sugar
-      Serial.println("Sugar level (0=no sugar, 1=low, 2=medium, 3=high)");
-      sugarLevel    = readIntInRange(0, 3);
+      Serial.println("Waiting STRENGTH:...");
+      waitStrengthFromGame();     // recebe STRENGTH:MILD / MEDIUM / STRONG
 
-      // strength
-      Serial.println("Strength level (0=mild, 1=medium, 2=strong)");
-      strengthLevel = readIntInRange(0, 2);
-      
-      // msg
-      Serial.print("Add milk? [y/n]: ");
-      withMilk      = readYesNo();
-      
-      // next state
+      Serial.println("Waiting MILK:...");
+      waitMilkFromGame();         // recebe MILK:YES / NO
+
+      // tudo recebido -> próximo estado
       state = S_PREPARE;
+      Serial.println("STATE:PREPARE");   // opcional: informar jogo
     } break;
+
 
     // S_CHECK_CUP State --------------------------------------
     // EXERCISE
