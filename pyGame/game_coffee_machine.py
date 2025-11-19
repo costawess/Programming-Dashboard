@@ -312,8 +312,18 @@ def run_coffee_game(screen):
                     config_open = True
 
                 elif reset_button_rect.collidepoint(mouse_pos):
-                    status_message = "Not connected."
-                    status_color = (255, 0, 0)
+                    # Volta para a tela de seleção de drinks
+                    customize_mode = False
+                    custom_step = 0
+
+                    # Mensagem de status amigável, sem mexer na COM
+                    if ser is not None and ser.is_open:
+                        status_message = "Ready. Select a drink."
+                        status_color = green_color
+                    else:
+                        status_message = "Not connected. Configure ESP32."
+                        status_color = red_color
+
 
                 elif menu_button_rect.collidepoint(mouse_pos):
                     running = False
@@ -551,6 +561,7 @@ def run_coffee_game(screen):
                     for rect, cmd in custom_click_areas:
                         if rect.collidepoint(mouse_pos):
                             try:
+                                # Envia o comando da opção (SUGAR:..., STRENGTH:..., MILK:...)
                                 ser.write((cmd + "\n").encode("utf-8"))
                                 status_message = f"Sent: {cmd}"
                                 status_color = green_color
@@ -559,15 +570,21 @@ def run_coffee_game(screen):
                                 # Avança para a próxima etapa de customização
                                 custom_step += 1
                                 if custom_step >= len(CUSTOM_STEPS):
-                                    # terminou (Sugar, Strength, Milk) -> volta a mostrar drinks
+                                    # Terminou (Sugar, Strength, Milk)
                                     customize_mode = False
+
+                                    # Envia confirmação final
+                                    ok_cmd = "CUSTOMIZE:OK"
+                                    ser.write((ok_cmd + "\n").encode("utf-8"))
+                                    status_message = f"Sent: {ok_cmd}"
+                                    status_color = green_color
+                                    print(f"Sent to ESP32 via COM: {ok_cmd}")
+
                             except Exception as e:
                                 status_message = f"Error sending command: {e}"
                                 status_color = red_color
                                 print(f"Error sending command: {e}")
                             break
-
-
 
         pygame.display.flip()
         clock.tick(60)
