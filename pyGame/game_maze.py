@@ -147,8 +147,11 @@ def init_game():
 
 def run_maze_game(screen):
     """
-    Run the maze game. Returns to caller (menu) when the game ends
-    or the user decides to exit the game (ESC).
+    Run the maze game.
+
+    Returns:
+        "menu" -> go back to main menu
+        "quit" -> close the whole program
     """
     clock = pygame.time.Clock()
     pygame.display.set_caption("Embedded Programming Maze - Serial Robot")
@@ -159,20 +162,6 @@ def run_maze_game(screen):
     except Exception as e:
         print(f"Could not load win image: {e}")
         win_image = None
-
-    # ===== INTRO SCREEN (1 second) =====
-    intro_font = pygame.font.SysFont(None, 60)
-    screen.fill((0, 0, 0))
-    draw_text_center(
-        screen,
-        "EMBEDDED PROGRAMMING 2026",
-        intro_font,
-        (255, 255, 255),
-        WINDOW_HEIGHT // 2,
-    )
-    pygame.display.flip()
-    pygame.time.delay(1000)
-    # ===================================
 
     # Initial game state (not started yet)
     robot_cell, direction, score, game_over = init_game()
@@ -195,6 +184,7 @@ def run_maze_game(screen):
     esp32_button_rect = pygame.Rect(20, 20, 120, 40)
     start_button_rect = pygame.Rect(160, 20, 120, 40)
     reset_button_rect = pygame.Rect(300, 20, 120, 40)
+    menu_button_rect = pygame.Rect(440, 20, 120, 40)  # Menu button
 
     # Popup (configuration window) state
     config_open = False
@@ -215,6 +205,9 @@ def run_maze_game(screen):
     START_COLOR = (0, 100, 0)
     GOAL_COLOR = (100, 0, 0)
 
+    # This flag tells the caller whether to quit the whole program
+    quit_program = False
+
     running = True
     while running:
         mouse_pos = pygame.mouse.get_pos()
@@ -222,7 +215,8 @@ def run_maze_game(screen):
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                # If the window close is requested, exit the game
+                # Window close -> quit whole program
+                quit_program = True
                 running = False
 
             # Mouse clicks
@@ -231,8 +225,14 @@ def run_maze_game(screen):
 
             # Keyboard handling
             if event.type == pygame.KEYDOWN:
-                # ESC returns to menu
-                if event.key == pygame.K_ESCAPE:
+                # Q: quit whole program from any state
+                if event.key == pygame.K_q:
+                    quit_program = True
+                    running = False
+
+                # ESC: go back to menu (only if not quitting)
+                elif event.key == pygame.K_ESCAPE:
+                    # ESC exits the game and returns to menu
                     running = False
 
                 # ENTER on GAME OVER -> same as clicking "I wanna try again"
@@ -271,7 +271,7 @@ def run_maze_game(screen):
                                 game_started = False
 
         # --- Handle mouse clicks on buttons / popup / game over / win ---
-        if mouse_clicked:
+        if mouse_clicked and not quit_program:
             if config_open:
                 # CONFIG POPUP geometry
                 popup_width = 400
@@ -407,6 +407,10 @@ def run_maze_game(screen):
                     won = False
                     game_started = False
 
+                elif menu_button_rect.collidepoint(mouse_pos):
+                    # Menu button -> go back to main menu
+                    running = False
+
         # ----- Read serial data if connected, game started and not over/won -----
         if (
             not game_over
@@ -415,6 +419,7 @@ def run_maze_game(screen):
             and game_started
             and ser is not None
             and ser.in_waiting > 0
+            and not quit_program
         ):
             try:
                 line = ser.readline().decode(errors="ignore").strip()
@@ -486,12 +491,11 @@ def run_maze_game(screen):
         screen.blit(status_surface, (20, WINDOW_HEIGHT - 30))
 
         # Hint
-        hint_text = font_small.render(
-            "Commands: UP, DOWN, LEFT, RIGHT (serial or arrows, ESC to menu)",
-            True,
-            WHITE,
+        hint_text = (
+            "UP/DOWN/LEFT/RIGHT (serial or arrows) | ESC: Menu | Q: Quit"
         )
-        screen.blit(hint_text, (20, WINDOW_HEIGHT - 55))
+        hint_surface = font_small.render(hint_text, True, WHITE)
+        screen.blit(hint_surface, (20, WINDOW_HEIGHT - 55))
 
         # "ESP32" button
         if esp32_button_rect.collidepoint(mouse_pos) and not config_open and not game_over and not won:
@@ -525,6 +529,17 @@ def run_maze_game(screen):
         txt_reset = font_small.render("Reset", True, WHITE)
         txt_reset_rect = txt_reset.get_rect(center=reset_button_rect.center)
         screen.blit(txt_reset, txt_reset_rect)
+
+        # "Menu" button
+        if menu_button_rect.collidepoint(mouse_pos) and not config_open:
+            btn_color_menu = BTN_BG_HOVER
+        else:
+            btn_color_menu = BTN_BG
+        pygame.draw.rect(screen, btn_color_menu, menu_button_rect, border_radius=6)
+        pygame.draw.rect(screen, WHITE, menu_button_rect, 1, border_radius=6)
+        txt_menu = font_small.render("Menu", True, WHITE)
+        txt_menu_rect = txt_menu.get_rect(center=menu_button_rect.center)
+        screen.blit(txt_menu, txt_menu_rect)
 
         # CONFIG POPUP
         if config_open:
@@ -702,5 +717,5 @@ def run_maze_game(screen):
     if ser is not None:
         ser.close()
 
-    print("Maze game closed, returning to menu.")
-    return
+    print("Maze game closed.")
+    return "quit" if quit_program else "menu"
