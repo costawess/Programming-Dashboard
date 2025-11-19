@@ -1,3 +1,4 @@
 pyGame/dist.zip
 pyGame/dist/*
 pyGame/build/*
+/.vscode/settings.json
