@@ -1,12 +1,13 @@
 import pygame
 
 from game_maze import run_maze_game
-# from coffee_machine import run_game2
+from game_coffee_machine import run_coffee_game  # NOVO
 
 # ====== WINDOW CONFIGURATION ======
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 # ==================================
+
 
 def draw_text_center(screen, text, font, color, y):
     """
@@ -15,7 +16,6 @@ def draw_text_center(screen, text, font, color, y):
     surface = font.render(text, True, color)
     rect = surface.get_rect(center=(WINDOW_WIDTH // 2, y))
     screen.blit(surface, rect)
-
 
 def show_intro(screen):
     """
@@ -48,7 +48,7 @@ def main():
     font_hint = pygame.font.SysFont(None, 24)
 
     # Menu buttons
-    btn_width = 300
+    btn_width = 320
     btn_height = 60
     btn_spacing = 20
 
@@ -58,7 +58,7 @@ def main():
         btn_width,
         btn_height,
     )
-    game2_btn_rect = pygame.Rect(
+    coffee_btn_rect = pygame.Rect(
         (WINDOW_WIDTH - btn_width) // 2,
         200 + btn_height + btn_spacing,
         btn_width,
@@ -115,7 +115,7 @@ def main():
             screen.blit(text_surf, text_rect)
 
         draw_button(maze_btn_rect, "Game 1 - Maze (ESP32)")
-        draw_button(game2_btn_rect, "Game 2 - Coming soon")
+        draw_button(coffee_btn_rect, "Game 2 - Coffee Machine")
         draw_button(quit_btn_rect, "Quit")
 
         # Hint at bottom
@@ -131,9 +131,9 @@ def main():
                 if result == "quit":
                     running = False
 
-            elif game2_btn_rect.collidepoint(mouse_pos):
-                # Run second game. It also returns status.
-                result = run_game2(screen)
+            elif coffee_btn_rect.collidepoint(mouse_pos):
+                # Run coffee machine game. It returns status.
+                result = run_coffee_game(screen)
                 if result == "quit":
                     running = False
 
