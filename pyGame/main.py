@@ -8,7 +8,6 @@ WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 # ==================================
 
-
 def draw_text_center(screen, text, font, color, y):
     """
     Draw text horizontally centered at given y coordinate.

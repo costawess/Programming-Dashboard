@@ -163,10 +163,10 @@ def run_maze_game(screen):
         print(f"Could not load win image: {e}")
         win_image = None
 
-    # Initial game state (not started yet)
+    # Initial game state
     robot_cell, direction, score, game_over = init_game()
-    game_started = False
-    won = False  # win state
+    game_started = True     # Game is active immediately
+    won = False             # Win state
 
     # Serial port initially not connected
     ser = None
@@ -182,9 +182,8 @@ def run_maze_game(screen):
 
     # Buttons on main screen
     esp32_button_rect = pygame.Rect(20, 20, 120, 40)
-    start_button_rect = pygame.Rect(160, 20, 120, 40)
-    reset_button_rect = pygame.Rect(300, 20, 120, 40)
-    menu_button_rect = pygame.Rect(440, 20, 120, 40)  # Menu button
+    reset_button_rect = pygame.Rect(160, 20, 120, 40)
+    menu_button_rect = pygame.Rect(300, 20, 120, 40)  # Menu button
 
     # Popup (configuration window) state
     config_open = False
@@ -398,15 +397,11 @@ def run_maze_game(screen):
                     selected_port_index = 0 if available_ports else -1
                     config_open = True
 
-                elif start_button_rect.collidepoint(mouse_pos):
+                elif reset_button_rect.collidepoint(mouse_pos):
+                    # Reset game and keep it active
                     robot_cell, direction, score, game_over = init_game()
                     won = False
                     game_started = True
-
-                elif reset_button_rect.collidepoint(mouse_pos):
-                    robot_cell, direction, score, game_over = init_game()
-                    won = False
-                    game_started = False
 
                 elif menu_button_rect.collidepoint(mouse_pos):
                     # Menu button -> go back to main menu
@@ -508,17 +503,6 @@ def run_maze_game(screen):
         txt_esp32 = font_small.render("ESP32", True, WHITE)
         txt_esp32_rect = txt_esp32.get_rect(center=esp32_button_rect.center)
         screen.blit(txt_esp32, txt_esp32_rect)
-
-        # "Start" button
-        if start_button_rect.collidepoint(mouse_pos) and not config_open and not game_over and not won:
-            btn_color_start = BTN_BG_HOVER
-        else:
-            btn_color_start = BTN_BG
-        pygame.draw.rect(screen, btn_color_start, start_button_rect, border_radius=6)
-        pygame.draw.rect(screen, WHITE, start_button_rect, 1, border_radius=6)
-        txt_start = font_small.render("Start", True, WHITE)
-        txt_start_rect = txt_start.get_rect(center=start_button_rect.center)
-        screen.blit(txt_start, txt_start_rect)
 
         # "Reset" button
         if reset_button_rect.collidepoint(mouse_pos) and not config_open and not game_over and not won:
