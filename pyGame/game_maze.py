@@ -7,6 +7,11 @@ WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 # ==================================
 
+# CORES PARA ESTADO DO ESP32
+green_color = (0, 170, 0)
+red_color   = (255, 0, 0)
+# ==================================
+
 # ====== MAZE CONFIGURATION ======
 # 0 = free cell, 1 = wall
 # Start = top-left (0,0), Goal = bottom-right (cols-1, rows-1)
@@ -334,7 +339,7 @@ def run_maze_game(screen):
 
                         ser_new, success, msg = try_open_serial(port_name, baudrate)
                         status_message = msg
-                        status_color = (0, 255, 0) if success else (255, 0, 0)
+                        status_color = green_color if success else red_color
 
                         if success:
                             ser = ser_new
@@ -349,7 +354,7 @@ def run_maze_game(screen):
                     ser.close()
                     ser = None
                     status_message = f"Disconnected from {port_name}."
-                    status_color = (255, 0, 0)
+                    status_color = red_color
 
                 # Cancel
                 if btn_cancel_rect.collidepoint(mouse_pos):
@@ -493,16 +498,24 @@ def run_maze_game(screen):
         hint_surface = font_small.render(hint_text, True, WHITE)
         screen.blit(hint_surface, (20, WINDOW_HEIGHT - 55))
 
-        # "ESP32" button
-        if esp32_button_rect.collidepoint(mouse_pos) and not config_open and not game_over and not won:
-            btn_color_esp32 = BTN_BG_HOVER
+        # "ESP32" button – cor depende se está conectado ou não
+        if ser is not None and ser.is_open:
+            base_color = green_color    # conectado
         else:
-            btn_color_esp32 = BTN_BG
+            base_color = red_color      # não conectado
+
+        # Hover: mesma cor, só um pouco mais clara
+        if esp32_button_rect.collidepoint(mouse_pos) and not config_open and not game_over and not won:
+            btn_color_esp32 = tuple(min(c + 40, 255) for c in base_color)
+        else:
+            btn_color_esp32 = base_color
+
         pygame.draw.rect(screen, btn_color_esp32, esp32_button_rect, border_radius=6)
         pygame.draw.rect(screen, WHITE, esp32_button_rect, 1, border_radius=6)
         txt_esp32 = font_small.render("ESP32", True, WHITE)
         txt_esp32_rect = txt_esp32.get_rect(center=esp32_button_rect.center)
         screen.blit(txt_esp32, txt_esp32_rect)
+
 
         # "Reset" button
         if reset_button_rect.collidepoint(mouse_pos) and not config_open and not game_over and not won:

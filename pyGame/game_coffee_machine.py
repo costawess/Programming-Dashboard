@@ -407,11 +407,37 @@ def run_coffee_game(screen):
 
 
         # ===== TOP BUTTONS =====
-        btn_color_esp32 = BTN_BG_HOVER if esp32_button_rect.collidepoint(mouse_pos) and not config_open else BTN_BG
+        # --- ESP32 button background depends on connection state ---
+        if ser is not None and ser.is_open:
+            base_color = green_color      # connected
+        else:
+            base_color = red_color        # not connected
+
+        # Hover = mesma cor, só um pouco mais clara
+        if esp32_button_rect.collidepoint(mouse_pos) and not config_open:
+            btn_color_esp32 = tuple(min(c + 40, 255) for c in base_color)
+        else:
+            btn_color_esp32 = base_color
+
         pygame.draw.rect(screen, btn_color_esp32, esp32_button_rect, border_radius=6)
         pygame.draw.rect(screen, WHITE, esp32_button_rect, 1, border_radius=6)
         txt_esp32 = font_small.render("ESP32", True, WHITE)
         screen.blit(txt_esp32, txt_esp32.get_rect(center=esp32_button_rect.center))
+
+        # --- Reset button (mantém como estava) ---
+        btn_color_reset = BTN_BG_HOVER if reset_button_rect.collidepoint(mouse_pos) and not config_open else BTN_BG
+        pygame.draw.rect(screen, btn_color_reset, reset_button_rect, border_radius=6)
+        pygame.draw.rect(screen, WHITE, reset_button_rect, 1, border_radius=6)
+        txt_reset = font_small.render("Reset", True, WHITE)
+        screen.blit(txt_reset, txt_reset.get_rect(center=reset_button_rect.center))
+
+        # --- Menu button (mantém como estava) ---
+        btn_color_menu = BTN_BG_HOVER if menu_button_rect.collidepoint(mouse_pos) and not config_open else BTN_BG
+        pygame.draw.rect(screen, btn_color_menu, menu_button_rect, border_radius=6)
+        pygame.draw.rect(screen, WHITE, menu_button_rect, 1, border_radius=6)
+        txt_menu = font_small.render("Menu", True, WHITE)
+        screen.blit(txt_menu, txt_menu.get_rect(center=menu_button_rect.center))
+
 
         btn_color_reset = BTN_BG_HOVER if reset_button_rect.collidepoint(mouse_pos) and not config_open else BTN_BG
         pygame.draw.rect(screen, btn_color_reset, reset_button_rect, border_radius=6)
