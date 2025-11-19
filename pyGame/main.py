@@ -40,7 +40,7 @@ BAUD_OPTIONS = [9600, 115200]
 # ==================================
 
 # ====== WIN IMAGE CONFIGURATION ======
-WIN_IMAGE_PATH = "assets/figures/win/gold-winner.gif"
+WIN_IMAGE_PATH = "pyGame/assets/figures/win/gold-winner.gif"
 # ======================================
 
 
