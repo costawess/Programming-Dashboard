@@ -15,6 +15,9 @@ BAUD_OPTIONS = [9600, 115200]
 green_color = (0, 170, 0)
 red_color   = (255, 0, 0)
 black_color = (0, 0, 0)
+HOVER_OVERLAY_COLOR = (255, 246, 213, 80)
+
+
 
 # ====== COFFEE MACHINE IMAGE ======
 COFFEE_IMAGE_PATH = "pyGame/assets/figures/coffee_machine/coffee_machine_cleaned.png"
@@ -27,7 +30,7 @@ DRINK_OPTIONS = [
         "scale": 0.02,
         "dx": -42,
         "dy": 108,
-        "command": "SELECTED:SPRESSO",  # text sent to ESP32
+        "command": "SELECTED:ESPRESSO",  # text sent to ESP32
     },
     {
         "name": "capuccino",
@@ -55,6 +58,41 @@ DRINK_OPTIONS = [
     },
 ]
 # ============================================================
+
+# ====== CUSTOMIZATION STEPS (Sugar, Strength, Milk) ======
+CUSTOM_STEPS = [
+    {
+        "name": "sugar",
+        "title": "Sugar level",
+        "prefix": "SUGAR:",
+        "options": [
+            ("No sugar", "NO_SUGAR"),
+            ("Low", "LOW"),
+            ("Medium", "MEDIUM"),
+            ("High", "HIGH"),
+        ],
+    },
+    {
+        "name": "strength",
+        "title": "Strength level",
+        "prefix": "STRENGTH:",
+        "options": [
+            ("Mild", "MILD"),
+            ("Medium", "MEDIUM"),
+            ("Strong", "STRONG"),
+        ],
+    },
+    {
+        "name": "milk",
+        "title": "Milk",
+        "prefix": "MILK:",
+        "options": [
+            ("Yes", "YES"),
+            ("No", "NO"),
+        ],
+    },
+]
+# =========================================================
 
 # Background
 BACKGROUND_COLOR = (237, 215, 196)  # #edd7c4
@@ -156,6 +194,11 @@ def run_coffee_game(screen):
 
     # Load all drinks once
     drink_images = load_drink_images()
+
+    # State for customization mode
+    customize_mode = False   # False = mostrando drinks, True = perguntando Sugar/Strength/Milk
+    custom_step = 0          # 0 = Sugar, 1 = Strength, 2 = Milk
+
 
     quit_program = False
     running = True
@@ -296,25 +339,62 @@ def run_coffee_game(screen):
             error_rect = error_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
             screen.blit(error_text, error_rect)
 
-        # Draw drink options and remember their rects for click detection
-        drink_click_areas = []  # list of (rect, drink_dict)
+        # Draw drink options OR customization options and remember rects
+        drink_click_areas = []   # list of (rect, drink_dict)
+        custom_click_areas = []  # list of (rect, command_str) for customization
+
         if img_rect is not None:
-            for drink in drink_images:
-                base_img = drink["image"]
-                scale = drink["scale"]
-                dx = drink["dx"]
-                dy = drink["dy"]
+            if not customize_mode:
+                # === NORMAL MODE: mostrar as imagens das bebidas ===
+                for drink in drink_images:
+                    base_img = drink["image"]
+                    scale = drink["scale"]
+                    dx = drink["dx"]
+                    dy = drink["dy"]
 
-                dw, dh = base_img.get_size()
-                new_size = (int(dw * scale), int(dh * scale))
-                img_drink = pygame.transform.smoothscale(base_img, new_size)
+                    dw, dh = base_img.get_size()
+                    new_size = (int(dw * scale), int(dh * scale))
+                    img_drink = pygame.transform.smoothscale(base_img, new_size)
 
-                rect = img_drink.get_rect()
-                rect.centerx = img_rect.centerx + dx
-                rect.top = img_rect.top + dy
+                    rect = img_drink.get_rect()
+                    rect.centerx = img_rect.centerx + dx
+                    rect.top = img_rect.top + dy
 
-                screen.blit(img_drink, rect)
-                drink_click_areas.append((rect, drink))
+                    screen.blit(img_drink, rect)
+                    drink_click_areas.append((rect, drink))
+            else:
+                # === CUSTOMIZATION MODE: Sugar / Strength / Milk ===
+                step = CUSTOM_STEPS[custom_step]
+
+                # Título da pergunta (dentro da tela da máquina)
+                title_surf = font_medium.render(step["title"], True, black_color)
+                title_rect = title_surf.get_rect()
+                title_rect.centerx = img_rect.centerx
+                title_rect.top = img_rect.top + 80
+                screen.blit(title_surf, title_rect)
+
+                # Botões das opções (uma etapa por vez, várias opções)
+                option_y = title_rect.bottom + 20
+                option_height = 40
+                option_width = 220
+                spacing_y = 10
+
+                for idx, (label, value) in enumerate(step["options"]):
+                    rect = pygame.Rect(0, 0, option_width, option_height)
+                    rect.centerx = img_rect.centerx
+                    rect.top = option_y + idx * (option_height + spacing_y)
+
+                    bg = BTN_BG_HOVER if rect.collidepoint(mouse_pos) else BTN_BG
+                    pygame.draw.rect(screen, bg, rect, border_radius=6)
+                    pygame.draw.rect(screen, WHITE, rect, 1, border_radius=6)
+
+                    text_surf = font_small.render(label, True, WHITE)
+                    text_rect = text_surf.get_rect(center=rect.center)
+                    screen.blit(text_surf, text_rect)
+
+                    cmd = step["prefix"] + value   # ex: "SUGAR:LOW"
+                    custom_click_areas.append((rect, cmd))
+
 
         # ===== TOP BUTTONS =====
         btn_color_esp32 = BTN_BG_HOVER if esp32_button_rect.collidepoint(mouse_pos) and not config_open else BTN_BG
@@ -432,26 +512,62 @@ def run_coffee_game(screen):
             x_txt = label_font.render("Cancel", True, WHITE)
             x_txt_rect = x_txt.get_rect(center=btn_cancel_rect.center)
             screen.blit(x_txt, x_txt_rect)
-
-        # ===== HANDLE CLICKS ON DRINKS (after rects are known) =====
+        #
+        # ===== HANDLE CLICKS (drinks OR customization) =====
         if mouse_clicked and not quit_program and not config_open:
             if ser is None or not ser.is_open:
-                status_message = "Connect ESP32 first to select a drink."
-                status_color = (255, 0, 0)
+                status_message = "Connect ESP32 first."
+                status_color = red_color
             else:
-                for rect, drink in drink_click_areas:
-                    if rect.collidepoint(mouse_pos):
-                        cmd = drink["command"]
-                        try:
-                            ser.write((cmd + "\n").encode("utf-8"))
-                            status_message = f"Sent: {cmd}"
-                            status_color = green_color
-                            print(f"Sent to ESP32 via COM: {cmd}")
-                        except Exception as e:
-                            status_message = f"Error sending command: {e}"
-                            status_color = (255, 0, 0)
-                            print(f"Error sending command: {e}")
-                        break
+                if not customize_mode:
+                    # --- MODO NORMAL: clique nas bebidas ---
+                    for rect, drink in drink_click_areas:
+                        if rect.collidepoint(mouse_pos):
+                            cmd = drink["command"]
+                            try:
+                                ser.write((cmd + "\n").encode("utf-8"))
+                                status_message = f"Sent: {cmd}"
+                                status_color = green_color
+                                print(f"Sent to ESP32 via COM: {cmd}")
+
+                                # Ler respostas do ESP32 (por ex: STATE:CUSTOMIZE)
+                                pygame.time.wait(20)
+                                while ser.in_waiting > 0:
+                                    line = ser.readline().decode(errors="ignore").strip()
+                                    if not line:
+                                        continue
+                                    print(f"Received from ESP32 via COM: {line}")
+                                    if line.startswith("STATE:CUSTOMIZE"):
+                                        customize_mode = True
+                                        custom_step = 0  # começa em Sugar
+
+                            except Exception as e:
+                                status_message = f"Error sending command: {e}"
+                                status_color = red_color
+                                print(f"Error sending command: {e}")
+                            break
+                else:
+                    # --- MODO CUSTOMIZE: clique nas opções (Sugar/Strength/Milk) ---
+                    for rect, cmd in custom_click_areas:
+                        if rect.collidepoint(mouse_pos):
+                            try:
+                                ser.write((cmd + "\n").encode("utf-8"))
+                                status_message = f"Sent: {cmd}"
+                                status_color = green_color
+                                print(f"Sent to ESP32 via COM: {cmd}")
+
+                                # Avança para a próxima etapa de customização
+                                custom_step += 1
+                                if custom_step >= len(CUSTOM_STEPS):
+                                    # terminou (Sugar, Strength, Milk) -> volta a mostrar drinks
+                                    customize_mode = False
+                            except Exception as e:
+                                status_message = f"Error sending command: {e}"
+                                status_color = red_color
+                                print(f"Error sending command: {e}")
+                            break
+
+
 
         pygame.display.flip()
         clock.tick(60)
