@@ -11,20 +11,53 @@ WINDOW_HEIGHT = 600
 BAUD_OPTIONS = [9600, 115200]
 # ==================================
 
+# COLORS
+green_color = (0, 170, 0)
+red_color   = (255, 0, 0)
+black_color = (0, 0, 0)
+
 # ====== COFFEE MACHINE IMAGE ======
 COFFEE_IMAGE_PATH = "pyGame/assets/figures/coffee_machine/coffee_machine_cleaned.png"
 
-# Options to be selected
-ESPRESSO_IMAGE_PATH = "pyGame/assets/figures/coffee_machine/espresso.png"
-CAPUCCINO_IMAGE_PATH = "pyGame/assets/figures/coffee_machine/capuccino.png"
-TOMATO_SOUP_IMAGE_PATH = "pyGame/assets/figures/coffee_machine/tomato_soup.png"
-CHOCOLATE_IMAGE_PATH = "pyGame/assets/figures/coffee_machine/chocolate.png"
+# ====== DRINK OPTIONS (edit only this list to add new options) ======
+DRINK_OPTIONS = [
+    {
+        "name": "espresso",
+        "path": "pyGame/assets/figures/coffee_machine/espresso.png",
+        "scale": 0.02,
+        "dx": -42,
+        "dy": 108,
+        "command": "SELECTED:SPRESSO",  # text sent to ESP32
+    },
+    {
+        "name": "capuccino",
+        "path": "pyGame/assets/figures/coffee_machine/capuccino.png",
+        "scale": 0.023,
+        "dx": 31,
+        "dy": 98,
+        "command": "SELECTED:CAPUCCINO",
+    },
+    {
+        "name": "tomato_soup",
+        "path": "pyGame/assets/figures/coffee_machine/tomato_soup.png",
+        "scale": 0.02,
+        "dx": -42,
+        "dy": 180,
+        "command": "SELECTED:TOMATO_SOUP",
+    },
+    {
+        "name": "chocolate",
+        "path": "pyGame/assets/figures/coffee_machine/chocolate.png",
+        "scale": 0.02,
+        "dx": 31,
+        "dy": 180,
+        "command": "SELECTED:CHOCOLATE",
+    },
+]
+# ============================================================
 
-
-# background
+# Background
 BACKGROUND_COLOR = (237, 215, 196)  # #edd7c4
-# ==================================
-
 
 
 def try_open_serial(port_name, baudrate):
@@ -34,7 +67,6 @@ def try_open_serial(port_name, baudrate):
     """
     if not port_name:
         return None, False, "No port selected."
-
     try:
         ser = serial.Serial(port_name, baudrate, timeout=0.05)
         msg = f"Connected to {port_name} at {baudrate} baud."
@@ -56,12 +88,29 @@ def draw_text_center(screen, text, font, color, y):
     screen.blit(surface, rect)
 
 
+def load_drink_images():
+    """
+    Load all drink option images defined in DRINK_OPTIONS.
+    Returns a list of dicts with the same keys plus 'image'.
+    """
+    loaded = []
+    for opt in DRINK_OPTIONS:
+        try:
+            img = pygame.image.load(opt["path"]).convert_alpha()
+            entry = opt.copy()
+            entry["image"] = img
+            loaded.append(entry)
+        except Exception as e:
+            print(f"Could not load drink image '{opt['name']}' from {opt['path']}: {e}")
+    return loaded
+
+
 def run_coffee_game(screen):
     """
     Coffee Machine game.
 
-    For now it only shows the cleaned coffee machine image, centered,
-    with the same ESP32 / Reset / Menu buttons and connection indicators.
+    Displays the coffee machine and drink options.
+    Clicking a drink while ESP32 is connected sends a command over serial.
 
     Returns:
         "menu" -> go back to main menu
@@ -105,37 +154,8 @@ def run_coffee_game(screen):
         print(f"Could not load coffee machine image: {e}")
         coffee_image = None
 
-    # Load espresso option image --------------------------------------------------
-    espresso_image = None
-    try:
-        espresso_image = pygame.image.load(ESPRESSO_IMAGE_PATH).convert_alpha()
-    except Exception as e:
-        print(f"Could not load espresso image: {e}")
-        espresso_image = None
-
-    # Load capuccino option image --------------------------------------------------
-    capuccino_image = None
-    try:
-        capuccino_image = pygame.image.load(CAPUCCINO_IMAGE_PATH).convert_alpha()
-    except Exception as e:
-        print(f"Could not load capuccino image: {e}")
-        capuccino_image = None
-
-    # Load chocolate option image --------------------------------------------------
-    chocolate_image = None
-    try:
-        chocolate_image = pygame.image.load(CHOCOLATE_IMAGE_PATH).convert_alpha()
-    except Exception as e:
-        print(f"Could not load chocolate image: {e}")
-        chocolate_image = None
-
-    # Load chocolate option image --------------------------------------------------
-    tomato_soup_image = None
-    try:
-        tomato_soup_image = pygame.image.load(TOMATO_SOUP_IMAGE_PATH).convert_alpha()
-    except Exception as e:
-        print(f"Could not load tomato_soup image: {e}")
-        tomato_soup_image = None
+    # Load all drinks once
+    drink_images = load_drink_images()
 
     quit_program = False
     running = True
@@ -160,7 +180,7 @@ def run_coffee_game(screen):
                 elif event.key == pygame.K_ESCAPE:
                     running = False
 
-        # ---- Handle mouse clicks ----
+        # ================= HANDLE MOUSE (buttons and popup) =================
         if mouse_clicked and not quit_program:
             if config_open:
                 # Pop-up geometry
@@ -221,7 +241,7 @@ def run_coffee_game(screen):
 
                         ser_new, success, msg = try_open_serial(port_name, baudrate)
                         status_message = msg
-                        status_color = (0, 255, 0) if success else (255, 0, 0)
+                        status_color = green_color if success else red_color
                         if success:
                             ser = ser_new
                             config_open = False
@@ -249,158 +269,77 @@ def run_coffee_game(screen):
                     config_open = True
 
                 elif reset_button_rect.collidepoint(mouse_pos):
-                    # For now reset is only a semantic reset: we could later
-                    # clear state (errors, etc). We just reset the status.
                     status_message = "Not connected."
                     status_color = (255, 0, 0)
 
                 elif menu_button_rect.collidepoint(mouse_pos):
                     running = False
 
-        # (Future) serial reading logic could go here if Coffee Machine
-        # also reacts to ESP32 commands.
-
-        # ===== DRAW SECTION =====
+        # ====================== DRAW SECTION ======================
         screen.fill(BACKGROUND_COLOR)
 
-        # Draw centered coffee machine image
-        # Draw centered coffee machine image
-        # Draw coffee machine image (scaled and repositioned)
+        # Draw coffee machine (scaled and repositioned)
+        img_rect = None
         if coffee_image is not None:
             img = coffee_image
-
-            # 1) SCALE: defina o tamanho aqui (1.0 = 100%, 1.3 = 130%, etc.)
-            SCALE = 0.085
+            MACHINE_SCALE = 0.085
             iw, ih = img.get_size()
-            new_size = (int(iw * SCALE), int(ih * SCALE))
+            new_size = (int(iw * MACHINE_SCALE), int(ih * MACHINE_SCALE))
             img = pygame.transform.smoothscale(img, new_size)
 
-            # 2) POSITION: ajuste aqui a posição na tela
             img_rect = img.get_rect()
-            img_rect.centerx = WINDOW_WIDTH // 2   # centralizado horizontalmente
-            img_rect.top = 60                     # distância do topo (abaixo dos botões)
-
+            img_rect.centerx = WINDOW_WIDTH // 2
+            img_rect.top = 60
             screen.blit(img, img_rect)
         else:
             error_text = font_medium.render("Coffee machine image not found.", True, (150, 0, 0))
             error_rect = error_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
             screen.blit(error_text, error_rect)
 
-        # draw espresso option inside the machine "screen"
-        if espresso_image is not None and img_rect is not None:
-            espresso = espresso_image
+        # Draw drink options and remember their rects for click detection
+        drink_click_areas = []  # list of (rect, drink_dict)
+        if img_rect is not None:
+            for drink in drink_images:
+                base_img = drink["image"]
+                scale = drink["scale"]
+                dx = drink["dx"]
+                dy = drink["dy"]
 
-            # A) SCALE of the espresso icon (change this freely)
-            ESPRESSO_SCALE = 0.02   # 0.25 = 25% of original size
-            ew, eh = espresso.get_size()
-            new_size = (int(ew * ESPRESSO_SCALE), int(eh * ESPRESSO_SCALE))
-            espresso = pygame.transform.smoothscale(espresso, new_size)
+                dw, dh = base_img.get_size()
+                new_size = (int(dw * scale), int(dh * scale))
+                img_drink = pygame.transform.smoothscale(base_img, new_size)
 
-            # B) POSITION of the espresso inside the machine
-            espresso_rect = espresso.get_rect()
+                rect = img_drink.get_rect()
+                rect.centerx = img_rect.centerx + dx
+                rect.top = img_rect.top + dy
 
-            # Center horizontally on the machine
-            espresso_rect.centerx = img_rect.centerx-48
-
-            # Vertical position: adjust the offset to place on the “screen”
-            # You can tweak +80 to move up/down
-            espresso_rect.top = img_rect.top + 108
-
-            screen.blit(espresso, espresso_rect)
-
-        # draw capuccino option inside the machine "screen"
-        if capuccino_image is not None and img_rect is not None:
-            capuccino = capuccino_image
-
-            # A) SCALE of the capuccino icon (change this freely)
-            CAPUCCINO_SCALE = 0.023   # 0.25 = 25% of original size
-            ew, eh = capuccino.get_size()
-            new_size = (int(ew * CAPUCCINO_SCALE), int(eh * CAPUCCINO_SCALE))
-            capuccino = pygame.transform.smoothscale(capuccino, new_size)
-
-            # B) POSITION of the capuccino inside the machine
-            capuccino_rect = capuccino.get_rect()
-
-            # Center horizontally on the machine
-            capuccino_rect.centerx = img_rect.centerx+27
-
-            # Vertical position: adjust the offset to place on the “screen”
-            # You can tweak +80 to move up/down
-            capuccino_rect.top = img_rect.top + 98
-
-            screen.blit(capuccino, capuccino_rect)
-
-        # draw chocolate option inside the machine "screen"
-        if chocolate_image is not None and img_rect is not None:
-            chocolate = chocolate_image
-
-            # A) SCALE of the chocolate icon (change this freely)
-            CHOCOLATE_SCALE = 0.023   # 0.25 = 25% of original size
-            ew, eh = chocolate.get_size()
-            new_size = (int(ew * CHOCOLATE_SCALE), int(eh * CHOCOLATE_SCALE))
-            chocolate = pygame.transform.smoothscale(chocolate, new_size)
-
-            # B) POSITION of the chocolate inside the machine
-            chocolate_rect = chocolate.get_rect()
-
-            # Center horizontally on the machine
-            chocolate_rect.centerx = img_rect.centerx-48
-
-            # Vertical position: adjust the offset to place on the “screen”
-            # You can tweak +80 to move up/down
-            chocolate_rect.top = img_rect.top + 180
-
-            screen.blit(chocolate, chocolate_rect)
-
-        # draw tomato_soup option inside the machine "screen"
-        if tomato_soup_image is not None and img_rect is not None:
-            tomato_soup = tomato_soup_image
-            # A) SCALE of the tomato_soup icon (change this freely)
-            TOMATO_SOUP_SCALE = 0.023   # 0.25 = 25% of original size
-            ew, eh = tomato_soup.get_size()
-            new_size = (int(ew * TOMATO_SOUP_SCALE), int(eh * TOMATO_SOUP_SCALE))
-            tomato_soup = pygame.transform.smoothscale(tomato_soup, new_size)
-
-            # B) POSITION of the tomato_soup inside the machine
-            tomato_soup_rect = tomato_soup.get_rect()
-
-            # Center horizontally on the machine
-            tomato_soup_rect.centerx = img_rect.centerx+27
-
-            # Vertical position: adjust the offset to place on the “screen”
-            # You can tweak +80 to move up/down
-            tomato_soup_rect.top = img_rect.top + 180
-
-            screen.blit(tomato_soup, tomato_soup_rect)
-        
+                screen.blit(img_drink, rect)
+                drink_click_areas.append((rect, drink))
 
         # ===== TOP BUTTONS =====
-        # ESP32
         btn_color_esp32 = BTN_BG_HOVER if esp32_button_rect.collidepoint(mouse_pos) and not config_open else BTN_BG
         pygame.draw.rect(screen, btn_color_esp32, esp32_button_rect, border_radius=6)
         pygame.draw.rect(screen, WHITE, esp32_button_rect, 1, border_radius=6)
         txt_esp32 = font_small.render("ESP32", True, WHITE)
         screen.blit(txt_esp32, txt_esp32.get_rect(center=esp32_button_rect.center))
 
-        # Reset
         btn_color_reset = BTN_BG_HOVER if reset_button_rect.collidepoint(mouse_pos) and not config_open else BTN_BG
         pygame.draw.rect(screen, btn_color_reset, reset_button_rect, border_radius=6)
         pygame.draw.rect(screen, WHITE, reset_button_rect, 1, border_radius=6)
         txt_reset = font_small.render("Reset", True, WHITE)
         screen.blit(txt_reset, txt_reset.get_rect(center=reset_button_rect.center))
 
-        # Menu
         btn_color_menu = BTN_BG_HOVER if menu_button_rect.collidepoint(mouse_pos) and not config_open else BTN_BG
         pygame.draw.rect(screen, btn_color_menu, menu_button_rect, border_radius=6)
         pygame.draw.rect(screen, WHITE, menu_button_rect, 1, border_radius=6)
         txt_menu = font_small.render("Menu", True, WHITE)
         screen.blit(txt_menu, txt_menu.get_rect(center=menu_button_rect.center))
 
-        # ===== BOTTOM STATUS (same estilo do maze) =====
+        # ===== BOTTOM STATUS =====
         status_surface = font_small.render(status_message, True, status_color)
         screen.blit(status_surface, (20, WINDOW_HEIGHT - 30))
 
-        hint_text = "ESC: Menu  |  Q: Quit  |  Use ESP32 button to configure serial"
+        hint_text = "ESC: Menu  |  Q: Quit  |  Click a drink (ESP32 must be connected)"
         hint_surface = font_small.render(hint_text, True, (0, 0, 0))
         screen.blit(hint_surface, (20, WINDOW_HEIGHT - 55))
 
@@ -433,7 +372,6 @@ def run_coffee_game(screen):
 
             label_font = pygame.font.SysFont(None, 24)
 
-            # Port label
             port_label = label_font.render("Port:", True, WHITE)
             screen.blit(port_label, (popup_rect.x + 20, popup_rect.y + 55))
 
@@ -494,6 +432,26 @@ def run_coffee_game(screen):
             x_txt = label_font.render("Cancel", True, WHITE)
             x_txt_rect = x_txt.get_rect(center=btn_cancel_rect.center)
             screen.blit(x_txt, x_txt_rect)
+
+        # ===== HANDLE CLICKS ON DRINKS (after rects are known) =====
+        if mouse_clicked and not quit_program and not config_open:
+            if ser is None or not ser.is_open:
+                status_message = "Connect ESP32 first to select a drink."
+                status_color = (255, 0, 0)
+            else:
+                for rect, drink in drink_click_areas:
+                    if rect.collidepoint(mouse_pos):
+                        cmd = drink["command"]
+                        try:
+                            ser.write((cmd + "\n").encode("utf-8"))
+                            status_message = f"Sent: {cmd}"
+                            status_color = green_color
+                            print(f"Sent to ESP32 via COM: {cmd}")
+                        except Exception as e:
+                            status_message = f"Error sending command: {e}"
+                            status_color = (255, 0, 0)
+                            print(f"Error sending command: {e}")
+                        break
 
         pygame.display.flip()
         clock.tick(60)
