@@ -236,7 +236,8 @@ def run_maze_game(screen):
                     running = False
 
                 # ENTER on GAME OVER -> same as clicking "I wanna try again"
-                elif game_over and not config_open and event.key == pygame.K_RETURN:
+                elif (game_over and not config_open and event.key in (pygame.K_RETURN, pygame.K_SPACE)):
+                    # Reset game when on GAME OVER screen
                     robot_cell, direction, score, game_over = init_game()
                     won = False
                     game_started = True
