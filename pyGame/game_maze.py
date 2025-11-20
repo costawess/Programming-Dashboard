@@ -12,7 +12,7 @@ green_color = (0, 170, 0)
 red_color   = (255, 0, 0)
 # ==================================
 
-NUM_MESSAGES_SHOWN = 15  # how many serial messages to keep in the log
+NUM_MESSAGES_SHOWN = 25  # how many serial messages to keep in the log
 
 
 # ====== MAZE CONFIGURATION ======
@@ -389,23 +389,31 @@ def run_maze_game(screen):
                     robot_cell, direction, score, game_over = init_game()
                     won = False
                     game_started = True
+                    msg_log.clear()
 
             elif won:
-                # WIN POPUP
-                win_width = 500
-                win_height = 350
+                # WIN POPUP - mesma geometria do bloco de desenho
+                win_width  = 500
+                win_height = 400   # <-- IGUAL AO BLOCO "if won:" DE DESENHO
                 win_rect = pygame.Rect(
                     (WINDOW_WIDTH - win_width) // 2,
                     (WINDOW_HEIGHT - win_height) // 2,
                     win_width,
                     win_height,
                 )
-                play_again_rect = pygame.Rect(win_rect.x + 150, win_rect.y + win_height - 70, 200, 40)
+
+                play_again_rect = pygame.Rect(
+                    win_rect.x + (win_width - 200) // 2,
+                    win_rect.y + win_height - 70,
+                    200,
+                    40,
+                )
 
                 if play_again_rect.collidepoint(mouse_pos):
                     robot_cell, direction, score, game_over = init_game()
                     won = False
                     game_started = True
+                    msg_log.clear()
 
             else:
                 # MAIN SCREEN buttons
@@ -420,6 +428,10 @@ def run_maze_game(screen):
                     robot_cell, direction, score, game_over = init_game()
                     won = False
                     game_started = True
+
+                    # limpa o painel de mensagens
+                    msg_log.clear()
+
 
                 elif menu_button_rect.collidepoint(mouse_pos):
                     # Menu button -> go back to main menu
@@ -651,8 +663,8 @@ def run_maze_game(screen):
 
         # WIN POPUP
         if won:
-            win_width = 500
-            win_height = 350
+            win_width  = 500
+            win_height = 400
             win_rect = pygame.Rect(
                 (WINDOW_WIDTH - win_width) // 2,
                 (WINDOW_HEIGHT - win_height) // 2,
@@ -660,41 +672,60 @@ def run_maze_game(screen):
                 win_height,
             )
 
+            # dark overlay
             overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 180))
             screen.blit(overlay, (0, 0))
 
+            # popup background
             pygame.draw.rect(screen, POPUP_BG, win_rect, border_radius=10)
             pygame.draw.rect(screen, POPUP_BORDER, win_rect, 2, border_radius=10)
 
+            # centers for left (image) and right (score)
+            left_center_x  = win_rect.x + win_width // 3
+            right_center_x = win_rect.x + 2 * win_width // 3
+            content_center_y = win_rect.y + win_height // 2
+
+            # draw image on the LEFT
             if win_image is not None:
-                max_w, max_h = 350, 200
+                # limit size so it fits in the left half
+                max_w = win_width // 2 - 40
+                max_h = win_height - 80
                 img = win_image
                 iw, ih = img.get_size()
                 scale = min(max_w / iw, max_h / ih, 1.0)
                 new_size = (int(iw * scale), int(ih * scale))
                 img_scaled = pygame.transform.smoothscale(img, new_size)
-                img_rect = img_scaled.get_rect(center=(win_rect.centerx, win_rect.y + 120))
+
+                img_rect = img_scaled.get_rect(center=(left_center_x, content_center_y))
                 screen.blit(img_scaled, img_rect)
             else:
                 fallback = font_large.render("YOU WIN!", True, YELLOW)
-                fallback_rect = fallback.get_rect(center=(win_rect.centerx, win_rect.y + 120))
+                fallback_rect = fallback.get_rect(center=(left_center_x, content_center_y))
                 screen.blit(fallback, fallback_rect)
 
+            # draw score on the RIGHT
             score_text_win = font_large.render(f"Score: {score}", True, WHITE)
-            score_rect_win = score_text_win.get_rect(center=(win_rect.centerx, win_rect.y + 200))
+            score_rect_win = score_text_win.get_rect(center=(right_center_x, content_center_y))
             screen.blit(score_text_win, score_rect_win)
 
-            play_again_rect = pygame.Rect(win_rect.x + 150, win_rect.y + win_height - 70, 200, 40)
+            # Play Again button (centered at bottom)
+            play_again_rect = pygame.Rect(
+                win_rect.x + (win_width - 200) // 2,
+                win_rect.y + win_height - 70,
+                200,
+                40,
+            )
             pygame.draw.rect(screen, BTN_BG, play_again_rect, border_radius=6)
             pygame.draw.rect(screen, WHITE, play_again_rect, 1, border_radius=6)
             pa_txt = font_medium.render("Play Again?", True, WHITE)
             pa_txt_rect = pa_txt.get_rect(center=play_again_rect.center)
             screen.blit(pa_txt, pa_txt_rect)
 
+
         # GAME OVER POPUP
         if game_over:
-            go_width = 400
+            go_width  = 400
             go_height = 220
             go_rect = pygame.Rect(
                 (WINDOW_WIDTH - go_width) // 2,
@@ -726,9 +757,9 @@ def run_maze_game(screen):
             screen.blit(ta_txt, ta_txt_rect)
 
         # ===== RIGHT-SIDE SERIAL LOG PANEL =====
-        if not config_open:
+        if (not config_open) and (not game_over) and (not won):
             panel_width  = 300
-            panel_height = 420
+            panel_height = 620
             # coloca o painel logo à direita do maze
             panel_x = MAZE_X_OFFSET + MAZE_WIDTH + 30
             panel_y = (WINDOW_HEIGHT - panel_height) // 2
