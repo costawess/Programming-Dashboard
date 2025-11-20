@@ -7,7 +7,7 @@ WINDOW_WIDTH  = 1000
 WINDOW_HEIGHT = 800
 # ==================================
 
-# CORES PARA ESTADO DO ESP32
+# COLORS FOR ESP32 STATE
 green_color = (0, 170, 0)
 red_color   = (255, 0, 0)
 # ==================================
@@ -15,10 +15,12 @@ red_color   = (255, 0, 0)
 NUM_MESSAGES_SHOWN = 27  # how many serial messages to keep in the log
 
 
-# ====== MAZE CONFIGURATION ======
+# ====== MAZE CONFIGURATION (MULTIPLE LEVELS) ======
 # 0 = free cell, 1 = wall
 # Start = top-left (0,0), Goal = bottom-right (cols-1, rows-1)
-MAZE = [
+
+# Level 1 (original maze)
+MAZE_1 = [
     [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
     [1, 1, 0, 1, 1, 0, 1, 1, 1, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
@@ -28,13 +30,58 @@ MAZE = [
     [0, 0, 0, 1, 0, 0, 0, 0, 1, 0],
     [1, 1, 0, 1, 0, 1, 1, 0, 0, 0],
 ]
+
+# Level 2 (slightly harder)
+MAZE_2 = [
+    [0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
+    [1, 1, 0, 1, 1, 0, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+    [0, 1, 1, 1, 0, 1, 1, 0, 1, 0],
+    [0, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+    [1, 1, 0, 1, 0, 0, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 1, 0, 1, 0],
+    [1, 1, 0, 1, 0, 1, 1, 0, 0, 0],
+]
+
+# Level 3 (harder)
+MAZE_3 = [
+    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    [1, 1, 0, 0, 1, 0, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+    [0, 1, 1, 1, 1, 1, 1, 0, 1, 0],
+    [0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 1, 0, 1, 1, 0, 0, 1, 1, 0],
+    [0, 1, 0, 1, 0, 0, 0, 0, 1, 0],
+    [1, 1, 1, 1, 0, 1, 1, 0, 0, 0],
+]
+
+# Level 4 (hardest)
+MAZE_4 = [
+    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    [1, 0, 1, 1, 0, 0, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+    [0, 1, 1, 1, 1, 1, 1, 0, 0, 1],
+    [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    [0, 1, 0, 1, 1, 0, 1, 1, 0, 0],
+    [0, 0, 0, 0, 0, 0, 1, 0, 1, 0],
+    [0, 1, 0, 1, 0, 1, 1, 0, 0, 0],
+]
+
+# List of all levels
+MAZE_LEVELS = [MAZE_1, MAZE_2, MAZE_3, MAZE_4]
+
+# Track completion: green button when True
+LEVEL_COMPLETED = [False] * len(MAZE_LEVELS)
+
+# Active maze (initially level 0)
+MAZE = MAZE_LEVELS[0]
 MAZE_ROWS = len(MAZE)
 MAZE_COLS = len(MAZE[0])
 
 # Maze drawing area (centered)
 MAZE_WIDTH    = 600
 MAZE_HEIGHT   = 480
-MAZE_X_OFFSET = (WINDOW_WIDTH - MAZE_WIDTH) // 2 - 160 
+MAZE_X_OFFSET = (WINDOW_WIDTH - MAZE_WIDTH) // 2 - 160
 MAZE_Y_OFFSET = (WINDOW_HEIGHT - MAZE_HEIGHT) // 2
 
 CELL_W = MAZE_WIDTH // MAZE_COLS
@@ -155,14 +202,37 @@ def init_game():
 
 def run_maze_game(screen):
     """
-    Run the maze game.
+    Run the maze game with multiple levels.
 
     Returns:
         "menu" -> go back to main menu
         "quit" -> close the whole program
     """
+    global MAZE, MAZE_ROWS, MAZE_COLS, CELL_W, CELL_H, BALL_RADIUS, LEVEL_COMPLETED
+
     clock = pygame.time.Clock()
     pygame.display.set_caption("Embedded Programming Maze - Serial Robot")
+
+    num_levels = len(MAZE_LEVELS)
+
+    def load_level(level_index: int) -> int:
+        """
+        Set the active maze to the given level index and update sizes.
+        """
+        global MAZE, MAZE_ROWS, MAZE_COLS, CELL_W, CELL_H, BALL_RADIUS
+        level_index = max(0, min(level_index, num_levels - 1))
+        MAZE = MAZE_LEVELS[level_index]
+        MAZE_ROWS = len(MAZE)
+        MAZE_COLS = len(MAZE[0])
+        # Recompute cell sizes based on current maze dimensions
+        CELL_W = MAZE_WIDTH // MAZE_COLS
+        CELL_H = MAZE_HEIGHT // MAZE_ROWS
+        BALL_RADIUS = min(CELL_W, CELL_H) // 3
+        return level_index
+
+    # Start at level 0
+    current_level = 0
+    current_level = load_level(current_level)
 
     # Load win image (static)
     try:
@@ -193,6 +263,16 @@ def run_maze_game(screen):
     reset_button_rect = pygame.Rect(160, 20, 120, 40)
     menu_button_rect = pygame.Rect(300, 20, 120, 40)  # Menu button
 
+    # Maze selection buttons (Maze 1..Maze N)
+    maze_button_rects = []
+    maze_btn_y = 80
+    maze_btn_w = 90
+    maze_btn_h = 35
+    maze_btn_spacing = 10
+    for i in range(num_levels):
+        x = 20 + i * (maze_btn_w + maze_btn_spacing)
+        maze_button_rects.append(pygame.Rect(x, maze_btn_y, maze_btn_w, maze_btn_h))
+
     # Popup (configuration window) state
     config_open = False
     available_ports = []
@@ -207,7 +287,6 @@ def run_maze_game(screen):
         msg_log.append(message)
         if len(msg_log) > NUM_MESSAGES_SHOWN:
             msg_log.pop(0)
-
 
     # Colors
     BTN_BG = (60, 60, 60)
@@ -252,9 +331,8 @@ def run_maze_game(screen):
                     # ESC exits the game and returns to menu
                     running = False
 
-                # ENTER on GAME OVER -> same as clicking "I wanna try again"
+                # ENTER or SPACE on GAME OVER -> same as clicking "I wanna try again"
                 elif (game_over and not config_open and event.key in (pygame.K_RETURN, pygame.K_SPACE)):
-                    # Reset game when on GAME OVER screen
                     robot_cell, direction, score, game_over = init_game()
                     won = False
                     game_started = True
@@ -287,6 +365,7 @@ def run_maze_game(screen):
                             if robot_cell == (MAZE_COLS - 1, MAZE_ROWS - 1):
                                 won = True
                                 game_started = False
+                                LEVEL_COMPLETED[current_level] = True
 
         # --- Handle mouse clicks on buttons / popup / game over / win ---
         if mouse_clicked and not quit_program:
@@ -392,9 +471,9 @@ def run_maze_game(screen):
                     msg_log.clear()
 
             elif won:
-                # WIN POPUP - mesma geometria do bloco de desenho
+                # WIN POPUP geometry (must match drawing code)
                 win_width  = 500
-                win_height = 400   # <-- IGUAL AO BLOCO "if won:" DE DESENHO
+                win_height = 400
                 win_rect = pygame.Rect(
                     (WINDOW_WIDTH - win_width) // 2,
                     (WINDOW_HEIGHT - win_height) // 2,
@@ -402,21 +481,59 @@ def run_maze_game(screen):
                     win_height,
                 )
 
-                play_again_rect = pygame.Rect(
-                    win_rect.x + (win_width - 200) // 2,
-                    win_rect.y + win_height - 70,
-                    200,
-                    40,
-                )
+                button_width = 180
+                button_height = 40
+                button_spacing = 20
+                buttons_y = win_rect.y + win_height - 70
 
-                if play_again_rect.collidepoint(mouse_pos):
-                    robot_cell, direction, score, game_over = init_game()
-                    won = False
-                    game_started = True
-                    msg_log.clear()
+                if current_level < num_levels - 1:
+                    total_buttons_width = button_width * 2 + button_spacing
+                    first_button_x = win_rect.x + (win_width - total_buttons_width) // 2
+
+                    # Try Again button
+                    try_again_rect = pygame.Rect(
+                        first_button_x,
+                        buttons_y,
+                        button_width,
+                        button_height,
+                    )
+
+                    # Next Level button
+                    next_level_rect = pygame.Rect(
+                        first_button_x + button_width + button_spacing,
+                        buttons_y,
+                        button_width,
+                        button_height,
+                    )
+
+                    if try_again_rect.collidepoint(mouse_pos):
+                        robot_cell, direction, score, game_over = init_game()
+                        won = False
+                        game_started = True
+                        msg_log.clear()
+
+                    elif next_level_rect.collidepoint(mouse_pos):
+                        current_level = load_level(current_level + 1)
+                        robot_cell, direction, score, game_over = init_game()
+                        won = False
+                        game_started = True
+                        msg_log.clear()
+                else:
+                    # Last level: only Try Again (centered)
+                    try_again_rect = pygame.Rect(
+                        win_rect.x + (win_width - button_width) // 2,
+                        buttons_y,
+                        button_width,
+                        button_height,
+                    )
+                    if try_again_rect.collidepoint(mouse_pos):
+                        robot_cell, direction, score, game_over = init_game()
+                        won = False
+                        game_started = True
+                        msg_log.clear()
 
             else:
-                # MAIN SCREEN buttons
+                # MAIN SCREEN buttons and maze selectors
                 if esp32_button_rect.collidepoint(mouse_pos):
                     # Refresh COM list whenever opening the popup
                     available_ports = get_available_ports()
@@ -424,18 +541,26 @@ def run_maze_game(screen):
                     config_open = True
 
                 elif reset_button_rect.collidepoint(mouse_pos):
-                    # Reset game and keep it active
+                    # Reset game and keep it active (same level)
                     robot_cell, direction, score, game_over = init_game()
                     won = False
                     game_started = True
-
-                    # limpa o painel de mensagens
                     msg_log.clear()
-
 
                 elif menu_button_rect.collidepoint(mouse_pos):
                     # Menu button -> go back to main menu
                     running = False
+
+                else:
+                    # Maze level buttons
+                    for idx, rect in enumerate(maze_button_rects):
+                        if rect.collidepoint(mouse_pos):
+                            current_level = load_level(idx)
+                            robot_cell, direction, score, game_over = init_game()
+                            won = False
+                            game_started = True
+                            msg_log.clear()
+                            break
 
         # ----- Read serial data if connected, game started and not over/won -----
         if (
@@ -455,7 +580,7 @@ def run_maze_game(screen):
                 cmd = line.upper()
                 if cmd in ("UP", "DOWN", "LEFT", "RIGHT"):
                     print(f"Serial command: {cmd}")
-                    add_log(f"(ESP): '{cmd}'")  # <-- always log every valid command
+                    add_log(f"(ESP): '{cmd}'")
 
                     robot_cell, collision, moved, new_dir = process_command(cmd, robot_cell)
                     direction = new_dir
@@ -467,9 +592,10 @@ def run_maze_game(screen):
                         if robot_cell == (MAZE_COLS - 1, MAZE_ROWS - 1):
                             won = True
                             game_started = False
+                            LEVEL_COMPLETED[current_level] = True
                 else:
                     print(f"Unknown command: {line!r}")
-                    add_log(f"(ESP): '{line}'")  # log de comando desconhecido
+                    add_log(f"(ESP): '{line}'")
 
         # ===== DRAW SECTION =====
         screen.fill((0, 0, 0))  # background
@@ -526,13 +652,13 @@ def run_maze_game(screen):
         hint_surface = font_small.render(hint_text, True, WHITE)
         screen.blit(hint_surface, (20, WINDOW_HEIGHT - 55))
 
-        # "ESP32" button – cor depende se está conectado ou não
+        # "ESP32" button – color depends on connection state
         if ser is not None and ser.is_open:
-            base_color = green_color    # conectado
+            base_color = green_color    # connected
         else:
-            base_color = red_color      # não conectado
+            base_color = red_color      # not connected
 
-        # Hover: mesma cor, só um pouco mais clara
+        # Hover: slightly lighter
         if esp32_button_rect.collidepoint(mouse_pos) and not config_open and not game_over and not won:
             btn_color_esp32 = tuple(min(c + 40, 255) for c in base_color)
         else:
@@ -543,7 +669,6 @@ def run_maze_game(screen):
         txt_esp32 = font_small.render("ESP32", True, WHITE)
         txt_esp32_rect = txt_esp32.get_rect(center=esp32_button_rect.center)
         screen.blit(txt_esp32, txt_esp32_rect)
-
 
         # "Reset" button
         if reset_button_rect.collidepoint(mouse_pos) and not config_open and not game_over and not won:
@@ -566,6 +691,30 @@ def run_maze_game(screen):
         txt_menu = font_small.render("Menu", True, WHITE)
         txt_menu_rect = txt_menu.get_rect(center=menu_button_rect.center)
         screen.blit(txt_menu, txt_menu_rect)
+
+        # Maze selection buttons
+        for idx, rect in enumerate(maze_button_rects):
+            # Base color depends on completion
+            if LEVEL_COMPLETED[idx]:
+                base_col = (0, 160, 0)  # green for completed
+            else:
+                base_col = BTN_BG
+
+            # Highlight current level
+            if idx == current_level:
+                base_col = tuple(min(c + 30, 255) for c in base_col)
+
+            # Hover effect
+            if rect.collidepoint(mouse_pos) and not config_open and not game_over and not won:
+                draw_color = tuple(min(c + 25, 255) for c in base_col)
+            else:
+                draw_color = base_col
+
+            pygame.draw.rect(screen, draw_color, rect, border_radius=6)
+            pygame.draw.rect(screen, WHITE, rect, 1, border_radius=6)
+            label = font_small.render(f"Maze {idx + 1}", True, WHITE)
+            label_rect = label.get_rect(center=rect.center)
+            screen.blit(label, label_rect)
 
         # CONFIG POPUP
         if config_open:
@@ -672,23 +821,22 @@ def run_maze_game(screen):
                 win_height,
             )
 
-            # dark overlay
+            # Dark overlay
             overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 180))
             screen.blit(overlay, (0, 0))
 
-            # popup background
+            # Popup background
             pygame.draw.rect(screen, POPUP_BG, win_rect, border_radius=10)
             pygame.draw.rect(screen, POPUP_BORDER, win_rect, 2, border_radius=10)
 
-            # centers for left (image) and right (score)
+            # Centers for left (image) and right (score)
             left_center_x  = win_rect.x + win_width // 3
             right_center_x = win_rect.x + 2 * win_width // 3
             content_center_y = win_rect.y + win_height // 2
 
-            # draw image on the LEFT
+            # Draw image on the left
             if win_image is not None:
-                # limit size so it fits in the left half
                 max_w = win_width // 2 - 40
                 max_h = win_height - 80
                 img = win_image
@@ -704,24 +852,59 @@ def run_maze_game(screen):
                 fallback_rect = fallback.get_rect(center=(left_center_x, content_center_y))
                 screen.blit(fallback, fallback_rect)
 
-            # draw score on the RIGHT
+            # Draw score on the right
             score_text_win = font_large.render(f"Score: {score}", True, WHITE)
             score_rect_win = score_text_win.get_rect(center=(right_center_x, content_center_y))
             screen.blit(score_text_win, score_rect_win)
 
-            # Play Again button (centered at bottom)
-            play_again_rect = pygame.Rect(
-                win_rect.x + (win_width - 200) // 2,
-                win_rect.y + win_height - 70,
-                200,
-                40,
-            )
-            pygame.draw.rect(screen, BTN_BG, play_again_rect, border_radius=6)
-            pygame.draw.rect(screen, WHITE, play_again_rect, 1, border_radius=6)
-            pa_txt = font_medium.render("Play Again?", True, WHITE)
-            pa_txt_rect = pa_txt.get_rect(center=play_again_rect.center)
-            screen.blit(pa_txt, pa_txt_rect)
+            # Buttons at the bottom
+            button_width = 180
+            button_height = 40
+            button_spacing = 20
+            buttons_y = win_rect.y + win_height - 70
 
+            if current_level < num_levels - 1:
+                # Two buttons: Try Again and Next Level
+                total_buttons_width = button_width * 2 + button_spacing
+                first_button_x = win_rect.x + (win_width - total_buttons_width) // 2
+
+                try_again_rect = pygame.Rect(
+                    first_button_x,
+                    buttons_y,
+                    button_width,
+                    button_height,
+                )
+                next_level_rect = pygame.Rect(
+                    first_button_x + button_width + button_spacing,
+                    buttons_y,
+                    button_width,
+                    button_height,
+                )
+
+                pygame.draw.rect(screen, BTN_BG, try_again_rect, border_radius=6)
+                pygame.draw.rect(screen, WHITE, try_again_rect, 1, border_radius=6)
+                pa_txt = font_medium.render("Try Again", True, WHITE)
+                pa_txt_rect = pa_txt.get_rect(center=try_again_rect.center)
+                screen.blit(pa_txt, pa_txt_rect)
+
+                pygame.draw.rect(screen, BTN_BG, next_level_rect, border_radius=6)
+                pygame.draw.rect(screen, WHITE, next_level_rect, 1, border_radius=6)
+                nl_txt = font_medium.render("Next Level", True, WHITE)
+                nl_txt_rect = nl_txt.get_rect(center=next_level_rect.center)
+                screen.blit(nl_txt, nl_txt_rect)
+            else:
+                # Last level: only Try Again (centered)
+                try_again_rect = pygame.Rect(
+                    win_rect.x + (win_width - button_width) // 2,
+                    buttons_y,
+                    button_width,
+                    button_height,
+                )
+                pygame.draw.rect(screen, BTN_BG, try_again_rect, border_radius=6)
+                pygame.draw.rect(screen, WHITE, try_again_rect, 1, border_radius=6)
+                pa_txt = font_medium.render("Try Again", True, WHITE)
+                pa_txt_rect = pa_txt.get_rect(center=try_again_rect.center)
+                screen.blit(pa_txt, pa_txt_rect)
 
         # GAME OVER POPUP
         if game_over:
@@ -760,36 +943,34 @@ def run_maze_game(screen):
         if (not config_open) and (not game_over) and (not won):
             panel_width  = 300
             panel_height = 620
-            # coloca o painel logo à direita do maze
+            # Panel just to the right of the maze
             panel_x = MAZE_X_OFFSET + MAZE_WIDTH + 30
             panel_y = (WINDOW_HEIGHT - panel_height) // 2
 
             panel_rect = pygame.Rect(panel_x, panel_y, panel_width, panel_height)
 
-            # semi-transparent background
+            # Semi-transparent background
             panel_surface = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
             panel_surface.fill((240, 240, 240, 180))  # light grey, alpha = 180
             screen.blit(panel_surface, (panel_x, panel_y))
 
-            # border
+            # Border
             border_color = (140, 140, 140)
             pygame.draw.rect(screen, border_color, panel_rect, 2, border_radius=8)
 
-            # title ABOVE the panel
+            # Title above the panel
             title_surf = font_small.render("Serial messages:", True, (255, 255, 255))
             title_rect = title_surf.get_rect()
-            # desenha um pouco acima do topo do painel
             title_rect.topleft = (panel_x + 10, panel_y - title_rect.height - 5)
             screen.blit(title_surf, title_rect)
 
-            # messages inside the panel
-            line_y = panel_y + 10  # primeira linha logo dentro do painel
+            # Messages inside the panel
+            line_y = panel_y + 10
             line_spacing = 22
             for msg in msg_log:
                 msg_surf = font_small.render(msg, True, (255, 255, 255))
                 screen.blit(msg_surf, (panel_x + 10, line_y))
                 line_y += line_spacing
-
 
         pygame.display.flip()
         clock.tick(60)
