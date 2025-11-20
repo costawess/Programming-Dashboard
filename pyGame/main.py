@@ -1,7 +1,8 @@
 import pygame
 
 from game_maze import run_maze_game
-from game_coffee_machine import run_coffee_game  # NOVO
+from game_coffee_machine import run_coffee_game
+from game_tictactoe import run_tictactoe_game
 
 # ====== WINDOW CONFIGURATION ======
 WINDOW_WIDTH  = 1000
@@ -9,17 +10,11 @@ WINDOW_HEIGHT = 800
 # ==================================
 
 def draw_text_center(screen, text, font, color, y):
-    """
-    Draw text horizontally centered at given y coordinate.
-    """
     surface = font.render(text, True, color)
     rect = surface.get_rect(center=(WINDOW_WIDTH // 2, y))
     screen.blit(surface, rect)
 
 def show_intro(screen):
-    """
-    Show the EMBEDDED PROGRAMMING intro screen before the menu.
-    """
     font_intro = pygame.font.SysFont(None, 60)
     screen.fill((0, 0, 0))
     draw_text_center(
@@ -30,8 +25,7 @@ def show_intro(screen):
         WINDOW_HEIGHT // 2,
     )
     pygame.display.flip()
-    pygame.time.delay(1000)  # 1 second
-
+    pygame.time.delay(1000)
 
 def main():
     pygame.init()
@@ -39,15 +33,14 @@ def main():
     pygame.display.set_caption("Embedded Programming Games")
     clock = pygame.time.Clock()
 
-    # Show intro ONCE, before the menu
     show_intro(screen)
 
     font_title = pygame.font.SysFont(None, 60)
-    font_btn = pygame.font.SysFont(None, 36)
-    font_hint = pygame.font.SysFont(None, 24)
+    font_btn   = pygame.font.SysFont(None, 36)
+    font_hint  = pygame.font.SysFont(None, 24)
 
     # Menu buttons
-    btn_width = 320
+    btn_width  = 320
     btn_height = 60
     btn_spacing = 20
 
@@ -63,9 +56,15 @@ def main():
         btn_width,
         btn_height,
     )
-    quit_btn_rect = pygame.Rect(
+    ttt_btn_rect = pygame.Rect(  # NOVO BOTÃO
         (WINDOW_WIDTH - btn_width) // 2,
         200 + 2 * (btn_height + btn_spacing),
+        btn_width,
+        btn_height,
+    )
+    quit_btn_rect = pygame.Rect(
+        (WINDOW_WIDTH - btn_width) // 2,
+        200 + 3 * (btn_height + btn_spacing),
         btn_width,
         btn_height,
     )
@@ -83,16 +82,13 @@ def main():
                 mouse_clicked = True
 
             if event.type == pygame.KEYDOWN:
-                # ESC in menu: close program
                 if event.key == pygame.K_ESCAPE:
                     running = False
-                # Q in menu: close program (any state)
                 elif event.key == pygame.K_q:
                     running = False
 
         screen.fill((10, 10, 10))
 
-        # Title
         draw_text_center(
             screen,
             "EMBEDDED PROGRAMMING GAMES",
@@ -101,7 +97,6 @@ def main():
             100,
         )
 
-        # Helper to draw a button
         def draw_button(rect, label):
             if rect.collidepoint(mouse_pos):
                 bg = (80, 80, 80)
@@ -113,26 +108,28 @@ def main():
             text_rect = text_surf.get_rect(center=rect.center)
             screen.blit(text_surf, text_rect)
 
-        draw_button(maze_btn_rect, "Game 1 - Maze (ESP32)")
+        draw_button(maze_btn_rect,   "Game 1 - Maze (ESP32)")
         draw_button(coffee_btn_rect, "Game 2 - Coffee Machine")
-        draw_button(quit_btn_rect, "Quit")
+        draw_button(ttt_btn_rect,    "Game 3 - Tic-Tac-Toe")  # NOVO
+        draw_button(quit_btn_rect,   "Quit")
 
-        # Hint at bottom
         hint_text = "ESC: quit (menu)  |  Q: quit (any state)"
         hint_surf = font_hint.render(hint_text, True, (200, 200, 200))
         screen.blit(hint_surf, (20, WINDOW_HEIGHT - 40))
 
-        # Button clicks
         if mouse_clicked:
             if maze_btn_rect.collidepoint(mouse_pos):
-                # Run maze game. It returns status to the menu.
                 result = run_maze_game(screen)
                 if result == "quit":
                     running = False
 
             elif coffee_btn_rect.collidepoint(mouse_pos):
-                # Run coffee machine game. It returns status.
                 result = run_coffee_game(screen)
+                if result == "quit":
+                    running = False
+
+            elif ttt_btn_rect.collidepoint(mouse_pos):  # NOVO
+                result = run_tictactoe_game(screen)
                 if result == "quit":
                     running = False
 
