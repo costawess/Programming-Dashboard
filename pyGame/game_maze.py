@@ -3,8 +3,8 @@ import serial.tools.list_ports
 import pygame
 
 # ====== WINDOW CONFIGURATION ======
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
+WINDOW_WIDTH  = 1000
+WINDOW_HEIGHT = 800
 # ==================================
 
 # CORES PARA ESTADO DO ESP32

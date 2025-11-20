@@ -272,17 +272,18 @@ void loop() {
       } break;
 
     // S_CUSTOMIZE State --------------------------------------
-        // S_CUSTOMIZE State --------------------------------------
     case S_CUSTOMIZE: {
-      Serial.println("\n-- Customization from game --");
-      Serial.println("Waiting SUGAR:...");
+      // Serial.println("\n-- Customization from game --");
+      // Serial.println("Waiting SUGAR:...");
       waitSugarFromGame();        // recebe SUGAR:NO_SUGAR / LOW / MEDIUM / HIGH
+      Serial.println("SUGAR:OK");
 
-      Serial.println("Waiting STRENGTH:...");
       waitStrengthFromGame();     // recebe STRENGTH:MILD / MEDIUM / STRONG
+      Serial.println("STRENGTH:OK");
 
-      Serial.println("Waiting MILK:...");
+      // Serial.println("Waiting MILK:...");
       waitMilkFromGame();         // recebe MILK:YES / NO
+      Serial.println("MILK:OK");
 
       // tudo recebido -> próximo estado
       state = S_PREPARE;

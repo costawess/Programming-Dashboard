@@ -3,8 +3,8 @@ import serial
 import serial.tools.list_ports
 
 # ====== WINDOW CONFIGURATION ======
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
+WINDOW_WIDTH  = 1020
+WINDOW_HEIGHT = 800
 # ==================================
 
 # ====== SERIAL CONFIGURATION ======
@@ -18,6 +18,7 @@ black_color = (0, 0, 0)
 HOVER_OVERLAY_COLOR = (255, 246, 213, 80)
 
 
+NUM_MESSAGES_SHOWN = 10
 
 # ====== COFFEE MACHINE IMAGE ======
 COFFEE_IMAGE_PATH = "pyGame/assets/figures/coffee_machine/coffee_machine_cleaned.png"
@@ -195,6 +196,15 @@ def run_coffee_game(screen):
     # Load all drinks once
     drink_images = load_drink_images()
 
+    # Log of last serial messages (TX and RX)
+    msg_log = []  # list of strings
+
+    def add_log(message: str):
+        """Append a message to the log and keep only the last 6."""
+        msg_log.append(message)
+        if len(msg_log) > NUM_MESSAGES_SHOWN:
+            msg_log.pop(0)
+
     # State for customization mode
     customize_mode = False   # False = mostrando drinks, True = perguntando Sugar/Strength/Milk
     custom_step = 0          # 0 = Sugar, 1 = Strength, 2 = Milk
@@ -341,8 +351,8 @@ def run_coffee_game(screen):
             img = pygame.transform.smoothscale(img, new_size)
 
             img_rect = img.get_rect()
-            img_rect.centerx = WINDOW_WIDTH // 2
-            img_rect.top = 60
+            img_rect.centerx = WINDOW_WIDTH // 2 - 180
+            img_rect.top = 120 
             screen.blit(img, img_rect)
         else:
             error_text = font_medium.render("Coffee machine image not found.", True, (150, 0, 0))
@@ -380,18 +390,18 @@ def run_coffee_game(screen):
                 title_surf = font_medium.render(step["title"], True, black_color)
                 title_rect = title_surf.get_rect()
                 title_rect.centerx = img_rect.centerx
-                title_rect.top = img_rect.top + 80
+                title_rect.top = img_rect.top + 110
                 screen.blit(title_surf, title_rect)
 
                 # Botões das opções (uma etapa por vez, várias opções)
-                option_y = title_rect.bottom + 20
-                option_height = 40
-                option_width = 220
-                spacing_y = 10
+                option_y = title_rect.bottom + 7
+                option_height = 30
+                option_width  = 150
+                spacing_y     = 3
 
                 for idx, (label, value) in enumerate(step["options"]):
                     rect = pygame.Rect(0, 0, option_width, option_height)
-                    rect.centerx = img_rect.centerx
+                    rect.centerx = img_rect.centerx - 10
                     rect.top = option_y + idx * (option_height + spacing_y)
 
                     bg = BTN_BG_HOVER if rect.collidepoint(mouse_pos) else BTN_BG
@@ -562,6 +572,11 @@ def run_coffee_game(screen):
                             cmd = drink["command"]
                             try:
                                 ser.write((cmd + "\n").encode("utf-8"))
+
+                                # ⬇⬇⬇ AQUI: loga qual bebida foi selecionada
+                                drink_name = drink.get("name", "unknown").upper()
+                                add_log(f"(PC): '{cmd}'")
+
                                 status_message = f"Sent: {cmd}"
                                 status_color = green_color
                                 print(f"Sent to ESP32 via COM: {cmd}")
@@ -573,6 +588,7 @@ def run_coffee_game(screen):
                                     if not line:
                                         continue
                                     print(f"Received from ESP32 via COM: {line}")
+                                    add_log(f"(ESP): '{line}'")
                                     if line.startswith("STATE:CUSTOMIZE"):
                                         customize_mode = True
                                         custom_step = 0  # começa em Sugar
@@ -582,6 +598,7 @@ def run_coffee_game(screen):
                                 status_color = red_color
                                 print(f"Error sending command: {e}")
                             break
+
                 else:
                     # --- MODO CUSTOMIZE: clique nas opções (Sugar/Strength/Milk) ---
                     for rect, cmd in custom_click_areas:
@@ -592,6 +609,7 @@ def run_coffee_game(screen):
                                 status_message = f"Sent: {cmd}"
                                 status_color = green_color
                                 print(f"Sent to ESP32 via COM: {cmd}")
+                                add_log(f"(PC): '{cmd}'")
 
                                 # Avança para a próxima etapa de customização
                                 custom_step += 1
@@ -605,12 +623,48 @@ def run_coffee_game(screen):
                                     status_message = f"Sent: {ok_cmd}"
                                     status_color = green_color
                                     print(f"Sent to ESP32 via COM: {ok_cmd}")
+                                    add_log(f"(PC): '{ok_cmd}'")
 
                             except Exception as e:
                                 status_message = f"Error sending command: {e}"
                                 status_color = red_color
                                 print(f"Error sending command: {e}")
                             break
+
+
+        # ---
+        # ===== RIGHT-SIDE SERIAL LOG PANEL =====
+        if not config_open:
+            panel_width = 320
+            panel_x = WINDOW_WIDTH - panel_width - 150
+            panel_y = 280
+            panel_height = 300
+
+            # background of the panel
+            panel_rect = pygame.Rect(panel_x, panel_y, panel_width, panel_height)
+
+            # 1) Semi-transparent background (RGBA, A = alpha)
+            panel_surface = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+            panel_surface.fill((240, 240, 240, 180))  # light grey, 180/255 transparency
+            screen.blit(panel_surface, (panel_x, panel_y))
+
+            # 2) Grey border (not transparent)
+            border_color = (140, 140, 140)  # mid grey
+            pygame.draw.rect(screen, border_color, panel_rect, 2, border_radius=8)
+
+
+            # title
+            title_surf = font_small.render("Serial messages:", True, black_color)
+            screen.blit(title_surf, (panel_x + 10, panel_y + 8))
+
+             # lines
+            line_y = panel_y + 30
+            
+        line_spacing = 22
+        for msg in msg_log:
+            msg_surf = font_small.render(msg, True, black_color)
+            screen.blit(msg_surf, (panel_x + 10, line_y))
+            line_y += line_spacing
 
         pygame.display.flip()
         clock.tick(60)

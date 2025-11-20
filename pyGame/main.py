@@ -4,10 +4,9 @@ from game_maze import run_maze_game
 from game_coffee_machine import run_coffee_game  # NOVO
 
 # ====== WINDOW CONFIGURATION ======
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
+WINDOW_WIDTH  = 1000
+WINDOW_HEIGHT = 800
 # ==================================
-
 
 def draw_text_center(screen, text, font, color, y):
     """
