@@ -15,7 +15,7 @@ BAUD_OPTIONS = [9600, 115200]
 green_color = (0, 170, 0)
 red_color   = (255, 0, 0)
 black_color = (0, 0, 0)
-HOVER_OVERLAY_COLOR = (255, 246, 213, 80)
+HOVER_OVERLAY_COLOR = (255, 182, 193, 120)
 
 NUM_MESSAGES_SHOWN = 25
 
@@ -208,7 +208,6 @@ def run_coffee_game(screen):
     customize_mode = False   # False = mostrando drinks, True = perguntando Sugar/Strength/Milk
     custom_step = 0          # 0 = Sugar, 1 = Strength, 2 = Milk
 
-
     quit_program = False
     running = True
     while running:
@@ -333,7 +332,6 @@ def run_coffee_game(screen):
                         status_message = "Not connected. Configure ESP32."
                         status_color = red_color
 
-
                 elif menu_button_rect.collidepoint(mouse_pos):
                     running = False
 
@@ -351,7 +349,7 @@ def run_coffee_game(screen):
 
             img_rect = img.get_rect()
             img_rect.centerx = WINDOW_WIDTH // 2 - 180
-            img_rect.top = 120 
+            img_rect.top = 120
             screen.blit(img, img_rect)
         else:
             error_text = font_medium.render("Coffee machine image not found.", True, (150, 0, 0))
@@ -364,7 +362,7 @@ def run_coffee_game(screen):
 
         if img_rect is not None:
             if not customize_mode:
-                # === NORMAL MODE: mostrar as imagens das bebidas ===
+                # === NORMAL MODE: mostrar as imagens das bebidas (com hover) ===
                 for drink in drink_images:
                     base_img = drink["image"]
                     scale = drink["scale"]
@@ -379,8 +377,21 @@ def run_coffee_game(screen):
                     rect.centerx = img_rect.centerx + dx
                     rect.top = img_rect.top + dy
 
+                    # Detecta hover sobre a bebida
+                    is_hover = rect.collidepoint(mouse_pos)
+
+                    # Overlay suave atrás da bebida quando está em hover
+                    if is_hover:
+                        hover_surf = pygame.Surface((rect.width + 10, rect.height + 10), pygame.SRCALPHA)
+                        hover_surf.fill(HOVER_OVERLAY_COLOR)
+                        screen.blit(hover_surf, (rect.x - 5, rect.y - 5))
+
+                    # Desenha a imagem da bebida
                     screen.blit(img_drink, rect)
+
+                    # Guarda para clique
                     drink_click_areas.append((rect, drink))
+
             else:
                 # === CUSTOMIZATION MODE: Sugar / Strength / Milk ===
                 step = CUSTOM_STEPS[custom_step]
@@ -403,18 +414,27 @@ def run_coffee_game(screen):
                     rect.centerx = img_rect.centerx - 10
                     rect.top = option_y + idx * (option_height + spacing_y)
 
-                    bg = BTN_BG_HOVER if rect.collidepoint(mouse_pos) else BTN_BG
-                    pygame.draw.rect(screen, bg, rect, border_radius=6)
+                    # detecta hover
+                    is_hover = rect.collidepoint(mouse_pos)
+
+                    # muda a cor de fundo no hover
+                    bg_color = BTN_BG_HOVER if is_hover else BTN_BG
+                    pygame.draw.rect(screen, bg_color, rect, border_radius=6)
                     pygame.draw.rect(screen, WHITE, rect, 1, border_radius=6)
 
+                    # overlay extra, mais forte para ficar visível
+                    if is_hover:
+                        hover_surf = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
+                        hover_surf.fill((255, 246, 213, 160))  # alpha maior
+                        screen.blit(hover_surf, rect.topleft)
+
+                    # texto por cima
                     text_surf = font_small.render(label, True, WHITE)
                     text_rect = text_surf.get_rect(center=rect.center)
                     screen.blit(text_surf, text_rect)
 
                     cmd = step["prefix"] + value
                     custom_click_areas.append((rect, cmd))
-
-
 
         # ===== TOP BUTTONS =====
         # --- ESP32 button background depends on connection state ---
@@ -434,27 +454,14 @@ def run_coffee_game(screen):
         txt_esp32 = font_small.render("ESP32", True, WHITE)
         screen.blit(txt_esp32, txt_esp32.get_rect(center=esp32_button_rect.center))
 
-        # --- Reset button (mantém como estava) ---
+        # --- Reset button ---
         btn_color_reset = BTN_BG_HOVER if reset_button_rect.collidepoint(mouse_pos) and not config_open else BTN_BG
         pygame.draw.rect(screen, btn_color_reset, reset_button_rect, border_radius=6)
         pygame.draw.rect(screen, WHITE, reset_button_rect, 1, border_radius=6)
         txt_reset = font_small.render("Reset", True, WHITE)
         screen.blit(txt_reset, txt_reset.get_rect(center=reset_button_rect.center))
 
-        # --- Menu button (mantém como estava) ---
-        btn_color_menu = BTN_BG_HOVER if menu_button_rect.collidepoint(mouse_pos) and not config_open else BTN_BG
-        pygame.draw.rect(screen, btn_color_menu, menu_button_rect, border_radius=6)
-        pygame.draw.rect(screen, WHITE, menu_button_rect, 1, border_radius=6)
-        txt_menu = font_small.render("Menu", True, WHITE)
-        screen.blit(txt_menu, txt_menu.get_rect(center=menu_button_rect.center))
-
-
-        btn_color_reset = BTN_BG_HOVER if reset_button_rect.collidepoint(mouse_pos) and not config_open else BTN_BG
-        pygame.draw.rect(screen, btn_color_reset, reset_button_rect, border_radius=6)
-        pygame.draw.rect(screen, WHITE, reset_button_rect, 1, border_radius=6)
-        txt_reset = font_small.render("Reset", True, WHITE)
-        screen.blit(txt_reset, txt_reset.get_rect(center=reset_button_rect.center))
-
+        # --- Menu button ---
         btn_color_menu = BTN_BG_HOVER if menu_button_rect.collidepoint(mouse_pos) and not config_open else BTN_BG
         pygame.draw.rect(screen, btn_color_menu, menu_button_rect, border_radius=6)
         pygame.draw.rect(screen, WHITE, menu_button_rect, 1, border_radius=6)
@@ -558,7 +565,7 @@ def run_coffee_game(screen):
             x_txt = label_font.render("Cancel", True, WHITE)
             x_txt_rect = x_txt.get_rect(center=btn_cancel_rect.center)
             screen.blit(x_txt, x_txt_rect)
-        #
+
         # ===== HANDLE CLICKS (drinks OR customization) =====
         if mouse_clicked and not quit_program and not config_open:
             if ser is None or not ser.is_open:
@@ -573,7 +580,7 @@ def run_coffee_game(screen):
                             try:
                                 ser.write((cmd + "\n").encode("utf-8"))
 
-                                # ⬇⬇⬇ AQUI: loga qual bebida foi selecionada
+                                # loga qual bebida foi selecionada
                                 drink_name = drink.get("name", "unknown").upper()
                                 add_log(f"(PC): '{cmd}'")
 
@@ -631,7 +638,6 @@ def run_coffee_game(screen):
                                 print(f"Error sending command: {e}")
                             break
 
-        # ---
         # ===== RIGHT-SIDE SERIAL LOG PANEL =====
         if not config_open:
             panel_width = 320
@@ -642,29 +648,29 @@ def run_coffee_game(screen):
             # background of the panel
             panel_rect = pygame.Rect(panel_x, panel_y, panel_width, panel_height)
 
-            # 1) Semi-transparent background (RGBA, A = alpha)
+            # Semi-transparent background
             panel_surface = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
             panel_surface.fill((240, 240, 240, 180))  # light grey, 180/255 transparency
             screen.blit(panel_surface, (panel_x, panel_y))
 
-            # 2) Grey border (not transparent)
+            # Grey border
             border_color = (140, 140, 140)  # mid grey
             pygame.draw.rect(screen, border_color, panel_rect, 2, border_radius=8)
 
             # title ABOVE the panel
             title_surf = font_small.render("Serial messages:", True, black_color)
             title_rect = title_surf.get_rect()
-            title_rect.topleft = (panel_x + 10, panel_y - title_rect.height - 5)  # a little above the panel
+            title_rect.topleft = (panel_x + 10, panel_y - title_rect.height - 5)
             screen.blit(title_surf, title_rect)
 
             # first line inside the panel
             line_y = panel_y + 10
 
-        line_spacing = 22
-        for msg in msg_log:
-            msg_surf = font_small.render(msg, True, black_color)
-            screen.blit(msg_surf, (panel_x + 10, line_y))
-            line_y += line_spacing
+            line_spacing = 22
+            for msg in msg_log:
+                msg_surf = font_small.render(msg, True, black_color)
+                screen.blit(msg_surf, (panel_x + 10, line_y))
+                line_y += line_spacing
 
         pygame.display.flip()
         clock.tick(60)
