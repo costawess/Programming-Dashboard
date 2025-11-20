@@ -12,7 +12,7 @@ green_color = (0, 170, 0)
 red_color   = (255, 0, 0)
 # ==================================
 
-NUM_MESSAGES_SHOWN = 25  # how many serial messages to keep in the log
+NUM_MESSAGES_SHOWN = 27  # how many serial messages to keep in the log
 
 
 # ====== MAZE CONFIGURATION ======
@@ -775,17 +775,21 @@ def run_maze_game(screen):
             border_color = (140, 140, 140)
             pygame.draw.rect(screen, border_color, panel_rect, 2, border_radius=8)
 
-            # title
+            # title ABOVE the panel
             title_surf = font_small.render("Serial messages:", True, (255, 255, 255))
-            screen.blit(title_surf, (panel_x + 10, panel_y + 8))
+            title_rect = title_surf.get_rect()
+            # desenha um pouco acima do topo do painel
+            title_rect.topleft = (panel_x + 10, panel_y - title_rect.height - 5)
+            screen.blit(title_surf, title_rect)
 
-            # messages
-            line_y = panel_y + 30
+            # messages inside the panel
+            line_y = panel_y + 10  # primeira linha logo dentro do painel
             line_spacing = 22
             for msg in msg_log:
                 msg_surf = font_small.render(msg, True, (255, 255, 255))
                 screen.blit(msg_surf, (panel_x + 10, line_y))
                 line_y += line_spacing
+
 
         pygame.display.flip()
         clock.tick(60)
