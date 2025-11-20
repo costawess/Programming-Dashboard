@@ -12,6 +12,9 @@ green_color = (0, 170, 0)
 red_color   = (255, 0, 0)
 # ==================================
 
+NUM_MESSAGES_SHOWN = 15  # how many serial messages to keep in the log
+
+
 # ====== MAZE CONFIGURATION ======
 # 0 = free cell, 1 = wall
 # Start = top-left (0,0), Goal = bottom-right (cols-1, rows-1)
@@ -29,10 +32,10 @@ MAZE_ROWS = len(MAZE)
 MAZE_COLS = len(MAZE[0])
 
 # Maze drawing area (centered)
-MAZE_WIDTH = 600
-MAZE_HEIGHT = 480
-MAZE_X_OFFSET = (WINDOW_WIDTH - MAZE_WIDTH) // 2
-MAZE_Y_OFFSET = 60
+MAZE_WIDTH    = 600
+MAZE_HEIGHT   = 480
+MAZE_X_OFFSET = (WINDOW_WIDTH - MAZE_WIDTH) // 2 - 160 
+MAZE_Y_OFFSET = (WINDOW_HEIGHT - MAZE_HEIGHT) // 2
 
 CELL_W = MAZE_WIDTH // MAZE_COLS
 CELL_H = MAZE_HEIGHT // MAZE_ROWS
@@ -195,6 +198,16 @@ def run_maze_game(screen):
     available_ports = []
     selected_port_index = -1  # -1 indicates no selection
     baud_index = 0            # Index in BAUD_OPTIONS, default 0 -> 9600
+
+    # Log of last serial messages (RX and (optional) TX)
+    msg_log = []
+
+    def add_log(message: str):
+        """Append a message to the log and keep only the last N messages."""
+        msg_log.append(message)
+        if len(msg_log) > NUM_MESSAGES_SHOWN:
+            msg_log.pop(0)
+
 
     # Colors
     BTN_BG = (60, 60, 60)
@@ -430,6 +443,8 @@ def run_maze_game(screen):
                 cmd = line.upper()
                 if cmd in ("UP", "DOWN", "LEFT", "RIGHT"):
                     print(f"Serial command: {cmd}")
+                    add_log(f"(ESP): '{cmd}'")  # <-- always log every valid command
+
                     robot_cell, collision, moved, new_dir = process_command(cmd, robot_cell)
                     direction = new_dir
                     if collision:
@@ -442,6 +457,7 @@ def run_maze_game(screen):
                             game_started = False
                 else:
                     print(f"Unknown command: {line!r}")
+                    add_log(f"(ESP): '{line}'")  # log de comando desconhecido
 
         # ===== DRAW SECTION =====
         screen.fill((0, 0, 0))  # background
@@ -708,6 +724,37 @@ def run_maze_game(screen):
             ta_txt = font_medium.render("I wanna try again", True, WHITE)
             ta_txt_rect = ta_txt.get_rect(center=try_again_rect.center)
             screen.blit(ta_txt, ta_txt_rect)
+
+        # ===== RIGHT-SIDE SERIAL LOG PANEL =====
+        if not config_open:
+            panel_width  = 300
+            panel_height = 420
+            # coloca o painel logo à direita do maze
+            panel_x = MAZE_X_OFFSET + MAZE_WIDTH + 30
+            panel_y = (WINDOW_HEIGHT - panel_height) // 2
+
+            panel_rect = pygame.Rect(panel_x, panel_y, panel_width, panel_height)
+
+            # semi-transparent background
+            panel_surface = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
+            panel_surface.fill((240, 240, 240, 180))  # light grey, alpha = 180
+            screen.blit(panel_surface, (panel_x, panel_y))
+
+            # border
+            border_color = (140, 140, 140)
+            pygame.draw.rect(screen, border_color, panel_rect, 2, border_radius=8)
+
+            # title
+            title_surf = font_small.render("Serial messages:", True, (255, 255, 255))
+            screen.blit(title_surf, (panel_x + 10, panel_y + 8))
+
+            # messages
+            line_y = panel_y + 30
+            line_spacing = 22
+            for msg in msg_log:
+                msg_surf = font_small.render(msg, True, (255, 255, 255))
+                screen.blit(msg_surf, (panel_x + 10, line_y))
+                line_y += line_spacing
 
         pygame.display.flip()
         clock.tick(60)
