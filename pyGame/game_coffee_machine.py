@@ -17,8 +17,7 @@ red_color   = (255, 0, 0)
 black_color = (0, 0, 0)
 HOVER_OVERLAY_COLOR = (255, 246, 213, 80)
 
-
-NUM_MESSAGES_SHOWN = 10
+NUM_MESSAGES_SHOWN = 25
 
 # ====== COFFEE MACHINE IMAGE ======
 COFFEE_IMAGE_PATH = "pyGame/assets/figures/coffee_machine/coffee_machine_cleaned.png"
@@ -394,7 +393,7 @@ def run_coffee_game(screen):
                 screen.blit(title_surf, title_rect)
 
                 # Botões das opções (uma etapa por vez, várias opções)
-                option_y = title_rect.bottom + 7
+                option_y      = title_rect.bottom + 7
                 option_height = 30
                 option_width  = 150
                 spacing_y     = 3
@@ -412,8 +411,9 @@ def run_coffee_game(screen):
                     text_rect = text_surf.get_rect(center=rect.center)
                     screen.blit(text_surf, text_rect)
 
-                    cmd = step["prefix"] + value   # ex: "SUGAR:LOW"
+                    cmd = step["prefix"] + value
                     custom_click_areas.append((rect, cmd))
+
 
 
         # ===== TOP BUTTONS =====
@@ -631,14 +631,13 @@ def run_coffee_game(screen):
                                 print(f"Error sending command: {e}")
                             break
 
-
         # ---
         # ===== RIGHT-SIDE SERIAL LOG PANEL =====
         if not config_open:
             panel_width = 320
             panel_x = WINDOW_WIDTH - panel_width - 150
-            panel_y = 280
-            panel_height = 300
+            panel_height = 620
+            panel_y = (WINDOW_HEIGHT - panel_height)//2
 
             # background of the panel
             panel_rect = pygame.Rect(panel_x, panel_y, panel_width, panel_height)
@@ -652,14 +651,15 @@ def run_coffee_game(screen):
             border_color = (140, 140, 140)  # mid grey
             pygame.draw.rect(screen, border_color, panel_rect, 2, border_radius=8)
 
-
-            # title
+            # title ABOVE the panel
             title_surf = font_small.render("Serial messages:", True, black_color)
-            screen.blit(title_surf, (panel_x + 10, panel_y + 8))
+            title_rect = title_surf.get_rect()
+            title_rect.topleft = (panel_x + 10, panel_y - title_rect.height - 5)  # a little above the panel
+            screen.blit(title_surf, title_rect)
 
-             # lines
-            line_y = panel_y + 30
-            
+            # first line inside the panel
+            line_y = panel_y + 10
+
         line_spacing = 22
         for msg in msg_log:
             msg_surf = font_small.render(msg, True, black_color)
