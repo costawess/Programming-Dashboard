@@ -11,7 +11,7 @@ const int S_CUSTOMIZE   = 2;
 const int S_PREPARE     = 3;
 const int S_DONE        = 4;
 
-// Drinks
+// Drinks 
 int D_NONE        = 0;
 int D_ESPRESSO    = 1;
 int D_CAPPUCCINO  = 2;
@@ -36,12 +36,10 @@ int decodeSelectedDrink(const String& line) {
   String name = line.substring(9); // part after "SELECTED:"
   name.trim();
   name.toUpperCase();
-
   if (name == "ESPRESSO")     return D_ESPRESSO;
   if (name == "CAPPUCCINO")   return D_CAPPUCCINO;
   if (name == "TOMATO_SOUP")  return D_TOMATO;
   if (name == "CHOCOLATE")    return D_CHOCOLATE;
-
   return D_NONE;
 }
 

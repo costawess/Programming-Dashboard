@@ -1,3 +1,4 @@
+import os
 import pygame
 import serial
 import serial.tools.list_ports
@@ -20,8 +21,9 @@ BOARD_Y     = (WINDOW_HEIGHT - BOARD_SIZE) // 2
 CELL_SIZE   = BOARD_SIZE // GRID_SIZE
 
 # Image paths for X and O symbols
-X_IMAGE_PATH = "pyGame/assets/figures/tic-tac-toe/x-symbol.png"
-O_IMAGE_PATH = "pyGame/assets/figures/tic-tac-toe/o-symbol.png"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+X_IMAGE_PATH = os.path.join(BASE_DIR, "assets", "figures", "tic-tac-toe", "x-symbol.png")
+O_IMAGE_PATH = os.path.join(BASE_DIR, "assets", "figures", "tic-tac-toe", "o-symbol.png")
 
 
 # Serial options

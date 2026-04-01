@@ -1,6 +1,8 @@
 import pygame
 import serial
 import serial.tools.list_ports
+import sys
+from pathlib import Path
 
 # ====== WINDOW CONFIGURATION ======
 WINDOW_WIDTH  = 1020
@@ -8,7 +10,7 @@ WINDOW_HEIGHT = 800
 # ==================================
 
 # ====== SERIAL CONFIGURATION ======
-BAUD_OPTIONS = [9600, 115200]
+BAUD_OPTIONS = [115200, 9600]
 # ==================================
 
 # COLORS
@@ -20,13 +22,13 @@ HOVER_OVERLAY_COLOR = (255, 182, 193, 120)
 NUM_MESSAGES_SHOWN = 25
 
 # ====== COFFEE MACHINE IMAGE ======
-COFFEE_IMAGE_PATH = "pyGame/assets/figures/coffee_machine/coffee_machine_cleaned.png"
+COFFEE_IMAGE_PATH = "assets/figures/coffee_machine/coffee_machine_cleaned.png"
 
 # ====== DRINK OPTIONS (edit only this list to add new options) ======
 DRINK_OPTIONS = [
     {
         "name": "espresso",
-        "path": "pyGame/assets/figures/coffee_machine/espresso.png",
+        "path": "assets/figures/coffee_machine/espresso.png",
         "scale": 0.02,
         "dx": -42,
         "dy": 108,
@@ -34,7 +36,7 @@ DRINK_OPTIONS = [
     },
     {
         "name": "capuccino",
-        "path": "pyGame/assets/figures/coffee_machine/capuccino.png",
+        "path": "assets/figures/coffee_machine/capuccino.png",
         "scale": 0.023,
         "dx": 31,
         "dy": 98,
@@ -42,7 +44,7 @@ DRINK_OPTIONS = [
     },
     {
         "name": "tomato_soup",
-        "path": "pyGame/assets/figures/coffee_machine/tomato_soup.png",
+        "path": "assets/figures/coffee_machine/tomato_soup.png",
         "scale": 0.02,
         "dx": -42,
         "dy": 180,
@@ -50,7 +52,7 @@ DRINK_OPTIONS = [
     },
     {
         "name": "chocolate",
-        "path": "pyGame/assets/figures/coffee_machine/chocolate.png",
+        "path": "assets/figures/coffee_machine/chocolate.png",
         "scale": 0.02,
         "dx": 31,
         "dy": 180,
@@ -98,6 +100,30 @@ CUSTOM_STEPS = [
 BACKGROUND_COLOR = (237, 215, 196)  # #edd7c4
 
 
+def resolve_asset_path(asset_path: str) -> Path:
+    """
+    Resolve an asset path reliably from source runs and packaged executables.
+    """
+    normalized = Path(asset_path)
+    parts = normalized.parts
+    if parts and parts[0].lower() == "pygame":
+        normalized = Path(*parts[1:])
+
+    base_dir = Path(__file__).resolve().parent
+    search_roots = [base_dir, base_dir.parent, Path.cwd()]
+
+    meipass_dir = getattr(sys, "_MEIPASS", None)
+    if meipass_dir:
+        search_roots.insert(0, Path(meipass_dir))
+
+    for root in search_roots:
+        candidate = root / normalized
+        if candidate.exists():
+            return candidate
+
+    return base_dir / normalized
+
+
 def try_open_serial(port_name, baudrate):
     """
     Try to open a serial port.
@@ -133,13 +159,14 @@ def load_drink_images():
     """
     loaded = []
     for opt in DRINK_OPTIONS:
+        image_path = resolve_asset_path(opt["path"])
         try:
-            img = pygame.image.load(opt["path"]).convert_alpha()
+            img = pygame.image.load(str(image_path)).convert_alpha()
             entry = opt.copy()
             entry["image"] = img
             loaded.append(entry)
         except Exception as e:
-            print(f"Could not load drink image '{opt['name']}' from {opt['path']}: {e}")
+            print(f"Could not load drink image '{opt['name']}' from {image_path}: {e}")
     return loaded
 
 
@@ -182,14 +209,15 @@ def run_coffee_game(screen):
     config_open = False
     available_ports = []
     selected_port_index = -1
-    baud_index = 0  # 9600 by default
+    baud_index = 0  # 115200 by default
 
     # Load coffee machine image
     coffee_image = None
+    coffee_image_path = resolve_asset_path(COFFEE_IMAGE_PATH)
     try:
-        coffee_image = pygame.image.load(COFFEE_IMAGE_PATH).convert_alpha()
+        coffee_image = pygame.image.load(str(coffee_image_path)).convert_alpha()
     except Exception as e:
-        print(f"Could not load coffee machine image: {e}")
+        print(f"Could not load coffee machine image from {coffee_image_path}: {e}")
         coffee_image = None
 
     # Load all drinks once
@@ -204,9 +232,121 @@ def run_coffee_game(screen):
         if len(msg_log) > NUM_MESSAGES_SHOWN:
             msg_log.pop(0)
 
-    # State for customization mode
-    customize_mode = False   # False = mostrando drinks, True = perguntando Sugar/Strength/Milk
-    custom_step = 0          # 0 = Sugar, 1 = Strength, 2 = Milk
+    # UI/protocol state
+    machine_phase = "select"     # select, awaiting_state, customize, prepare, done, idle
+    customize_mode = False
+    custom_step = 0
+    waiting_custom_ack = False
+    selected_drink_name = ""
+
+    def set_status(message: str, color):
+        nonlocal status_message, status_color
+        status_message = message
+        status_color = color
+
+    def reset_ui_state():
+        nonlocal machine_phase, customize_mode, custom_step, waiting_custom_ack, selected_drink_name
+        machine_phase = "select"
+        customize_mode = False
+        custom_step = 0
+        waiting_custom_ack = False
+        selected_drink_name = ""
+
+    def send_serial_command(command: str, message: str | None = None):
+        ser.write((command + "\n").encode("utf-8"))
+        add_log(f"(PC): '{command}'")
+        print(f"Sent to ESP32 via COM: {command}")
+        set_status(message or f"Sent: {command}", green_color)
+
+    def advance_custom_step(ok_prefix: str):
+        nonlocal custom_step, waiting_custom_ack
+        if not customize_mode:
+            return
+
+        waiting_custom_ack = False
+        current_title = CUSTOM_STEPS[custom_step]["title"]
+
+        if ok_prefix == "MILK":
+            set_status(f"{current_title} saved. Waiting for preparation...", green_color)
+            return
+
+        if custom_step < len(CUSTOM_STEPS) - 1:
+            custom_step += 1
+            next_title = CUSTOM_STEPS[custom_step]["title"]
+            set_status(f"{current_title} saved. Choose {next_title}.", green_color)
+
+    def handle_serial_line(line: str):
+        nonlocal machine_phase, customize_mode, custom_step, waiting_custom_ack
+        if not line:
+            return
+
+        print(f"Received from ESP32 via COM: {line}")
+        add_log(f"(ESP): '{line}'")
+
+        normalized = line.strip().upper()
+
+        if normalized.startswith("STATE:CUSTOMIZE"):
+            machine_phase = "customize"
+            customize_mode = True
+            custom_step = 0
+            waiting_custom_ack = False
+            set_status("Choose Sugar level.", green_color)
+            return
+
+        if normalized.startswith("STATE:PREPARE"):
+            machine_phase = "prepare"
+            customize_mode = False
+            waiting_custom_ack = False
+            set_status("Preparing your drink...", green_color)
+            return
+
+        if normalized == "SUGAR:OK":
+            advance_custom_step("SUGAR")
+            return
+
+        if normalized == "STRENGTH:OK":
+            advance_custom_step("STRENGTH")
+            return
+
+        if normalized == "MILK:OK":
+            advance_custom_step("MILK")
+            return
+
+        if normalized.startswith("READY!"):
+            machine_phase = "done"
+            customize_mode = False
+            waiting_custom_ack = False
+            set_status("Ready! Please take your cup.", green_color)
+            return
+
+        if "INSERT COIN" in normalized:
+            machine_phase = "idle"
+            customize_mode = False
+            waiting_custom_ack = False
+            try:
+                send_serial_command("s", "Start signal sent. Select a drink.")
+                machine_phase = "select"
+            except Exception as e:
+                set_status(f"Error sending start signal: {e}", red_color)
+            return
+
+    def poll_serial():
+        nonlocal ser
+        if ser is None or not ser.is_open:
+            return
+
+        try:
+            while ser.in_waiting > 0:
+                line = ser.readline().decode(errors="ignore").strip()
+                handle_serial_line(line)
+        except Exception as e:
+            set_status(f"Serial read error: {e}", red_color)
+            try:
+                ser.close()
+            except Exception:
+                pass
+            ser = None
+            reset_ui_state()
 
     quit_program = False
     running = True
@@ -230,6 +370,8 @@ def run_coffee_game(screen):
                 # ESC goes back to menu
                 elif event.key == pygame.K_ESCAPE:
                     running = False
+
+        poll_serial()
 
         # ================= HANDLE MOUSE (buttons and popup) =================
         if mouse_clicked and not quit_program:
@@ -295,6 +437,8 @@ def run_coffee_game(screen):
                         status_color = green_color if success else red_color
                         if success:
                             ser = ser_new
+                            reset_ui_state()
+                            set_status("Connected. Waiting for ESP32...", green_color)
                             config_open = False
 
                 # Disconnect
@@ -320,11 +464,8 @@ def run_coffee_game(screen):
                     config_open = True
 
                 elif reset_button_rect.collidepoint(mouse_pos):
-                    # Volta para a tela de seleção de drinks
-                    customize_mode = False
-                    custom_step = 0
+                    reset_ui_state()
 
-                    # Mensagem de status amigável, sem mexer na COM
                     if ser is not None and ser.is_open:
                         status_message = "Ready. Select a drink."
                         status_color = green_color
@@ -361,7 +502,7 @@ def run_coffee_game(screen):
         custom_click_areas = []  # list of (rect, command_str) for customization
 
         if img_rect is not None:
-            if not customize_mode:
+            if machine_phase == "select":
                 # === NORMAL MODE: mostrar as imagens das bebidas (com hover) ===
                 for drink in drink_images:
                     base_img = drink["image"]
@@ -392,7 +533,7 @@ def run_coffee_game(screen):
                     # Guarda para clique
                     drink_click_areas.append((rect, drink))
 
-            else:
+            elif machine_phase == "customize":
                 # === CUSTOMIZATION MODE: Sugar / Strength / Milk ===
                 step = CUSTOM_STEPS[custom_step]
 
@@ -435,6 +576,47 @@ def run_coffee_game(screen):
 
                     cmd = step["prefix"] + value
                     custom_click_areas.append((rect, cmd))
+
+            else:
+                phase_titles = {
+                    "awaiting_state": "Waiting for machine",
+                    "prepare": "Preparing drink",
+                    "done": "Drink ready",
+                    "idle": "Waiting for start",
+                }
+                phase_subtitles = {
+                    "awaiting_state": "ESP32 is processing your selection...",
+                    "prepare": "Please wait while the coffee machine works.",
+                    "done": "Take your cup. A new round will start soon.",
+                    "idle": "Sending start signal to the ESP32...",
+                }
+
+                title = phase_titles.get(machine_phase, "Coffee machine")
+                subtitle = phase_subtitles.get(machine_phase, "Waiting for serial events...")
+
+                box_rect = pygame.Rect(0, 0, 250, 150)
+                box_rect.centerx = img_rect.centerx
+                box_rect.centery = img_rect.top + 220
+
+                pygame.draw.rect(screen, (250, 247, 240), box_rect, border_radius=12)
+                pygame.draw.rect(screen, (90, 90, 90), box_rect, 2, border_radius=12)
+
+                title_surf = font_medium.render(title, True, black_color)
+                title_rect = title_surf.get_rect(center=(box_rect.centerx, box_rect.y + 40))
+                screen.blit(title_surf, title_rect)
+
+                subtitle_surf = font_small.render(subtitle, True, black_color)
+                subtitle_rect = subtitle_surf.get_rect(center=(box_rect.centerx, box_rect.y + 80))
+                screen.blit(subtitle_surf, subtitle_rect)
+
+                if selected_drink_name:
+                    drink_surf = font_small.render(
+                        f"Drink: {selected_drink_name.replace('_', ' ').title()}",
+                        True,
+                        black_color,
+                    )
+                    drink_rect = drink_surf.get_rect(center=(box_rect.centerx, box_rect.y + 112))
+                    screen.blit(drink_surf, drink_rect)
 
         # ===== TOP BUTTONS =====
         # --- ESP32 button background depends on connection state ---
@@ -572,71 +754,46 @@ def run_coffee_game(screen):
                 status_message = "Connect ESP32 first."
                 status_color = red_color
             else:
-                if not customize_mode:
+                if machine_phase == "select":
                     # --- MODO NORMAL: clique nas bebidas ---
                     for rect, drink in drink_click_areas:
                         if rect.collidepoint(mouse_pos):
                             cmd = drink["command"]
                             try:
-                                ser.write((cmd + "\n").encode("utf-8"))
-
-                                # loga qual bebida foi selecionada
-                                drink_name = drink.get("name", "unknown").upper()
-                                add_log(f"(PC): '{cmd}'")
-
-                                status_message = f"Sent: {cmd}"
-                                status_color = green_color
-                                print(f"Sent to ESP32 via COM: {cmd}")
-
-                                # Ler respostas do ESP32 (por ex: STATE:CUSTOMIZE)
-                                pygame.time.wait(20)
-                                while ser.in_waiting > 0:
-                                    line = ser.readline().decode(errors="ignore").strip()
-                                    if not line:
-                                        continue
-                                    print(f"Received from ESP32 via COM: {line}")
-                                    add_log(f"(ESP): '{line}'")
-                                    if line.startswith("STATE:CUSTOMIZE"):
-                                        customize_mode = True
-                                        custom_step = 0  # começa em Sugar
-
+                                selected_drink_name = drink.get("name", "")
+                                machine_phase = "awaiting_state"
+                                send_serial_command(cmd, f"Sent: {cmd}. Waiting for ESP32...")
                             except Exception as e:
                                 status_message = f"Error sending command: {e}"
                                 status_color = red_color
                                 print(f"Error sending command: {e}")
                             break
 
-                else:
+                elif machine_phase == "customize":
                     # --- MODO CUSTOMIZE: clique nas opções (Sugar/Strength/Milk) ---
-                    for rect, cmd in custom_click_areas:
-                        if rect.collidepoint(mouse_pos):
-                            try:
-                                # Envia o comando da opção (SUGAR:..., STRENGTH:..., MILK:...)
-                                ser.write((cmd + "\n").encode("utf-8"))
-                                status_message = f"Sent: {cmd}"
-                                status_color = green_color
-                                print(f"Sent to ESP32 via COM: {cmd}")
-                                add_log(f"(PC): '{cmd}'")
+                    if waiting_custom_ack:
+                        set_status("Waiting for ESP32 confirmation...", black_color)
+                    else:
+                        for rect, cmd in custom_click_areas:
+                            if rect.collidepoint(mouse_pos):
+                                try:
+                                    waiting_custom_ack = True
+                                    send_serial_command(cmd, f"Sent: {cmd}. Waiting confirmation...")
+                                except Exception as e:
+                                    waiting_custom_ack = False
+                                    status_message = f"Error sending command: {e}"
+                                    status_color = red_color
+                                    print(f"Error sending command: {e}")
+                                break
 
-                                # Avança para a próxima etapa de customização
-                                custom_step += 1
-                                if custom_step >= len(CUSTOM_STEPS):
-                                    # Terminou (Sugar, Strength, Milk)
-                                    customize_mode = False
-
-                                    # Envia confirmação final
-                                    ok_cmd = "CUSTOMIZE:OK"
-                                    ser.write((ok_cmd + "\n").encode("utf-8"))
-                                    status_message = f"Sent: {ok_cmd}"
-                                    status_color = green_color
-                                    print(f"Sent to ESP32 via COM: {ok_cmd}")
-                                    add_log(f"(PC): '{ok_cmd}'")
-
-                            except Exception as e:
-                                status_message = f"Error sending command: {e}"
-                                status_color = red_color
-                                print(f"Error sending command: {e}")
-                            break
+                elif machine_phase == "awaiting_state":
+                    set_status("Waiting for ESP32 to change state...", black_color)
+                elif machine_phase == "prepare":
+                    set_status("The drink is being prepared.", black_color)
+                elif machine_phase == "done":
+                    set_status("Drink ready. Waiting for the next round.", green_color)
+                elif machine_phase == "idle":
+                    set_status("Waiting for machine start.", black_color)
 
         # ===== RIGHT-SIDE SERIAL LOG PANEL =====
         if not config_open:
