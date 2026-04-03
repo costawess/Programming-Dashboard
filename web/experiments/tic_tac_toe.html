@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Embedded Programming - Tic-Tac-Toe</title>
+  <script>
+    document.documentElement.classList.add("theme-dark");
+  </script>
+  <style>
+    :root {
+      --bg: #101010;
+      --panel: rgba(22, 22, 22, 0.92);
+      --line: #323232;
+      --text: #f5f5f5;
+      --subtle: #c4c4c4;
+      --x: #c83232;
+      --o: #3296dc;
+      --accent: #ffffff;
+      --green: #28b463;
+      --yellow: #f4d03f;
+      --toggle-bg: rgba(20, 20, 20, 0.94);
+      --toggle-border: #454545;
+      --toggle-thumb: #f4d03f;
+      --toggle-text: #f5f5f5;
+      --control-bg: #1a1a1a;
+      --control-border: #454545;
+      --back-bg: #191919;
+      --back-border: #4a4a4a;
+      --status-bg: #171717;
+      --status-border: #444444;
+      --board-bg: #070707;
+      --board-line: #dadada;
+      --card-soft-bg: rgba(255,255,255,0.04);
+      --card-strong-bg: rgba(255,255,255,0.03);
+      --hover-bg: rgba(255,255,255,0.08);
+      --field-bg: #161616;
+      --overlay-bg: rgba(0,0,0,0.74);
+      --modal-bg: #181818;
+    }
+    html.theme-dark {
+      --bg: #101010;
+      --panel: rgba(22, 22, 22, 0.92);
+      --line: #323232;
+      --text: #f5f5f5;
+      --subtle: #c4c4c4;
+      --x: #c83232;
+      --o: #3296dc;
+      --accent: #ffffff;
+      --green: #28b463;
+      --yellow: #f4d03f;
+      --toggle-bg: rgba(20, 20, 20, 0.94);
+      --toggle-border: #454545;
+      --toggle-thumb: #f4d03f;
+      --toggle-text: #f5f5f5;
+    }
+    html:not(.theme-dark) {
+      --bg: #eef4f8;
+      --panel: rgba(255, 255, 255, 0.94);
+      --line: #cfdbe2;
+      --text: #173445;
+      --subtle: #55707f;
+      --x: #d44747;
+      --o: #1d86d6;
+      --accent: #173445;
+      --green: #139255;
+      --yellow: #ce8c00;
+      --toggle-bg: rgba(255, 255, 255, 0.96);
+      --toggle-border: #c7d4dc;
+      --toggle-thumb: #1d86d6;
+      --toggle-text: #173445;
+      --control-bg: #ffffff;
+      --control-border: #c7d4dc;
+      --back-bg: #ffffff;
+      --back-border: #c7d4dc;
+      --status-bg: #f6fbff;
+      --status-border: #c7d4dc;
+      --board-bg: #fdfefe;
+      --board-line: #aebeca;
+      --card-soft-bg: rgba(241, 247, 251, 0.92);
+      --card-strong-bg: rgba(248, 251, 253, 0.96);
+      --hover-bg: rgba(29,134,214,0.1);
+      --field-bg: #ffffff;
+      --overlay-bg: rgba(12, 27, 38, 0.42);
+      --modal-bg: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #282828 0%, #101010 55%, #080808 100%);
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+    html:not(.theme-dark) body {
+      background: radial-gradient(circle at top, #f8fbfd 0%, #eef4f8 55%, #dde8ee 100%);
+    }
+    .app { padding: 22px; display: grid; gap: 18px; }
+    .header, .board-panel, .side-panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+    }
+    .header {
+      padding: 18px 20px;
+      display: grid;
+      grid-template-columns: auto minmax(0,1fr) auto;
+      gap: 16px;
+      align-items: center;
+    }
+    .brand-logo {
+      width: 132px;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+    .back {
+      text-decoration: none;
+      color: var(--accent);
+      border: 2px solid #4a4a4a;
+      border-radius: 16px;
+      padding: 12px 16px;
+      font-weight: 800;
+      background: #191919;
+    }
+    .title h1 { margin: 0; font-size: clamp(28px, 3vw, 46px); }
+    .title p { margin: 6px 0 0; color: var(--subtle); }
+    .status {
+      min-width: 250px;
+      text-align: center;
+      padding: 12px 16px;
+      border: 2px solid #444;
+      border-radius: 18px;
+      color: var(--yellow);
+      font-weight: 800;
+      background: #171717;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(620px, 1fr) minmax(320px, 0.75fr);
+      gap: 20px;
+      align-items: start;
+    }
+    .board-panel, .side-panel { padding: 18px; }
+    h2, h3, p { margin: 0; }
+    .board-wrap {
+      margin-top: 14px;
+      display: grid;
+      justify-content: center;
+      gap: 16px;
+    }
+    #board {
+      width: min(74vw, 600px);
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      background: #070707;
+      border: 3px solid #dadada;
+    }
+    .cell {
+      border: 1px solid #dadada;
+      padding: 0;
+      min-width: 0;
+      min-height: 0;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+      font-size: clamp(70px, 10vw, 130px);
+      font-weight: 900;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease;
+    }
+    .cell.hoverable:hover { background: rgba(255,255,255,0.08); }
+    .cell.x { color: var(--x); }
+    .cell.o { color: var(--o); }
+    .controls {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    button {
+      appearance: none;
+      border: 2px solid #454545;
+      border-radius: 16px;
+      padding: 12px 16px;
+      background: #1a1a1a;
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .serial-card, .symbol-card {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      display: grid;
+      gap: 12px;
+    }
+    .serial-controls, .symbol-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+    }
+    .tool-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .symbol-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .mode-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+    .field {
+      display: grid;
+      gap: 6px;
+      color: var(--subtle);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .field select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 2px solid #454545;
+      background: #161616;
+      color: var(--text);
+      font: inherit;
+    }
+    .uart-test-input {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 2px solid #454545;
+      background: #161616;
+      color: var(--text);
+      font: inherit;
+    }
+    html:not(.theme-dark) .field select,
+    html:not(.theme-dark) button,
+    html:not(.theme-dark) .back,
+    html:not(.theme-dark) .modal {
+      background: #ffffff;
+    }
+    .serial-state {
+      color: var(--yellow);
+      font-weight: 800;
+    }
+    .serial-hint {
+      color: var(--subtle);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .symbol-btn.active {
+      border-color: var(--yellow);
+      color: var(--yellow);
+    }
+    .mode-btn.active {
+      border-color: var(--yellow);
+      color: var(--yellow);
+      box-shadow: inset 0 0 0 1px rgba(244, 208, 63, 0.28);
+    }
+    .shortcut-hint {
+      display: block;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--subtle);
+      opacity: 0.92;
+    }
+    .back {
+      border-color: var(--back-border);
+      background: var(--back-bg);
+    }
+    .status {
+      border-color: var(--status-border);
+      background: var(--status-bg);
+    }
+    #board {
+      background: var(--board-bg);
+      border-color: var(--board-line);
+    }
+    .cell {
+      border-color: var(--board-line);
+    }
+    .cell.expiring {
+      box-shadow: inset 0 0 0 4px rgba(244, 208, 63, 0.28);
+    }
+    .cell.hoverable:hover {
+      background: var(--hover-bg);
+    }
+    button {
+      border-color: var(--control-border);
+      background: var(--control-bg);
+    }
+    .serial-card, .symbol-card {
+      background: var(--card-soft-bg);
+    }
+    .score-card, .log-item {
+      background: var(--card-strong-bg);
+      border-color: var(--line);
+    }
+    .field select {
+      border-color: var(--control-border);
+      background: var(--field-bg);
+    }
+    .overlay {
+      background: var(--overlay-bg);
+    }
+    .modal {
+      background: var(--modal-bg);
+      border-color: var(--control-border);
+    }
+    .score-grid, .log-list {
+      margin-top: 14px;
+      display: grid;
+      gap: 12px;
+    }
+    .score-card, .log-item {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid #373737;
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .score-card strong { display: block; font-size: 30px; margin-top: 6px; }
+    .score-card.x strong { color: var(--x); }
+    .score-card.o strong { color: var(--o); }
+    .score-card.draw strong { color: var(--yellow); }
+    .log-item {
+      font-family: Consolas, monospace;
+      font-size: 14px;
+      color: var(--subtle);
+    }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.74);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+    .modal {
+      width: min(560px, 100%);
+      background: #181818;
+      border: 2px solid #454545;
+      border-radius: 26px;
+      padding: 24px;
+      display: grid;
+      gap: 16px;
+      text-align: center;
+    }
+    .modal h3 { font-size: clamp(30px, 5vw, 52px); }
+    .modal .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .hidden { display: none !important; }
+    @media (max-width: 1080px) { .layout { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) { .header { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a class="back" href="../heater_sim.html">Back to menu</a>
+      <div class="title">
+        <h1>Tic-Tac-Toe</h1>
+        <p>HTML version of the pygame game. Play locally with alternating turns for X and O.</p>
+      </div>
+      <img class="brand-logo" src="../../assets/branding/hanze_logo.png" alt="Hanze logo" />
+    </header>
+
+    <section class="layout">
+      <section class="board-panel">
+        <h2>Board</h2>
+        <div class="board-wrap">
+          <div id="board"></div>
+          <div class="controls">
+            <button id="resetRoundBtn">Reset round<small class="shortcut-hint">(Key R)</small></button>
+            <button id="clearScoresBtn">Clear scores<small class="shortcut-hint">(Key L)</small></button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <div class="serial-card">
+          <h2>ESP32 / UART</h2>
+          <div class="serial-controls">
+            <label class="field">
+              <span>Baud rate</span>
+              <select id="baudSelect">
+                <option value="9600">9600</option>
+                <option value="115200">115200</option>
+              </select>
+            </label>
+            <button id="serialToggleBtn" type="button">Connect ESP32<small class="shortcut-hint">(Key C)</small></button>
+          </div>
+          <div class="serial-state" id="serialStatus">Not connected</div>
+          <div class="serial-hint" id="serialHint">Use Chrome or Edge with `localhost` or `https`. UART2 on ESP32: TX = GPIO17, RX = GPIO16, shared GND.</div>
+        </div>
+        <div class="symbol-card">
+          <h2>UART symbol</h2>
+          <div class="symbol-row">
+            <button class="symbol-btn" id="chooseXBtn" type="button">Play as X<small class="shortcut-hint">(Key X)</small></button>
+            <button class="symbol-btn" id="chooseOBtn" type="button">Play as O<small class="shortcut-hint">(Key O)</small></button>
+          </div>
+          <h2 style="margin-top:2px;">Game mode</h2>
+          <div class="mode-row">
+            <button class="mode-btn active" id="traditionalModeBtn" type="button">Traditional<small class="shortcut-hint">(Key T)</small></button>
+            <button class="mode-btn" id="slidingModeBtn" type="button">Sliding Tic-Tac-Toe<small class="shortcut-hint">(Key S)</small></button>
+          </div>
+          <div class="status" id="statusPill">Player X starts</div>
+          <div class="serial-hint">This follows the pygame handshake: `SYMBOL:SELECTED`, `MOVE`, `REMATCH:REQUEST`, and `REMATCH:ACCEPT`. The HTML page also syncs the local mode with `MODE:TRADITIONAL` and `MODE:SLIDING`.</div>
+        </div>
+        <h2>Scoreboard</h2>
+        <div class="score-grid">
+          <div class="score-card x">Player X<strong id="xScore">0</strong></div>
+          <div class="score-card o">Player O<strong id="oScore">0</strong></div>
+          <div class="score-card draw">Draws<strong id="drawScore">0</strong></div>
+        </div>
+        <h2 style="margin-top:18px;">History tools</h2>
+        <div class="tool-row">
+          <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example MOVE:5, then press Enter" />
+          <button id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
+        </div>
+        <h2 style="margin-top:18px;">Messages</h2>
+        <div class="log-list" id="logList"></div>
+      </aside>
+    </section>
+  </div>
+
+  <div class="overlay hidden" id="resultOverlay">
+    <div class="modal">
+      <h3 id="resultTitle">X wins!</h3>
+      <p id="resultText">Start another round or go back to the menu.</p>
+      <div class="actions">
+        <button id="playAgainBtn">Play again<small class="shortcut-hint">(Key A)</small></button>
+        <a class="back" href="../heater_sim.html">Back to menu</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/sound_fx.js"></script>
+  <script src="../shared/web_serial_bridge.js"></script>
+  <script>
+    const boardEl = document.getElementById("board");
+    const statusPill = document.getElementById("statusPill");
+    const xScoreEl = document.getElementById("xScore");
+    const oScoreEl = document.getElementById("oScore");
+    const drawScoreEl = document.getElementById("drawScore");
+    const logList = document.getElementById("logList");
+    const resultOverlay = document.getElementById("resultOverlay");
+    const resultTitle = document.getElementById("resultTitle");
+    const resultText = document.getElementById("resultText");
+    const resetRoundBtn = document.getElementById("resetRoundBtn");
+    const clearScoresBtn = document.getElementById("clearScoresBtn");
+    const playAgainBtn = document.getElementById("playAgainBtn");
+    const baudSelect = document.getElementById("baudSelect");
+    const serialToggleBtn = document.getElementById("serialToggleBtn");
+    const serialStatus = document.getElementById("serialStatus");
+    const serialHint = document.getElementById("serialHint");
+    const uartTestInput = document.getElementById("uartTestInput");
+    const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+    const chooseXBtn = document.getElementById("chooseXBtn");
+    const chooseOBtn = document.getElementById("chooseOBtn");
+    const traditionalModeBtn = document.getElementById("traditionalModeBtn");
+    const slidingModeBtn = document.getElementById("slidingModeBtn");
+
+    const state = {
+      board: Array(9).fill(""),
+      current: "X",
+      mode: "traditional",
+      finished: false,
+      scores: { X: 0, O: 0, draw: 0 },
+      logs: ["(SYSTEM): Tic-Tac-Toe HTML experiment ready."],
+      serialConnected: false,
+      mySymbol: null,
+      opponentSymbol: null,
+      broadcastingSymbol: false,
+      lastBroadcast: 0,
+      rematchRequested: false,
+      rematchReceived: false,
+      sendingMove: false,
+      moveHistory: { X: [], O: [] }
+    };
+
+    const wins = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    const serialBridge = new WebSerialLineBridge({
+      onLine: handleSerialLine,
+      onStatus: handleSerialStatus,
+      onError: error => {
+        addLog(`(SYSTEM): UART error - ${error.message || error}`);
+        statusPill.textContent = "Serial error";
+      }
+    });
+
+    function addLog(message) {
+      state.logs.push(message);
+      if (state.logs.length > 14) state.logs.shift();
+      renderLogs();
+    }
+
+    function clearHistory() {
+      state.logs = ["(SYSTEM): History cleared."];
+      renderLogs();
+    }
+
+    function renderLogs() {
+      logList.innerHTML = "";
+      for (const message of [...state.logs].reverse()) {
+        const el = document.createElement("div");
+        el.className = "log-item";
+        el.textContent = message;
+        logList.appendChild(el);
+      }
+    }
+
+    function updateModeUi() {
+      traditionalModeBtn.classList.toggle("active", state.mode === "traditional");
+      slidingModeBtn.classList.toggle("active", state.mode === "sliding");
+    }
+
+    function getExpiringIndex(symbol = state.current) {
+      if (state.mode !== "sliding") return null;
+      const history = state.moveHistory[symbol] || [];
+      return history.length >= 3 ? history[0] : null;
+    }
+
+    function renderBoard() {
+      boardEl.innerHTML = "";
+      const expiringIndex = getExpiringIndex();
+      state.board.forEach((value, index) => {
+        const cell = document.createElement("button");
+        const hoverable = canPlay(index) ? "hoverable" : "";
+        const expiring = expiringIndex === index ? "expiring" : "";
+        cell.className = `cell ${value ? value.toLowerCase() : ""} ${hoverable} ${expiring}`.trim();
+        cell.textContent = value;
+        cell.addEventListener("click", () => play(index));
+        boardEl.appendChild(cell);
+      });
+    }
+
+    function updateSerialUi() {
+      if (!serialBridge.supported) {
+        serialToggleBtn.disabled = true;
+        chooseXBtn.disabled = true;
+        chooseOBtn.disabled = true;
+        serialStatus.textContent = "Web Serial unavailable";
+        serialHint.textContent = "Open this page in Chrome or Edge on localhost or https.";
+        return;
+      }
+
+      serialToggleBtn.disabled = false;
+      serialToggleBtn.textContent = state.serialConnected ? "Disconnect" : "Connect ESP32";
+      serialStatus.textContent = state.serialConnected ? `Connected at ${baudSelect.value} baud` : "Not connected";
+      serialHint.textContent = state.serialConnected
+        ? "Choose a symbol, select the mode, then wait for the other board. UART2 on ESP32: TX = GPIO17, RX = GPIO16, shared GND."
+        : "Use Chrome or Edge with localhost or https. UART2 on ESP32: TX = GPIO17, RX = GPIO16, shared GND.";
+      chooseXBtn.disabled = !state.serialConnected;
+      chooseOBtn.disabled = !state.serialConnected;
+      chooseXBtn.classList.toggle("active", state.mySymbol === "X");
+      chooseOBtn.classList.toggle("active", state.mySymbol === "O");
+    }
+
+    async function sendSerialMessage(message, log = true) {
+      await serialBridge.sendLine(message);
+      if (log) {
+        addLog(`(TX): ${message}`);
+      }
+    }
+
+    function clearBoardState() {
+      state.board = Array(9).fill("");
+      state.current = "X";
+      state.finished = false;
+      state.sendingMove = false;
+      state.moveHistory = { X: [], O: [] };
+      resultOverlay.classList.add("hidden");
+    }
+
+    function startSerialSetup() {
+      clearBoardState();
+      state.mySymbol = null;
+      state.opponentSymbol = null;
+      state.broadcastingSymbol = false;
+      state.lastBroadcast = 0;
+      state.rematchRequested = false;
+      state.rematchReceived = false;
+      updateOverlayAction();
+      updateSerialUi();
+      updateStatus();
+      renderBoard();
+      sendSerialMessage(`MODE:${state.mode.toUpperCase()}`, false)
+        .catch(error => addLog(`(SYSTEM): ${error.message || error}`));
+    }
+
+    function resetSerialRound(logMessage = "(SYSTEM): UART round reset.") {
+      clearBoardState();
+      state.broadcastingSymbol = false;
+      state.rematchRequested = false;
+      state.rematchReceived = false;
+      updateOverlayAction();
+      updateStatus();
+      renderBoard();
+      if (logMessage) {
+        addLog(logMessage);
+      }
+    }
+
+    function checkWinner() {
+      for (const [a, b, c] of wins) {
+        if (state.board[a] && state.board[a] === state.board[b] && state.board[a] === state.board[c]) return state.board[a];
+      }
+      if (state.mode === "traditional" && state.board.every(Boolean)) return "draw";
+      return null;
+    }
+
+    function canPlay(index) {
+      if (state.finished || state.board[index] || state.sendingMove) return false;
+      if (!state.serialConnected) return true;
+      return Boolean(state.mySymbol) && state.opponentSymbol !== null && state.current === state.mySymbol;
+    }
+
+    function applyMove(index, symbol, logMessage) {
+      if (state.finished || state.board[index]) return;
+
+      if (state.mode === "sliding" && state.moveHistory[symbol].length >= 3) {
+        const removedIndex = state.moveHistory[symbol].shift();
+        state.board[removedIndex] = "";
+        addLog(`(SLIDE): Player ${symbol} released cell ${removedIndex + 1}`);
+      }
+
+      state.board[index] = symbol;
+      state.moveHistory[symbol].push(index);
+      addLog(logMessage);
+      const result = checkWinner();
+      if (result) finish(result);
+      else {
+        state.current = state.current === "X" ? "O" : "X";
+        updateStatus();
+        renderBoard();
+      }
+    }
+
+    function play(index) {
+      if (!canPlay(index)) return;
+
+      if (!state.serialConnected) {
+        applyMove(index, state.current, `(MOVE): Player ${state.current} -> cell ${index + 1}`);
+        return;
+      }
+
+      const row = Math.floor(index / 3);
+      const col = index % 3;
+      const command = `MOVE:${row},${col},${state.mySymbol}`;
+      state.sendingMove = true;
+      renderBoard();
+
+      sendSerialMessage(command).then(() => {
+        state.sendingMove = false;
+        applyMove(index, state.mySymbol, `(MOVE): You played ${state.mySymbol} on cell ${index + 1}`);
+      }).catch(error => {
+        state.sendingMove = false;
+        addLog(`(SYSTEM): Send failed - ${error.message || error}`);
+        updateStatus();
+        renderBoard();
+      });
+    }
+
+    function finish(result) {
+      state.finished = true;
+      if (result === "draw") {
+        state.scores.draw += 1;
+        resultTitle.textContent = "Draw!";
+        resultText.textContent = "No winner this round.";
+        addLog("(RESULT): Draw.");
+      } else {
+        state.scores[result] += 1;
+        resultTitle.textContent = `${result} wins!`;
+        resultText.textContent = `Player ${result} completed a winning line.`;
+        addLog(`(RESULT): Player ${result} wins.`);
+      }
+      updateScore();
+      updateStatus(result);
+      renderBoard();
+      resultOverlay.classList.remove("hidden");
+      updateOverlayAction();
+    }
+
+    function updateStatus(result = null) {
+      const modeLabel = state.mode === "sliding" ? "Sliding" : "Traditional";
+
+      if (result === "draw") {
+        statusPill.textContent = `${modeLabel}: round finished - draw`;
+        return;
+      }
+
+      if (result) {
+        statusPill.textContent = `${modeLabel}: ${result} wins`;
+        return;
+      }
+
+      if (!state.serialConnected) {
+        statusPill.textContent = `${modeLabel}: Player ${state.current} turn`;
+        return;
+      }
+
+      if (!state.mySymbol) {
+        statusPill.textContent = `${modeLabel}: choose X or O`;
+      } else if (state.opponentSymbol === null) {
+        statusPill.textContent = `${modeLabel}: broadcasting ${state.mySymbol}`;
+      } else if (state.current === state.mySymbol) {
+        statusPill.textContent = `${modeLabel}: your turn (${state.mySymbol})`;
+      } else {
+        statusPill.textContent = `${modeLabel}: opponent turn (${state.opponentSymbol})`;
+      }
+    }
+
+    function updateScore() {
+      xScoreEl.textContent = state.scores.X;
+      oScoreEl.textContent = state.scores.O;
+      drawScoreEl.textContent = state.scores.draw;
+    }
+
+    function resetRound(logMessage = "(SYSTEM): Round reset.") {
+      if (state.serialConnected) {
+        resetSerialRound(logMessage);
+        return;
+      }
+
+      clearBoardState();
+      updateStatus();
+      renderBoard();
+      updateOverlayAction();
+      addLog(logMessage);
+    }
+
+    function clearScores() {
+      state.scores = { X: 0, O: 0, draw: 0 };
+      updateScore();
+      addLog("(SYSTEM): Scoreboard cleared.");
+    }
+
+    function updateOverlayAction() {
+      if (!state.serialConnected) {
+        playAgainBtn.innerHTML = `Play again<small class="shortcut-hint">(Key A)</small>`;
+        playAgainBtn.disabled = false;
+        return;
+      }
+
+      if (state.rematchReceived) {
+        playAgainBtn.innerHTML = `Accept rematch<small class="shortcut-hint">(Key A)</small>`;
+        playAgainBtn.disabled = false;
+      } else if (state.rematchRequested) {
+        playAgainBtn.innerHTML = `Rematch requested<small class="shortcut-hint">(Key A)</small>`;
+        playAgainBtn.disabled = true;
+      } else {
+        playAgainBtn.innerHTML = `Request rematch<small class="shortcut-hint">(Key A)</small>`;
+        playAgainBtn.disabled = false;
+      }
+    }
+
+    async function handleReplayAction() {
+      if (!state.serialConnected) {
+        resetRound("(SYSTEM): New round started.");
+        return;
+      }
+
+      try {
+        if (state.rematchReceived) {
+          await sendSerialMessage("REMATCH:ACCEPT");
+          resetSerialRound("(SYSTEM): Rematch accepted.");
+        } else if (!state.rematchRequested) {
+          state.rematchRequested = true;
+          updateOverlayAction();
+          await sendSerialMessage("REMATCH:REQUEST");
+          statusPill.textContent = "Rematch request sent. Waiting opponent.";
+        }
+      } catch (error) {
+        state.rematchRequested = false;
+        updateOverlayAction();
+        addLog(`(SYSTEM): ${error.message || error}`);
+      }
+    }
+
+    function chooseSymbol(symbol) {
+      if (!state.serialConnected) return;
+      state.mySymbol = symbol;
+      state.opponentSymbol = null;
+      state.broadcastingSymbol = true;
+      state.lastBroadcast = 0;
+      state.rematchRequested = false;
+      state.rematchReceived = false;
+      updateSerialUi();
+      updateOverlayAction();
+      updateStatus();
+      sendSerialMessage(`SYMBOL:SELECTED:${symbol}`)
+        .catch(error => addLog(`(SYSTEM): ${error.message || error}`));
+    }
+
+    async function setMode(mode, source = "GUI", sync = true) {
+      if (mode !== "traditional" && mode !== "sliding") return;
+      if (state.mode === mode && source !== "UART") return;
+
+      state.mode = mode;
+      clearBoardState();
+      updateModeUi();
+      updateOverlayAction();
+      updateStatus();
+      renderBoard();
+      addLog(`(${source}): Mode set to ${mode}.`);
+
+      if (sync && state.serialConnected) {
+        try {
+          await sendSerialMessage(`MODE:${mode.toUpperCase()}`);
+        } catch (error) {
+          addLog(`(SYSTEM): ${error.message || error}`);
+        }
+      }
+    }
+
+    function handleSerialLine(line) {
+      addLog(`(RX): ${line}`);
+
+      if (line === "MODE:TRADITIONAL") {
+        setMode("traditional", "UART", false);
+        return;
+      }
+
+      if (line === "MODE:SLIDING") {
+        setMode("sliding", "UART", false);
+        return;
+      }
+
+      if (line.startsWith("SYMBOL:SELECTED:")) {
+        const remoteSymbol = line.split(":").pop().toUpperCase();
+
+        if (state.mySymbol === null) {
+          state.opponentSymbol = remoteSymbol;
+          state.mySymbol = remoteSymbol === "X" ? "O" : "X";
+          sendSerialMessage(`SYMBOL:SELECTED:${state.mySymbol}`)
+            .catch(error => addLog(`(SYSTEM): ${error.message || error}`));
+        } else {
+          state.opponentSymbol = remoteSymbol;
+        }
+
+        state.broadcastingSymbol = false;
+        updateSerialUi();
+        updateStatus();
+        renderBoard();
+        return;
+      }
+
+      if (line.startsWith("MOVE:")) {
+        const payload = line.slice(5).split(",");
+        const row = Number(payload[0]);
+        const col = Number(payload[1]);
+        const symbol = (payload[2] || state.opponentSymbol || "").toUpperCase();
+        const index = row * 3 + col;
+
+        if (Number.isInteger(row) && Number.isInteger(col) && index >= 0 && index < 9 && symbol) {
+          applyMove(index, symbol, `(MOVE): Opponent played ${symbol} on cell ${index + 1}`);
+        }
+        return;
+      }
+
+      if (line === "REMATCH:REQUEST") {
+        state.rematchReceived = true;
+        updateOverlayAction();
+        statusPill.textContent = "Opponent wants a rematch.";
+        if (state.finished) {
+          resultOverlay.classList.remove("hidden");
+        }
+        return;
+      }
+
+      if (line === "REMATCH:ACCEPT") {
+        resetSerialRound("(SYSTEM): Opponent accepted the rematch.");
+      }
+    }
+
+    function handleSerialStatus(status) {
+      state.serialConnected = status === "connected";
+
+      if (state.serialConnected) {
+        addLog(`(SYSTEM): UART connected at ${baudSelect.value} baud.`);
+        startSerialSetup();
+      } else {
+        addLog("(SYSTEM): UART disconnected. Local mode enabled.");
+        state.mySymbol = null;
+        state.opponentSymbol = null;
+        state.broadcastingSymbol = false;
+        state.rematchRequested = false;
+        state.rematchReceived = false;
+        clearBoardState();
+        updateStatus();
+        renderBoard();
+        updateOverlayAction();
+      }
+
+      updateSerialUi();
+    }
+
+    async function toggleSerialConnection() {
+      serialToggleBtn.disabled = true;
+      try {
+        if (state.serialConnected) {
+          await serialBridge.disconnect();
+        } else {
+          await serialBridge.connect(Number(baudSelect.value));
+        }
+      } catch (error) {
+        addLog(`(SYSTEM): ${error.message || error}`);
+        updateSerialUi();
+      }
+    }
+
+    function animate(ts) {
+      if (!animate.last) animate.last = ts;
+
+      if (
+        state.serialConnected &&
+        state.broadcastingSymbol &&
+        state.mySymbol &&
+        ts - state.lastBroadcast >= 100
+      ) {
+        state.lastBroadcast = ts;
+        sendSerialMessage(`SYMBOL:SELECTED:${state.mySymbol}`, false)
+          .catch(error => addLog(`(SYSTEM): ${error.message || error}`));
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    resetRoundBtn.addEventListener("click", resetRound);
+    clearScoresBtn.addEventListener("click", clearScores);
+    clearHistoryBtn.addEventListener("click", clearHistory);
+    playAgainBtn.addEventListener("click", handleReplayAction);
+    serialToggleBtn.addEventListener("click", toggleSerialConnection);
+    chooseXBtn.addEventListener("click", () => chooseSymbol("X"));
+    chooseOBtn.addEventListener("click", () => chooseSymbol("O"));
+    traditionalModeBtn.addEventListener("click", () => setMode("traditional"));
+    slidingModeBtn.addEventListener("click", () => setMode("sliding"));
+    uartTestInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        const line = uartTestInput.value.trim();
+        if (!line) return;
+        event.preventDefault();
+        handleSerialLine(line);
+        uartTestInput.value = "";
+      }
+    });
+
+    window.addEventListener("keydown", event => {
+      const tag = document.activeElement?.tagName || "";
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      const key = event.key.toLowerCase();
+      if (key === "r") {
+        event.preventDefault();
+        resetRound();
+      } else if (key === "h") {
+        event.preventDefault();
+        clearHistory();
+      } else if (key === "l") {
+        event.preventDefault();
+        clearScores();
+      } else if (key === "c") {
+        event.preventDefault();
+        toggleSerialConnection();
+      } else if (key === "x") {
+        event.preventDefault();
+        chooseSymbol("X");
+      } else if (key === "o") {
+        event.preventDefault();
+        chooseSymbol("O");
+      } else if (key === "t") {
+        event.preventDefault();
+        setMode("traditional");
+      } else if (key === "s") {
+        event.preventDefault();
+        setMode("sliding");
+      } else if (key === "a" && !resultOverlay.classList.contains("hidden")) {
+        event.preventDefault();
+        handleReplayAction();
+      }
+    });
+
+    updateScore();
+    updateStatus();
+    updateOverlayAction();
+    updateModeUi();
+    updateSerialUi();
+    renderBoard();
+    renderLogs();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

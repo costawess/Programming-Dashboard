@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Embedded Programming - EP Simulations</title>
+  <script>document.documentElement.classList.add("theme-dark");</script>
+  <style>
+    :root {
+      --bg: #0f2230;
+      --panel: rgba(20, 36, 48, 0.94);
+      --card: rgba(30, 50, 65, 0.96);
+      --line: #37586d;
+      --text: #edf7fb;
+      --subtle: #9db9c8;
+      --accent: #63c4ff;
+      --accent-soft: rgba(99, 196, 255, 0.14);
+      --green: #2fc76b;
+      --yellow: #ffcc45;
+      --red: #ff6b65;
+      --purple: #b98cff;
+      --orange: #ff9f43;
+      --cyan: #30d2d2;
+      --white: #f6fbff;
+      --button-bg: #173245;
+      --code-bg: #0d1720;
+      --stage-bg: linear-gradient(180deg, #162c3b 0%, #11202a 100%);
+      --shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; font-family: "Segoe UI", Arial, sans-serif; color: var(--text); background: radial-gradient(circle at top, #193549 0%, var(--bg) 58%, #081118 100%); }
+    .app { padding: 16px; display: grid; gap: 14px; }
+    .header, .panel, .card { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
+    .header { padding: 14px 16px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+    .back { color: var(--text); text-decoration: none; border: 2px solid var(--line); border-radius: 14px; padding: 10px 14px; background: var(--button-bg); font-weight: 800; }
+    .brand-logo { width: 132px; max-width: 100%; height: auto; object-fit: contain; }
+    .title h1 { margin: 0; font-size: clamp(24px, 2.6vw, 40px); }
+    .title p { margin: 6px 0 0; color: var(--subtle); }
+    .layout { display: grid; grid-template-columns: minmax(300px, 0.9fr) minmax(320px, 0.95fr) minmax(420px, 1.2fr); gap: 18px; align-items: start; }
+    .panel { padding: 14px; display: grid; gap: 12px; }
+    .topic-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+    .topic-chip { appearance: none; border: 2px solid var(--line); border-radius: 999px; padding: 8px 12px; background: rgba(255, 255, 255, 0.02); color: var(--subtle); font-weight: 700; cursor: pointer; transition: .16s ease; }
+    .topic-chip.active { border-color: var(--accent); color: var(--white); background: var(--accent-soft); box-shadow: 0 0 0 3px rgba(99, 196, 255, 0.12); }
+    .topic-head { display: grid; gap: 8px; }
+    .topic-head h2, .panel h2, .panel h3, .panel p { margin: 0; }
+    .topic-head p { color: var(--subtle); line-height: 1.45; }
+    .status-pill { justify-self: start; border: 2px solid var(--accent); border-radius: 999px; padding: 8px 14px; background: var(--accent-soft); color: var(--accent); font-weight: 800; }
+    .controls-card, .visual-card, .timeline-card, .code-card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 12px; display: grid; gap: 10px; }
+    .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .controls-grid { display: grid; gap: 12px; }
+    .control-row { display: grid; gap: 6px; }
+    .control-inline { display: flex; gap: 10px; flex-wrap: wrap; }
+    .field-label { color: var(--subtle); font-size: 13px; font-weight: 700; }
+    input[type="range"], select, input[type="text"] { width: 100%; padding: 10px 11px; border-radius: 12px; border: 2px solid var(--line); background: rgba(11, 24, 34, 0.84); color: var(--text); font: inherit; }
+    input[type="range"] { padding: 0; accent-color: var(--accent); }
+    button.action-btn { appearance: none; border: 2px solid var(--line); border-radius: 12px; padding: 9px 12px; background: var(--button-bg); color: var(--text); font-weight: 800; cursor: pointer; }
+    button.action-btn.active { border-color: var(--accent); background: var(--accent-soft); color: var(--white); }
+    .value-line { display: flex; justify-content: space-between; gap: 12px; color: var(--subtle); font-size: 13px; }
+    .visual-stage { min-height: 280px; border-radius: 18px; border: 1px solid var(--line); background: var(--stage-bg); padding: 14px; display: grid; place-items: center; overflow: hidden; }
+    .visual-wrap { width: 100%; max-width: 420px; display: grid; gap: 14px; justify-items: center; }
+    .rig-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; justify-content: center; }
+    .push-button, .sensor-box, .code-box, .serial-box, .function-box, .counter-box { min-width: 96px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); padding: 12px; text-align: center; display: grid; gap: 6px; }
+    .push-button strong, .sensor-box strong, .code-box strong, .serial-box strong, .function-box strong, .counter-box strong { font-size: 13px; color: var(--subtle); }
+    .foundations-io-row { width: 100%; max-width: 290px; display: grid; grid-template-columns: repeat(2, minmax(110px, 1fr)); gap: 18px; justify-items: center; }
+    .io-button { width: 72px; height: 72px; border-radius: 50%; border: 5px solid rgba(255, 255, 255, 0.16); background: radial-gradient(circle at 35% 30%, #4e6270 0%, #243844 70%, #11202a 100%); box-shadow: inset 0 8px 12px rgba(255, 255, 255, 0.08); }
+    .io-button.on { background: radial-gradient(circle at 35% 30%, #80d2ff 0%, #2d8fd5 58%, #0f365c 100%); border-color: rgba(99, 196, 255, 0.45); }
+    .led { width: 64px; height: 64px; border-radius: 50%; border: 5px solid #081118; background: radial-gradient(circle at 35% 30%, #29343a 0%, #11191f 70%, #060b0f 100%); box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.4); }
+    .led.green.on { background: radial-gradient(circle at 35% 30%, #97f7bb 0%, var(--green) 52%, #0d7e38 100%); }
+    .led.red.on { background: radial-gradient(circle at 35% 30%, #ff9d98 0%, var(--red) 52%, #8a1f1a 100%); }
+    .led.yellow.on { background: radial-gradient(circle at 35% 30%, #fff1a0 0%, var(--yellow) 52%, #9f7700 100%); }
+    .led.blue.on { background: radial-gradient(circle at 35% 30%, #a9deff 0%, var(--accent) 52%, #215e8c 100%); }
+    .led.purple.on { background: radial-gradient(circle at 35% 30%, #dcc6ff 0%, var(--purple) 52%, #613d9a 100%); }
+    .led-strip { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .variable-grid, .stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; }
+    .bar-shell { width: min(100%, 320px); height: 18px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.06); overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent) 0%, var(--cyan) 100%); border-radius: inherit; }
+    .compare-box { border-radius: 16px; border: 2px dashed var(--line); padding: 14px; text-align: center; color: var(--subtle); width: min(100%, 320px); }
+    .traffic-light { width: 108px; padding: 14px; border-radius: 20px; background: linear-gradient(180deg, #2d4451 0%, #1d2e39 100%); border: 4px solid #091117; display: grid; gap: 12px; justify-items: center; }
+    .serial-lanes { width: min(100%, 360px); display: grid; gap: 12px; }
+    .lane { border-radius: 18px; border: 1px solid var(--line); padding: 14px; background: rgba(255, 255, 255, 0.04); display: grid; gap: 8px; }
+    .lane strong { color: var(--subtle); font-size: 14px; }
+    .lane code { display: block; border-radius: 12px; padding: 10px 12px; background: rgba(7, 15, 21, 0.82); color: var(--accent); font-family: Consolas, monospace; font-size: 14px; min-height: 42px; user-select: text; -webkit-user-select: text; cursor: text; }
+    .state-line { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center; }
+    .state-node { min-width: 88px; border-radius: 18px; border: 2px solid var(--line); background: rgba(255, 255, 255, 0.03); padding: 12px 10px; text-align: center; font-weight: 800; color: var(--subtle); }
+    .state-node.active { border-color: var(--accent); color: var(--white); background: var(--accent-soft); }
+    .state-machine-wrap { width: 100%; max-width: 460px; display: grid; gap: 14px; justify-items: center; }
+    .state-machine-status { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .state-chip { border-radius: 18px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); padding: 12px 14px; display: grid; gap: 6px; text-align: center; }
+    .state-chip strong { color: var(--subtle); font-size: 13px; }
+    .state-chip span { color: var(--white); font-size: 18px; font-weight: 900; }
+    .state-machine-diagram { width: 100%; display: grid; gap: 10px; }
+    .state-machine-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: center; }
+    .state-machine-row.bottom { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 16.666%; }
+    .state-transition { border-radius: 16px; border: 1px dashed var(--line); background: rgba(255, 255, 255, 0.03); padding: 10px 8px; text-align: center; color: var(--subtle); font-size: 12px; line-height: 1.3; }
+    .state-node.red.active { border-color: var(--red); background: rgba(255, 107, 101, 0.16); }
+    .state-node.green.active { border-color: var(--green); background: rgba(47, 199, 107, 0.16); }
+    .state-node.yellow.active { border-color: var(--yellow); background: rgba(255, 204, 69, 0.16); color: var(--white); }
+    .state-node.purple.active { border-color: var(--purple); background: rgba(185, 140, 255, 0.16); }
+    .conditional-layout { width: 100%; max-width: 520px; display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 14px; align-items: start; }
+    .io-mini-row { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .io-mini-row.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .mini-io-card { border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); padding: 10px 8px; display: grid; gap: 8px; justify-items: center; text-align: center; }
+    .mini-io-card strong { font-size: 13px; color: var(--subtle); }
+    .io-button.small { width: 54px; height: 54px; border-width: 5px; }
+    .led.small { width: 54px; height: 54px; border-width: 5px; }
+    .truth-card { border-radius: 18px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); padding: 12px; display: grid; gap: 10px; }
+    .truth-card strong { font-size: 14px; color: var(--subtle); }
+    .truth-table { width: 100%; border-collapse: collapse; font-size: 12px; color: var(--text); }
+    .truth-table th, .truth-table td { border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 7px 6px; text-align: center; }
+    .truth-table th { color: var(--subtle); font-weight: 800; }
+    .truth-table tr.active-row td { background: rgba(99, 196, 255, 0.12); color: var(--white); }
+    .truth-note { color: var(--subtle); font-size: 12px; line-height: 1.35; }
+    .combo-grid { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .combo-card { border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); padding: 10px 12px; display: grid; gap: 4px; color: var(--subtle); font-size: 12px; line-height: 1.35; }
+    .combo-card strong { color: var(--white); font-size: 13px; }
+    .combo-card.active { border-color: var(--green); background: rgba(47, 199, 107, 0.16); color: var(--white); }
+    .combo-card.selected { box-shadow: 0 0 0 2px rgba(99, 196, 255, 0.25) inset; }
+    .loop-led-grid { width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start; }
+    .loop-led-item { display: grid; gap: 8px; justify-items: center; text-align: center; color: var(--subtle); font-size: 12px; }
+    .loop-led-item strong { color: var(--white); font-size: 13px; }
+    .loop-led-item span { line-height: 1.3; }
+    .timeline-canvas { width: 100%; height: 380px; display: block; border-radius: 18px; background: rgba(7, 15, 21, 0.86); border: 1px solid var(--line); }
+    .timeline-extra { display: none; }
+    .timeline-extra.show { display: grid; gap: 12px; }
+    .diagram-stage { min-height: 300px; align-items: start; }
+    .timeline-note, .code-note { color: var(--subtle); font-size: 14px; line-height: 1.45; }
+    pre.code-block { margin: 0; min-height: 380px; padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--code-bg); color: #d8f2ff; font-family: Consolas, "Courier New", monospace; font-size: 12px; line-height: 1.45; white-space: pre-wrap; user-select: text; -webkit-user-select: text; cursor: text; }
+    .code-line { display: block; margin: 0 -6px; padding: 1px 6px; border-radius: 8px; transition: background 0.16s ease, box-shadow 0.16s ease; }
+    .code-line.active { background: rgba(99, 196, 255, 0.16); box-shadow: inset 3px 0 0 rgba(99, 196, 255, 0.9); color: var(--white); }
+    .copy-btn { appearance: none; border: 2px solid var(--line); border-radius: 12px; padding: 8px 12px; background: rgba(11, 24, 34, 0.84); color: var(--text); font-weight: 800; cursor: pointer; transition: .16s ease; }
+    .copy-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .copy-btn.copied { border-color: var(--green); color: var(--white); background: rgba(47, 199, 107, 0.14); }
+    @media (max-width: 1320px) { .layout { grid-template-columns: 1fr; } .timeline-canvas, pre.code-block { min-height: 360px; } }
+    @media (max-width: 760px) { .header { grid-template-columns: 1fr; } .variable-grid, .stat-grid, .state-machine-status, .state-machine-row, .state-machine-row.bottom, .conditional-layout, .loop-led-grid, .foundations-io-row { grid-template-columns: 1fr; padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a class="back" href="../heater_sim.html">Back to menu</a>
+      <div class="title">
+        <h1>EP Simulations</h1>
+        <p>Each topic combines a live visual model, a timeline column, and an Arduino C++ example that matches the current logic.</p>
+      </div>
+      <img class="brand-logo" src="../../assets/branding/hanze_logo.png" alt="Hanze logo" />
+    </header>
+    <section class="panel"><div class="topic-bar" id="topicTabs"></div></section>
+    <section class="layout">
+      <section class="panel">
+        <div class="topic-head">
+          <h2 id="topicTitle">Foundations</h2>
+          <p id="topicDescription"></p>
+          <div class="status-pill" id="topicStatus">Ready</div>
+        </div>
+        <div class="controls-card"><h3>Interactive controls</h3><div class="controls-grid" id="controlsPane"></div></div>
+        <div class="visual-card"><h3>System view</h3><div class="visual-stage" id="visualStage"></div></div>
+      </section>
+      <section class="panel"><div class="timeline-card"><div class="card-head"><h2>Timeline</h2><button class="action-btn" id="toggleTimelineBtn" type="button">Pause timeline</button></div><p class="timeline-note">All topics plot their important signals over the last 12 seconds so the students can see how the logic evolves in time.</p><canvas class="timeline-canvas" id="timelineCanvas" width="720" height="420"></canvas></div><div id="timelineExtra" class="timeline-extra"></div></section>
+      <section class="panel"><div class="code-card"><div class="card-head"><h2>Arduino C++</h2><button class="copy-btn" id="copyCodeBtn" type="button">Copy code</button></div><p class="code-note" id="codeNote">The example below follows the current topic and its active settings.</p><pre class="code-block" id="codeBlock"></pre></div></section>
+    </section>
+  </div>
+  <script src="../shared/sound_fx.js"></script>
+  <script>
+    const TOPIC_ORDER = ["foundations", "variables", "conditionals", "loops", "adc", "uart", "i2c", "functions", "interrupts", "timers", "state_machines"];
+    const TOPIC_INFO = {
+      foundations: { title: "Embedded System Foundations", short: "Foundations", description: "Read one digital input and drive one digital output. This is the smallest complete embedded loop: input, decision, output.", codeNote: "A simple button-to-LED sketch is enough to introduce setup, loop, pin modes, and digital I/O." },
+      variables: { title: "Algorithmic Thinking and Variables", short: "Variables", description: "Track sensor values inside variables, transform them, and map them into another range before sending them to an output.", codeNote: "This sketch highlights assignment, map(), and the idea that variables store values that change over time." },
+      conditionals: { title: "Decision Systems - Conditionals", short: "Conditionals", description: "Compare a basic condition, a nested condition, and a threshold comparison. The output LED changes according to the active rule.", codeNote: "The code switches between a basic if, a nested if, and a comparison against a threshold." },
+      loops: { title: "Loops and Repetition", short: "Loops", description: "Automate repeated actions with a blinking LED sequence. This is useful to explain for-loops, while-loops, do-while loops, and index variables.", codeNote: "The Arduino example shows a for-loop, a while-loop, or a do-while loop scanning a small LED array." },
+      adc: { title: "Analog Signals and ADC", short: "ADC", description: "Move a sensor through the ADC range, observe the converted digital value, and see how it affects a PWM output and measured voltage.", codeNote: "Use analogRead() to sample the sensor and map() to convert the result into brightness." },
+      uart: { title: "Communication - UART", short: "UART", description: "Simulate a UART serial exchange between two devices. A transmitted frame creates TX activity, then reaches RX after a short delay.", codeNote: "The code uses Serial.begin(), Serial.println(), and Serial.available() to explain UART communication." },
+      i2c: { title: "Communication - I2C", short: "I2C", description: "Simulate a master writing one byte to an I2C slave. Watch SDA, SCL, and ACK activity during the transaction.", codeNote: "The code uses Wire.beginTransmission(), Wire.write(), and Wire.endTransmission() to explain an I2C transfer." },
+      functions: { title: "Modular Code - Functions and Libraries", short: "Functions", description: "Trigger the same behavior with different parameters. Reusing a function makes the code shorter and easier to read.", codeNote: "The example shows a blinkLed(times, delayMs) function called from several input cases." },
+      interrupts: { title: "Time and Event-Based Systems - Interrupts", short: "Interrupts", description: "Compare an immediate interrupt-style reaction with a slower polling reaction. The same event is visible on two different response paths.", codeNote: "The code contrasts attachInterrupt() with a slower polling loop that only checks the input periodically." },
+      timers: { title: "Timers vs Delay", short: "Timers", description: "Compare a blocking delay() pattern, a non-blocking millis() pattern, and an ESP32 hardware timer ISR while button events need service in parallel.", codeNote: "Compare delay(), millis(), and an ESP32 hardware timer ISR for multitasking behavior." },
+      state_machines: { title: "System Modeling - State Machines", short: "State Machines", description: "Run a traffic-light state machine with optional pedestrian requests. The timeline shows each state transition clearly.", codeNote: "The Arduino example uses an enum plus a switch statement to encode the state machine." }
+    };
+    function createTopicState(topicId) {
+      if (topicId === "foundations") return { time: 0, button: false, led: false };
+      if (topicId === "variables") return { time: 0, sensor: 510, pwm: 128, brightness: 50 };
+      if (topicId === "conditionals") return { time: 0, mode: "basic", operation: "and", nestedPattern: "ab", compareOp: "gt", buttonA: false, buttonB: false, buttonC: false, buttonD: false, sensor: 480, threshold: 600, led: false };
+      if (topicId === "loops") return { time: 0, running: true, mode: "for", speed: 0.7, index: 0, leds: [true, false, false, false], ledYellow: 1, ledRed: 0, ledGreen: 0, ledBlue: 0, accum: 0, cyclePulse: 0 };
+      if (topicId === "adc") return { time: 0, adcBits: 12, analog: 1281, pwm: 80, voltage: 1.03 };
+      if (topicId === "uart") return { time: 0, text: "HELLO", txPulse: 0, rxPulse: 0, queue: [], sent: "None yet", received: "None yet", buffer: 0 };
+      if (topicId === "i2c") return { time: 0, address: "0x3C", dataByte: "0xA5", sclPulse: 0, sdaPulse: 0, ackPulse: 0, queue: [], lastWrite: "No write yet", lastAck: "No ACK yet", buffer: 0 };
+      if (topicId === "functions") return { time: 0, pendingBlinks: 0, led: false, ledTimer: 0, callPulse: 0, lastCall: "idle" };
+      if (topicId === "interrupts") return { time: 0, cpuBusy: false, eventPulse: 0, interruptPulse: 0, pollingPulse: 0, queue: 0, pollTimer: 0, irqCount: 0, pollCount: 0 };
+      if (topicId === "timers") return { time: 0, mode: "delay", running: true, paused: false, led: false, blinkTimer: 0, busyTimer: 0, buttonPulse: 0, servicePulse: 0, timerPulse: 0, handled: 0, missed: 0, isrCount: 0 };
+      return { time: 0, auto: true, phase: "RED", phaseTimer: 0, pedestrian: false, red: true, yellow: false, green: false };
+    }
+    const topicTabs = document.getElementById("topicTabs");
+    const topicTitle = document.getElementById("topicTitle");
+    const topicDescription = document.getElementById("topicDescription");
+    const topicStatus = document.getElementById("topicStatus");
+    const controlsPane = document.getElementById("controlsPane");
+    const visualStage = document.getElementById("visualStage");
+    const timelineCanvas = document.getElementById("timelineCanvas");
+    const timelineCtx = timelineCanvas.getContext("2d");
+    const timelineExtra = document.getElementById("timelineExtra");
+    const toggleTimelineBtn = document.getElementById("toggleTimelineBtn");
+    const codeBlock = document.getElementById("codeBlock");
+    const codeNote = document.getElementById("codeNote");
+    const copyCodeBtn = document.getElementById("copyCodeBtn");
+    let currentTopicId = new URLSearchParams(window.location.search).get("topic");
+    const usedLegacyCommunicationTopic = currentTopicId === "communication";
+    if (usedLegacyCommunicationTopic) currentTopicId = "uart";
+    if (!TOPIC_INFO[currentTopicId]) currentTopicId = "conditionals";
+    let sim = createTopicState(currentTopicId);
+    let samples = [];
+    let sampleAccum = 0;
+    let lastTs = 0;
+    let timelineHoverX = null;
+    let timelinePaused = false;
+    let timelineFrozenTime = 0;
+    function setStatus(text, tone = "accent") {
+      topicStatus.textContent = text;
+      const colors = { accent: ["var(--accent)", "rgba(99, 196, 255, 0.14)"], green: ["var(--green)", "rgba(47, 199, 107, 0.14)"], yellow: ["var(--yellow)", "rgba(255, 204, 69, 0.14)"], red: ["var(--red)", "rgba(255, 107, 101, 0.14)"], purple: ["var(--purple)", "rgba(185, 140, 255, 0.14)"] };
+      const pair = colors[tone] || colors.accent;
+      topicStatus.style.color = pair[0];
+      topicStatus.style.borderColor = pair[0];
+      topicStatus.style.background = pair[1];
+    }
+    function replaceUrlTopic(topicId) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("topic", topicId);
+      window.history.replaceState({}, "", url.toString());
+    }
+    if (usedLegacyCommunicationTopic) replaceUrlTopic("uart");
+    function escapeHtml(value) {
+      return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
+    }
+    function renderHighlightedCode(text, activeLines = []) {
+      const normalized = String(text || "");
+      const activeSet = new Set(activeLines);
+      codeBlock.dataset.rawCode = normalized;
+      codeBlock.innerHTML = normalized.split("\n").map((line, index) => {
+        const safeLine = line.length ? escapeHtml(line) : "&nbsp;";
+        return `<span class="code-line ${activeSet.has(index + 1) ? "active" : ""}">${safeLine}</span>`;
+      }).join("");
+    }
+    async function copyTextToClipboard(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+      const helper = document.createElement("textarea");
+      helper.value = text;
+      helper.setAttribute("readonly", "");
+      helper.style.position = "absolute";
+      helper.style.left = "-9999px";
+      document.body.appendChild(helper);
+      helper.select();
+      const copied = document.execCommand("copy");
+      helper.remove();
+      return copied;
+    }
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+    function adjustDiscreteValue(value, direction, step, min, max) {
+      const safeStep = Math.max(1, Number(step) || 1);
+      if (direction > 0) {
+        const next = value % safeStep === 0 ? value + safeStep : Math.ceil(value / safeStep) * safeStep;
+        return clamp(next, min, max);
+      }
+      const next = value % safeStep === 0 ? value - safeStep : Math.floor(value / safeStep) * safeStep;
+      return clamp(next, min, max);
+    }
+    function isTypingTarget(element) {
+      if (!element) return false;
+      if (element.isContentEditable) return true;
+      return ["INPUT", "TEXTAREA", "SELECT", "BUTTON"].includes(element.tagName);
+    }
+    function getAdcMax(bits = 12) {
+      const safeBits = Math.min(16, Math.max(1, Math.round(Number(bits) || 12)));
+      return 2 ** safeBits - 1;
+    }
+    function getAdcReferenceVoltage() {
+      return 3.3;
+    }
+    function updateAdcOutputs() {
+      const adcMax = getAdcMax(sim.adcBits);
+      sim.pwm = Math.round(sim.analog / adcMax * 255);
+      sim.voltage = sim.analog / adcMax * getAdcReferenceVoltage();
+    }
+    function setAdcVoltage(nextVoltage) {
+      const adcMax = getAdcMax(sim.adcBits);
+      const safeVoltage = clamp(Number(nextVoltage) || 0, 0, getAdcReferenceVoltage());
+      sim.analog = Math.round(safeVoltage / getAdcReferenceVoltage() * adcMax);
+      updateAdcOutputs();
+    }
+    function setAdcBits(nextBits) {
+      const previousMax = getAdcMax(sim.adcBits);
+      const safeBits = Math.min(16, Math.max(1, Math.round(Number(nextBits) || 12)));
+      const nextMax = getAdcMax(safeBits);
+      const ratio = previousMax > 0 ? sim.analog / previousMax : 0;
+      sim.adcBits = safeBits;
+      sim.analog = Math.round(ratio * nextMax);
+      updateAdcOutputs();
+      samples = [];
+      sampleSignals();
+    }
+    function normalizeHexInput(value, digits, fallback) {
+      const cleaned = String(value || "").trim().replace(/^0x/i, "").replace(/[^0-9a-f]/gi, "").toUpperCase();
+      if (!cleaned) return fallback;
+      return `0x${cleaned.slice(0, digits).padStart(digits, "0")}`;
+    }
+    function bindMomentaryButton(button, onChange) {
+      const setPressed = pressed => {
+        button.classList.toggle("active", Boolean(pressed));
+        onChange(Boolean(pressed));
+      };
+      button.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        setPressed(true);
+      });
+      button.addEventListener("pointerup", () => setPressed(false));
+      button.addEventListener("pointerleave", () => setPressed(false));
+      button.addEventListener("pointercancel", () => setPressed(false));
+      button.addEventListener("keydown", event => {
+        if (event.code === "Space" || event.code === "Enter") {
+          event.preventDefault();
+          setPressed(true);
+        }
+      });
+      button.addEventListener("keyup", event => {
+        if (event.code === "Space" || event.code === "Enter") {
+          event.preventDefault();
+          setPressed(false);
+        }
+      });
+      button.addEventListener("blur", () => setPressed(false));
+    }
+    function isSimulationPaused() {
+      if (currentTopicId === "timers") return Boolean(sim.paused);
+      if (currentTopicId === "loops") return !sim.running;
+      return false;
+    }
+    function getTimelineReferenceTime() {
+      return timelinePaused ? timelineFrozenTime : sim.time;
+    }
+    function updateTimelinePauseButton() {
+      toggleTimelineBtn.textContent = timelinePaused ? "Resume timeline" : "Pause timeline";
+      toggleTimelineBtn.classList.toggle("active", timelinePaused);
+    }
+    function setTimelinePaused(paused) {
+      if (timelinePaused === paused) return;
+      if (paused) {
+        timelinePaused = true;
+        timelineFrozenTime = sim.time;
+      } else {
+        const skippedTime = sim.time - timelineFrozenTime;
+        if (skippedTime > 0) {
+          samples = samples.map(sample => ({ ...sample, t: sample.t + skippedTime }));
+        }
+        timelinePaused = false;
+      }
+      updateTimelinePauseButton();
+      renderTimeline();
+    }
+    function evaluateLogicOperation(operation, a, b) {
+      if (operation === "or") return Boolean(a || b);
+      if (operation === "xor") return Boolean(a !== b);
+      if (operation === "nand") return Boolean(!(a && b));
+      if (operation === "nor") return Boolean(!(a || b));
+      return Boolean(a && b);
+    }
+    function getLogicOperatorLabel(operation) {
+      if (operation === "or") return "A OR B";
+      if (operation === "xor") return "A XOR B";
+      if (operation === "nand") return "A NAND B";
+      if (operation === "nor") return "A NOR B";
+      return "A AND B";
+    }
+    function evaluateNestedCombination(pattern, a, b, c, d) {
+      if (pattern === "a_cd") return Boolean(a && (c || d));
+      if (pattern === "ab_or_cd") return Boolean((a && b) || (c && d));
+      if (pattern === "a_notb_cd") return Boolean(a && !b && (c || d));
+      return Boolean(a && b);
+    }
+    function getNestedPatternLabel(pattern) {
+      if (pattern === "a_cd") return "A AND (C OR D)";
+      if (pattern === "ab_or_cd") return "(A AND B) OR (C AND D)";
+      if (pattern === "a_notb_cd") return "A AND NOT B AND (C OR D)";
+      return "A AND B";
+    }
+    function evaluateComparison(compareOp, left, right) {
+      if (compareOp === "gte") return left >= right;
+      if (compareOp === "lt") return left < right;
+      if (compareOp === "lte") return left <= right;
+      if (compareOp === "eq") return left === right;
+      if (compareOp === "neq") return left !== right;
+      return left > right;
+    }
+    function syncLoopLedSignals() {
+      sim.ledYellow = sim.leds[0] ? 1 : 0;
+      sim.ledRed = sim.leds[1] ? 1 : 0;
+      sim.ledGreen = sim.leds[2] ? 1 : 0;
+      sim.ledBlue = sim.leds[3] ? 1 : 0;
+    }
+    function getComparisonLabel(compareOp) {
+      if (compareOp === "gte") return ">=";
+      if (compareOp === "lt") return "<";
+      if (compareOp === "lte") return "<=";
+      if (compareOp === "eq") return "==";
+      if (compareOp === "neq") return "!=";
+      return ">";
+    }
+    function getNestedLogicSnippet(pattern) {
+      if (pattern === "a_cd") return `  if (buttonA) {\n    if (buttonC) {\n      output = HIGH;\n    } else {\n      if (buttonD) {\n        output = HIGH;\n      }\n    }\n  }`;
+      if (pattern === "ab_or_cd") return `  if (buttonA) {\n    if (buttonB) {\n      output = HIGH;\n    }\n  }\n\n  if (buttonC) {\n    if (buttonD) {\n      output = HIGH;\n    }\n  }`;
+      if (pattern === "a_notb_cd") return `  if (buttonA) {\n    if (!buttonB) {\n      if (buttonC) {\n        output = HIGH;\n      } else {\n        if (buttonD) {\n          output = HIGH;\n        }\n      }\n    }\n  }`;
+      return `  if (buttonA) {\n    if (buttonB) {\n      output = HIGH;\n    }\n  }`;
+    }
+    function getStateDiagramMarkup() {
+      return `<div class="state-machine-wrap"><div class="state-line">${[{ name: "RED", tone: "red" }, { name: "GREEN", tone: "green" }, { name: "YELLOW", tone: "yellow" }, { name: "WALK", tone: "purple" }].map(item => `<div class="state-node ${item.tone} ${sim.phase === item.name ? "active" : ""}">${item.name}</div>`).join("")}</div><div class="state-machine-diagram"><div class="state-machine-row"><div class="state-node red ${sim.phase === "RED" ? "active" : ""}">RED</div><div class="state-transition">after 2.4 s</div><div class="state-node green ${sim.phase === "GREEN" ? "active" : ""}">GREEN</div></div><div class="state-machine-row"><div class="state-transition">YELLOW -> RED<br />if no request</div><div class="state-node yellow ${sim.phase === "YELLOW" ? "active" : ""}">YELLOW</div><div class="state-transition">GREEN -> YELLOW<br />after 3.4 s or pedestrian</div></div><div class="state-machine-row bottom"><div class="state-node purple ${sim.phase === "WALK" ? "active" : ""}">WALK</div><div class="state-transition">WALK -> RED<br />after 1.8 s</div></div></div></div>`;
+    }
+    function renderTimelineExtra() {
+      if (currentTopicId !== "state_machines") {
+        timelineExtra.className = "timeline-extra";
+        timelineExtra.innerHTML = "";
+        return;
+      }
+      timelineExtra.className = "timeline-extra show";
+      timelineExtra.innerHTML = `<div class="visual-card"><h3>State diagram</h3><div class="visual-stage diagram-stage">${getStateDiagramMarkup()}</div></div>`;
+    }
+    function renderTopicTabs() {
+      topicTabs.innerHTML = "";
+      for (const topicId of TOPIC_ORDER) {
+        const button = document.createElement("button");
+        button.className = `topic-chip ${topicId === currentTopicId ? "active" : ""}`;
+        button.textContent = TOPIC_INFO[topicId].short;
+        button.addEventListener("click", () => switchTopic(topicId));
+        topicTabs.appendChild(button);
+      }
+    }
+    function switchTopic(topicId) {
+      currentTopicId = topicId;
+      sim = createTopicState(topicId);
+      samples = [];
+      sampleAccum = 0;
+      lastTs = 0;
+      timelinePaused = false;
+      timelineFrozenTime = 0;
+      replaceUrlTopic(topicId);
+      renderTopicTabs();
+      updateTimelinePauseButton();
+      renderTopicShell();
+      sampleSignals();
+      renderVisual();
+      renderTimeline();
+      renderCode();
+    }
+    function renderTopicShell() {
+      const info = TOPIC_INFO[currentTopicId];
+      topicTitle.textContent = info.title;
+      topicDescription.textContent = info.description;
+      codeNote.textContent = info.codeNote;
+      renderControls();
+      updateStatusFromTopic();
+    }
+    function renderControls() {
+      if (currentTopicId === "foundations") {
+        controlsPane.innerHTML = `<div class="control-row"><div class="field-label">Digital input</div><div class="control-inline"><button class="action-btn ${sim.button ? "active" : ""}" id="momentaryButtonBtn">Press and hold</button></div></div>`;
+        bindMomentaryButton(document.getElementById("momentaryButtonBtn"), pressed => {
+          sim.button = pressed;
+          sim.led = sim.button;
+          renderVisual();
+          renderCode();
+          updateStatusFromTopic();
+        });
+        return;
+      }
+      if (currentTopicId === "variables") {
+        controlsPane.innerHTML = `<div class="control-row"><div class="value-line"><span>Sensor variable (← →)</span><span>${sim.sensor}</span></div><input id="sensorSlider" type="range" min="0" max="1023" step="10" value="${sim.sensor}" /></div>`;
+        document.getElementById("sensorSlider").addEventListener("input", event => {
+          sim.sensor = Number(event.target.value);
+          renderControls();
+          renderVisual();
+          renderCode();
+        });
+        return;
+      }
+      if (currentTopicId === "conditionals") {
+        const basicControls = `<div class="control-row"><div class="field-label">Logic operation</div><select id="logicOperation"><option value="and" ${sim.operation === "and" ? "selected" : ""}>AND</option><option value="or" ${sim.operation === "or" ? "selected" : ""}>OR</option><option value="xor" ${sim.operation === "xor" ? "selected" : ""}>XOR</option><option value="nand" ${sim.operation === "nand" ? "selected" : ""}>NAND</option><option value="nor" ${sim.operation === "nor" ? "selected" : ""}>NOR</option></select></div><div class="control-row"><div class="control-inline"><button class="action-btn ${sim.buttonA ? "active" : ""}" id="buttonABtn">Button A</button><button class="action-btn ${sim.buttonB ? "active" : ""}" id="buttonBBtn">Button B</button></div></div>`;
+        const nestedControls = `<div class="control-row"><div class="field-label">Nested combination</div><select id="nestedPattern"><option value="ab" ${sim.nestedPattern === "ab" ? "selected" : ""}>A AND B</option><option value="a_cd" ${sim.nestedPattern === "a_cd" ? "selected" : ""}>A AND (C OR D)</option><option value="ab_or_cd" ${sim.nestedPattern === "ab_or_cd" ? "selected" : ""}>(A AND B) OR (C AND D)</option><option value="a_notb_cd" ${sim.nestedPattern === "a_notb_cd" ? "selected" : ""}>A AND NOT B AND (C OR D)</option></select></div><div class="control-row"><div class="control-inline"><button class="action-btn ${sim.buttonA ? "active" : ""}" id="buttonABtn">Button A</button><button class="action-btn ${sim.buttonB ? "active" : ""}" id="buttonBBtn">Button B</button><button class="action-btn ${sim.buttonC ? "active" : ""}" id="buttonCBtn">Button C</button><button class="action-btn ${sim.buttonD ? "active" : ""}" id="buttonDBtn">Button D</button></div></div>`;
+        const comparisonControls = `<div class="control-row"><div class="field-label">Comparison operator</div><select id="comparisonOperator"><option value="gt" ${sim.compareOp === "gt" ? "selected" : ""}>&gt;</option><option value="gte" ${sim.compareOp === "gte" ? "selected" : ""}>&gt;=</option><option value="lt" ${sim.compareOp === "lt" ? "selected" : ""}>&lt;</option><option value="lte" ${sim.compareOp === "lte" ? "selected" : ""}>&lt;=</option><option value="eq" ${sim.compareOp === "eq" ? "selected" : ""}>==</option><option value="neq" ${sim.compareOp === "neq" ? "selected" : ""}>!=</option></select></div><div class="control-row"><div class="value-line"><span>Sensor (← →)</span><span>${sim.sensor}</span></div><input id="conditionalSensor" type="range" min="0" max="1023" step="10" value="${sim.sensor}" /></div><div class="control-row"><div class="value-line"><span>Threshold (↑ ↓)</span><span>${sim.threshold}</span></div><input id="conditionalThreshold" type="range" min="0" max="1023" step="10" value="${sim.threshold}" /></div>`;
+        controlsPane.innerHTML = `<div class="control-row"><div class="field-label">Conditional mode</div><select id="conditionalMode"><option value="basic" ${sim.mode === "basic" ? "selected" : ""}>Basic if</option><option value="nested" ${sim.mode === "nested" ? "selected" : ""}>Nested if</option><option value="comparison" ${sim.mode === "comparison" ? "selected" : ""}>Comparison</option></select></div>${sim.mode === "comparison" ? comparisonControls : sim.mode === "nested" ? nestedControls : basicControls}`;
+        document.getElementById("conditionalMode").addEventListener("change", event => {
+          sim.mode = event.target.value;
+          samples = [];
+          renderControls();
+          renderVisual();
+          renderCode();
+        });
+        if (sim.mode === "comparison") {
+          document.getElementById("comparisonOperator").addEventListener("change", event => { sim.compareOp = event.target.value; renderControls(); renderVisual(); renderCode(); });
+          document.getElementById("conditionalSensor").addEventListener("input", event => { sim.sensor = Number(event.target.value); renderControls(); renderVisual(); renderCode(); });
+          document.getElementById("conditionalThreshold").addEventListener("input", event => { sim.threshold = Number(event.target.value); renderControls(); renderVisual(); renderCode(); });
+        } else if (sim.mode === "nested") {
+          document.getElementById("nestedPattern").addEventListener("change", event => { sim.nestedPattern = event.target.value; renderControls(); renderVisual(); renderCode(); });
+          document.getElementById("buttonABtn").addEventListener("click", () => { sim.buttonA = !sim.buttonA; renderControls(); renderVisual(); renderCode(); });
+          document.getElementById("buttonBBtn").addEventListener("click", () => { sim.buttonB = !sim.buttonB; renderControls(); renderVisual(); renderCode(); });
+          document.getElementById("buttonCBtn").addEventListener("click", () => { sim.buttonC = !sim.buttonC; renderControls(); renderVisual(); renderCode(); });
+          document.getElementById("buttonDBtn").addEventListener("click", () => { sim.buttonD = !sim.buttonD; renderControls(); renderVisual(); renderCode(); });
+        } else {
+          document.getElementById("logicOperation").addEventListener("change", event => { sim.operation = event.target.value; renderControls(); renderVisual(); renderCode(); });
+          document.getElementById("buttonABtn").addEventListener("click", () => { sim.buttonA = !sim.buttonA; renderControls(); renderVisual(); renderCode(); });
+          document.getElementById("buttonBBtn").addEventListener("click", () => { sim.buttonB = !sim.buttonB; renderControls(); renderVisual(); renderCode(); });
+        }
+        return;
+      }
+      if (currentTopicId === "loops") {
+        controlsPane.innerHTML = `<div class="control-row"><div class="field-label">Loop style</div><select id="loopMode"><option value="for" ${sim.mode === "for" ? "selected" : ""}>for loop</option><option value="while" ${sim.mode === "while" ? "selected" : ""}>while loop</option><option value="do_while" ${sim.mode === "do_while" ? "selected" : ""}>do while</option></select></div><div class="control-row"><div class="value-line"><span>Step period (← →)</span><span>${sim.speed.toFixed(1)} s</span></div><input id="loopSpeed" type="range" min="0.2" max="1.4" step="0.1" value="${sim.speed}" /></div><div class="control-inline"><button class="action-btn ${sim.running ? "active" : ""}" id="toggleLoopBtn">${sim.running ? "Pause sequence" : "Start sequence"}</button><button class="action-btn" id="resetLoopBtn">Reset</button></div>`;
+        document.getElementById("loopMode").addEventListener("change", event => { sim.mode = event.target.value; renderControls(); renderCode(); });
+        document.getElementById("loopSpeed").addEventListener("input", event => { sim.speed = Number(event.target.value); renderControls(); renderCode(); });
+        document.getElementById("toggleLoopBtn").addEventListener("click", () => {
+          sim.running = !sim.running;
+          renderControls();
+          renderVisual();
+          renderTimeline();
+          renderCode();
+        });
+        document.getElementById("resetLoopBtn").addEventListener("click", () => {
+          sim.index = 0;
+          sim.leds = [true, false, false, false];
+          syncLoopLedSignals();
+          sim.accum = 0;
+          sim.cyclePulse = 0;
+          samples = [];
+          sampleAccum = 0;
+          sampleSignals();
+          renderControls();
+          renderVisual();
+          renderTimeline();
+          renderCode();
+        });
+        return;
+      }
+      if (currentTopicId === "adc") {
+        controlsPane.innerHTML = `<div class="control-row"><div class="value-line"><span>ADC resolution</span><span>${sim.adcBits} bits</span></div><input id="adcBitsInput" type="number" min="1" max="16" step="1" value="${sim.adcBits}" /></div><div class="control-row"><div class="value-line"><span>Analog input (← →)</span><span>${sim.voltage.toFixed(2)} V</span></div><input id="adcSlider" type="range" min="0" max="${getAdcReferenceVoltage()}" step="0.01" value="${sim.voltage.toFixed(2)}" /></div>`;
+        document.getElementById("adcBitsInput").addEventListener("change", event => {
+          setAdcBits(event.target.value);
+          renderControls();
+          renderVisual();
+          renderCode();
+        });
+        document.getElementById("adcSlider").addEventListener("input", event => {
+          setAdcVoltage(event.target.value);
+          renderControls();
+          renderVisual();
+          renderCode();
+        });
+        return;
+      }
+      if (currentTopicId === "uart") {
+        controlsPane.innerHTML = `<div class="control-row"><div class="field-label">UART frame</div><input id="uartFrameInput" type="text" value="${escapeHtml(sim.text)}" /></div><div class="control-inline"><button class="action-btn" id="sendUartBtn">Send UART frame</button></div>`;
+        const input = document.getElementById("uartFrameInput");
+        input.addEventListener("input", event => { sim.text = event.target.value; renderCode(); });
+        input.addEventListener("keydown", event => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            sendUartFrame();
+          }
+        });
+        document.getElementById("sendUartBtn").addEventListener("click", sendUartFrame);
+        return;
+      }
+      if (currentTopicId === "i2c") {
+        controlsPane.innerHTML = `<div class="control-row"><div class="field-label">Slave address</div><input id="i2cAddressInput" type="text" value="${escapeHtml(sim.address)}" /></div><div class="control-row"><div class="field-label">Data byte</div><input id="i2cDataInput" type="text" value="${escapeHtml(sim.dataByte)}" /></div><div class="control-inline"><button class="action-btn" id="sendI2cBtn">Write over I2C</button></div>`;
+        document.getElementById("i2cAddressInput").addEventListener("input", event => {
+          sim.address = event.target.value;
+          renderCode();
+        });
+        document.getElementById("i2cDataInput").addEventListener("input", event => {
+          sim.dataByte = event.target.value;
+          renderCode();
+        });
+        document.getElementById("i2cAddressInput").addEventListener("keydown", event => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            sendI2cWrite();
+          }
+        });
+        document.getElementById("i2cDataInput").addEventListener("keydown", event => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            sendI2cWrite();
+          }
+        });
+        document.getElementById("sendI2cBtn").addEventListener("click", sendI2cWrite);
+        return;
+      }
+      if (currentTopicId === "functions") {
+        controlsPane.innerHTML = `<div class="control-row"><div class="field-label">Call a reusable function</div><div class="control-inline"><button class="action-btn" id="callOnceBtn">blinkLed(1)</button><button class="action-btn" id="callTripleBtn">blinkLed(3)</button><button class="action-btn" id="callFiveBtn">blinkLed(5)</button></div></div>`;
+        document.getElementById("callOnceBtn").addEventListener("click", () => queueFunctionBlink(1));
+        document.getElementById("callTripleBtn").addEventListener("click", () => queueFunctionBlink(3));
+        document.getElementById("callFiveBtn").addEventListener("click", () => queueFunctionBlink(5));
+        return;
+      }
+      if (currentTopicId === "interrupts") {
+        controlsPane.innerHTML = `<div class="control-row"><div class="control-inline"><button class="action-btn" id="interruptEventBtn">Trigger event</button><button class="action-btn ${sim.cpuBusy ? "active" : ""}" id="busyCpuBtn">${sim.cpuBusy ? "CPU busy: ON" : "CPU busy: OFF"}</button></div></div>`;
+        document.getElementById("interruptEventBtn").addEventListener("click", triggerInterruptEvent);
+        document.getElementById("busyCpuBtn").addEventListener("click", () => { sim.cpuBusy = !sim.cpuBusy; renderControls(); renderCode(); });
+        return;
+      }
+      if (currentTopicId === "timers") {
+        controlsPane.innerHTML = `<div class="control-row"><div class="field-label">Timing strategy</div><select id="timerMode"><option value="delay" ${sim.mode === "delay" ? "selected" : ""}>delay()</option><option value="millis" ${sim.mode === "millis" ? "selected" : ""}>millis()</option><option value="esp32_timer" ${sim.mode === "esp32_timer" ? "selected" : ""}>ESP32 timer ISR</option></select></div><div class="control-inline"><button class="action-btn ${sim.running ? "active" : ""}" id="timerRunBtn">${sim.running ? "Pause blinker" : "Start blinker"}</button><button class="action-btn ${sim.paused ? "active" : ""}" id="timerPauseBtn">${sim.paused ? "Resume simulation" : "Pause simulation"}</button><button class="action-btn" id="timerEventBtn">Press button event</button></div>`;
+        document.getElementById("timerMode").addEventListener("change", event => {
+          sim.mode = event.target.value;
+          sim.led = false;
+          sim.paused = false;
+          sim.blinkTimer = 0;
+          sim.busyTimer = 0;
+          sim.buttonPulse = 0;
+          sim.servicePulse = 0;
+          sim.timerPulse = 0;
+          sim.handled = 0;
+          sim.missed = 0;
+          sim.isrCount = 0;
+          samples = [];
+          renderControls();
+          renderVisual();
+          renderCode();
+        });
+        document.getElementById("timerRunBtn").addEventListener("click", () => { sim.running = !sim.running; renderControls(); renderCode(); });
+        document.getElementById("timerPauseBtn").addEventListener("click", () => { sim.paused = !sim.paused; renderControls(); renderCode(); updateStatusFromTopic(); });
+        document.getElementById("timerEventBtn").addEventListener("click", triggerTimerEvent);
+        return;
+      }
+      controlsPane.innerHTML = `<div class="control-inline"><button class="action-btn ${sim.auto ? "active" : ""}" id="toggleAutoBtn">${sim.auto ? "Auto cycle ON" : "Auto cycle OFF"}</button><button class="action-btn" id="pedestrianBtn">Request pedestrian</button><button class="action-btn" id="nextStateBtn">Next state</button></div>`;
+      document.getElementById("toggleAutoBtn").addEventListener("click", () => { sim.auto = !sim.auto; renderControls(); renderCode(); });
+      document.getElementById("pedestrianBtn").addEventListener("click", () => { sim.pedestrian = true; renderVisual(); renderCode(); });
+      document.getElementById("nextStateBtn").addEventListener("click", () => { stepStateMachine(true); renderVisual(); renderCode(); });
+    }
+    function queueFunctionBlink(times) {
+      sim.pendingBlinks += times * 2;
+      sim.callPulse = 0.25;
+      sim.lastCall = `blinkLed(${times})`;
+      renderVisual();
+      renderCode();
+    }
+    function sendUartFrame() {
+      const text = sim.text.trim();
+      if (!text) return;
+      sim.sent = text;
+      sim.queue.push({ text, delay: 0.8 });
+      sim.txPulse = 0.35;
+      sim.buffer = sim.queue.length;
+      renderVisual();
+      renderCode();
+    }
+    function sendI2cWrite() {
+      const address = normalizeHexInput(sim.address, 2, "0x3C");
+      const dataByte = normalizeHexInput(sim.dataByte, 2, "0xA5");
+      sim.address = address;
+      sim.dataByte = dataByte;
+      sim.lastWrite = `START -> ${address} -> ${dataByte}`;
+      sim.lastAck = "Waiting for ACK";
+      sim.queue.push({ address, dataByte, delay: 0.6 });
+      sim.sclPulse = 0.35;
+      sim.sdaPulse = 0.35;
+      sim.buffer = sim.queue.length;
+      renderVisual();
+      renderCode();
+    }
+    function triggerInterruptEvent() {
+      sim.queue += 1;
+      sim.eventPulse = 0.22;
+      sim.interruptPulse = 0.35;
+      sim.irqCount += 1;
+      renderVisual();
+      renderCode();
+    }
+    function triggerTimerEvent() {
+      sim.buttonPulse = 0.22;
+      if (sim.mode === "delay" && sim.busyTimer > 0.01) sim.missed += 1;
+      else {
+        sim.handled += 1;
+        sim.servicePulse = 0.28;
+      }
+      renderVisual();
+      renderCode();
+    }
+    function stepStateMachine(forceStep = false) {
+      const thresholds = { RED: 2.4, GREEN: sim.pedestrian ? 1.8 : 3.4, YELLOW: 1.1, WALK: 1.8 };
+      if (!forceStep && sim.phaseTimer < thresholds[sim.phase]) return;
+      if (sim.phase === "RED") sim.phase = "GREEN";
+      else if (sim.phase === "GREEN") sim.phase = "YELLOW";
+      else if (sim.phase === "YELLOW") sim.phase = sim.pedestrian ? "WALK" : "RED";
+      else { sim.phase = "RED"; sim.pedestrian = false; }
+      sim.phaseTimer = 0;
+    }
+    function updateTopicModel(dt) {
+      sim.time += dt;
+      if (currentTopicId === "foundations") { sim.led = sim.button; return; }
+      if (currentTopicId === "variables") { sim.pwm = Math.round(sim.sensor / 1023 * 255); sim.brightness = Math.round(sim.pwm / 255 * 100); return; }
+      if (currentTopicId === "conditionals") {
+        if (sim.mode === "basic") sim.led = evaluateLogicOperation(sim.operation, sim.buttonA, sim.buttonB);
+        else if (sim.mode === "nested") sim.led = evaluateNestedCombination(sim.nestedPattern, sim.buttonA, sim.buttonB, sim.buttonC, sim.buttonD);
+        else sim.led = evaluateComparison(sim.compareOp, sim.sensor, sim.threshold);
+        return;
+      }
+      if (currentTopicId === "loops") {
+        if (sim.cyclePulse > 0) sim.cyclePulse = Math.max(0, sim.cyclePulse - dt);
+        syncLoopLedSignals();
+        if (!sim.running) return;
+        sim.accum += dt;
+        if (sim.accum >= sim.speed) {
+          sim.accum = 0;
+          sim.index = (sim.index + 1) % 4;
+          sim.leds = sim.leds.map((_, index) => index === sim.index);
+          syncLoopLedSignals();
+          if (sim.index === 0) sim.cyclePulse = 0.28;
+        }
+        return;
+      }
+      if (currentTopicId === "adc") { updateAdcOutputs(); return; }
+      if (currentTopicId === "uart") {
+        if (sim.txPulse > 0) sim.txPulse = Math.max(0, sim.txPulse - dt);
+        if (sim.rxPulse > 0) sim.rxPulse = Math.max(0, sim.rxPulse - dt);
+        sim.queue.forEach(frame => frame.delay -= dt);
+        if (sim.queue.length && sim.queue[0].delay <= 0) {
+          const frame = sim.queue.shift();
+          sim.received = `ACK:${frame.text}`;
+          sim.rxPulse = 0.35;
+        }
+        sim.buffer = sim.queue.length;
+        return;
+      }
+      if (currentTopicId === "i2c") {
+        if (sim.sclPulse > 0) sim.sclPulse = Math.max(0, sim.sclPulse - dt);
+        if (sim.sdaPulse > 0) sim.sdaPulse = Math.max(0, sim.sdaPulse - dt);
+        if (sim.ackPulse > 0) sim.ackPulse = Math.max(0, sim.ackPulse - dt);
+        sim.queue.forEach(write => write.delay -= dt);
+        if (sim.queue.length && sim.queue[0].delay <= 0) {
+          const write = sim.queue.shift();
+          sim.lastAck = `ACK from ${write.address}`;
+          sim.ackPulse = 0.35;
+        }
+        sim.buffer = sim.queue.length;
+        return;
+      }
+      if (currentTopicId === "functions") {
+        if (sim.callPulse > 0) sim.callPulse = Math.max(0, sim.callPulse - dt);
+        if (sim.pendingBlinks <= 0) return;
+        sim.ledTimer += dt;
+        if (sim.ledTimer >= 0.28) {
+          sim.ledTimer = 0;
+          sim.led = !sim.led;
+          sim.pendingBlinks -= 1;
+          if (sim.pendingBlinks <= 0) sim.led = false;
+        }
+        return;
+      }
+      if (currentTopicId === "interrupts") {
+        if (sim.eventPulse > 0) sim.eventPulse = Math.max(0, sim.eventPulse - dt);
+        if (sim.interruptPulse > 0) sim.interruptPulse = Math.max(0, sim.interruptPulse - dt);
+        if (sim.pollingPulse > 0) sim.pollingPulse = Math.max(0, sim.pollingPulse - dt);
+        sim.pollTimer += dt;
+        const pollPeriod = sim.cpuBusy ? 1.4 : 0.75;
+        if (sim.queue > 0 && sim.pollTimer >= pollPeriod) {
+          sim.pollTimer = 0;
+          sim.queue -= 1;
+          sim.pollingPulse = 0.35;
+          sim.pollCount += 1;
+        }
+        return;
+      }
+      if (currentTopicId === "timers") {
+        if (sim.buttonPulse > 0) sim.buttonPulse = Math.max(0, sim.buttonPulse - dt);
+        if (sim.servicePulse > 0) sim.servicePulse = Math.max(0, sim.servicePulse - dt);
+        if (sim.timerPulse > 0) sim.timerPulse = Math.max(0, sim.timerPulse - dt);
+        if (sim.busyTimer > 0) sim.busyTimer = Math.max(0, sim.busyTimer - dt);
+        if (!sim.running) return;
+        sim.blinkTimer += dt;
+        if (sim.blinkTimer >= 0.8) {
+          sim.blinkTimer = 0;
+          sim.led = !sim.led;
+          if (sim.mode === "delay") sim.busyTimer = 0.55;
+          if (sim.mode === "esp32_timer") {
+            sim.timerPulse = 0.28;
+            sim.isrCount += 1;
+          }
+        }
+        return;
+      }
+      sim.phaseTimer += dt;
+      if (sim.auto) stepStateMachine(false);
+      sim.red = sim.phase === "RED";
+      sim.yellow = sim.phase === "YELLOW";
+      sim.green = sim.phase === "GREEN" || sim.phase === "WALK";
+    }
+    function getSignals() {
+      if (currentTopicId === "foundations") return [{ key: "button", label: "Button", color: "#63c4ff", min: 0, max: 1, unit: "0/1" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0/1" }];
+      if (currentTopicId === "variables") return [{ key: "sensor", label: "Sensor", color: "#63c4ff", min: 0, max: 1023, unit: "raw" }, { key: "pwm", label: "PWM", color: "#ffcc45", min: 0, max: 255, unit: "8-bit" }, { key: "brightness", label: "Brightness", color: "#2fc76b", min: 0, max: 100, unit: "%" }];
+      if (currentTopicId === "conditionals") return sim.mode === "comparison" ? [{ key: "sensor", label: "Sensor", color: "#63c4ff", min: 0, max: 1023, unit: "raw" }, { key: "threshold", label: "Threshold", color: "#ff9f43", min: 0, max: 1023, unit: "raw" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0/1" }] : sim.mode === "nested" ? [{ key: "buttonA", label: "Input A", color: "#63c4ff", min: 0, max: 1, unit: "0/1" }, { key: "buttonB", label: "Input B", color: "#b98cff", min: 0, max: 1, unit: "0/1" }, { key: "buttonC", label: "Input C", color: "#ff9f43", min: 0, max: 1, unit: "0/1" }, { key: "buttonD", label: "Input D", color: "#ff6b65", min: 0, max: 1, unit: "0/1" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0/1" }] : [{ key: "buttonA", label: "Input A", color: "#63c4ff", min: 0, max: 1, unit: "0/1" }, { key: "buttonB", label: "Input B", color: "#b98cff", min: 0, max: 1, unit: "0/1" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0/1" }];
+      if (currentTopicId === "loops") return [{ key: "running", label: "Run", color: "#63c4ff", min: 0, max: 1, unit: "0/1" }, { key: "index", label: "Index", color: "#ffcc45", min: 0, max: 3, unit: "id" }, { key: "cyclePulse", label: "Cycle", color: "#2fc76b", min: 0, max: 1, unit: "pulse" }, { key: "loopLeds", label: "LEDs", color: "#63c4ff", min: 0, max: 1, unit: "0/1", series: [{ key: "ledYellow", label: "Y", color: "#ffcc45" }, { key: "ledRed", label: "R", color: "#ff6b65" }, { key: "ledGreen", label: "G", color: "#2fc76b" }, { key: "ledBlue", label: "B", color: "#63c4ff" }] }];
+      if (currentTopicId === "adc") return [{ key: "voltage", label: "Voltage", color: "#2fc76b", min: 0, max: getAdcReferenceVoltage(), unit: "V" }, { key: "analog", label: "ADC input", color: "#63c4ff", min: 0, max: getAdcMax(sim.adcBits), unit: "raw" }, { key: "pwm", label: "PWM", color: "#ffcc45", min: 0, max: 255, unit: "8-bit" }];
+      if (currentTopicId === "uart") return [{ key: "txPulse", label: "TX", color: "#63c4ff", min: 0, max: 1, unit: "pulse" }, { key: "rxPulse", label: "RX", color: "#2fc76b", min: 0, max: 1, unit: "pulse" }, { key: "buffer", label: "Queue", color: "#ffcc45", min: 0, max: 5, unit: "msg" }];
+      if (currentTopicId === "i2c") return [{ key: "sdaPulse", label: "SDA", color: "#63c4ff", min: 0, max: 1, unit: "pulse" }, { key: "sclPulse", label: "SCL", color: "#b98cff", min: 0, max: 1, unit: "pulse" }, { key: "ackPulse", label: "ACK", color: "#2fc76b", min: 0, max: 1, unit: "pulse" }];
+      if (currentTopicId === "functions") return [{ key: "callPulse", label: "Call", color: "#b98cff", min: 0, max: 1, unit: "pulse" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0/1" }, { key: "pendingBlinks", label: "Pending", color: "#ffcc45", min: 0, max: 10, unit: "toggles" }];
+      if (currentTopicId === "interrupts") return [{ key: "eventPulse", label: "Event", color: "#63c4ff", min: 0, max: 1, unit: "pulse" }, { key: "interruptPulse", label: "Interrupt", color: "#2fc76b", min: 0, max: 1, unit: "pulse" }, { key: "pollingPulse", label: "Polling", color: "#ff9f43", min: 0, max: 1, unit: "pulse" }, { key: "cpuBusy", label: "CPU busy", color: "#ff6b65", min: 0, max: 1, unit: "0/1" }];
+      if (currentTopicId === "timers") return sim.mode === "esp32_timer" ? [{ key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0/1" }, { key: "buttonPulse", label: "Button", color: "#63c4ff", min: 0, max: 1, unit: "pulse" }, { key: "timerPulse", label: "ISR", color: "#b98cff", min: 0, max: 1, unit: "pulse" }] : [{ key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0/1" }, { key: "buttonPulse", label: "Button", color: "#63c4ff", min: 0, max: 1, unit: "pulse" }, { key: "servicePulse", label: "Service", color: "#ffcc45", min: 0, max: 1, unit: "pulse" }];
+      return [{ key: "red", label: "Red", color: "#ff6b65", min: 0, max: 1, unit: "0/1" }, { key: "yellow", label: "Yellow", color: "#ffcc45", min: 0, max: 1, unit: "0/1" }, { key: "green", label: "Green", color: "#2fc76b", min: 0, max: 1, unit: "0/1" }];
+    }
+    function sampleSignals() {
+      if (timelinePaused) return;
+      const sample = { t: sim.time, values: {} };
+      for (const signal of getSignals()) sample.values[signal.key] = Number(sim[signal.key] || 0);
+      samples.push(sample);
+      samples = samples.filter(item => getTimelineReferenceTime() - item.t <= 12);
+    }
+    function updateStatusFromTopic() {
+      if (currentTopicId === "foundations") setStatus(sim.led ? "LED follows the button" : "Press the input button", sim.led ? "green" : "accent");
+      else if (currentTopicId === "variables") setStatus(`PWM = ${sim.pwm}`, "accent");
+      else if (currentTopicId === "conditionals") setStatus(sim.mode === "comparison" ? `Comparison: sensor ${getComparisonLabel(sim.compareOp)} threshold` : sim.mode === "nested" ? `Nested if | ${getNestedPatternLabel(sim.nestedPattern)}` : `Basic if | ${getLogicOperatorLabel(sim.operation)}`, "accent");
+      else if (currentTopicId === "loops") setStatus(sim.running ? `${sim.mode === "do_while" ? "do while" : sim.mode} loop scanning LED ${sim.index + 1}` : "Sequence paused", sim.running ? "accent" : "yellow");
+      else if (currentTopicId === "adc") setStatus(`${sim.voltage.toFixed(2)} V measured | ${sim.adcBits} bits`, "accent");
+      else if (currentTopicId === "uart") setStatus(sim.queue.length ? "UART frame in transit" : "UART line idle", sim.queue.length ? "accent" : "green");
+      else if (currentTopicId === "i2c") setStatus(sim.queue.length ? "I2C write in progress" : "I2C bus idle", sim.queue.length ? "purple" : "green");
+      else if (currentTopicId === "functions") setStatus(sim.lastCall === "idle" ? "Choose a function call" : `${sim.lastCall} active`, "purple");
+      else if (currentTopicId === "interrupts") setStatus(`IRQ: ${sim.irqCount} | Poll: ${sim.pollCount}`, sim.cpuBusy ? "yellow" : "accent");
+      else if (currentTopicId === "timers") setStatus(sim.paused ? "Simulation paused" : sim.mode === "delay" ? "Blocking timing" : sim.mode === "millis" ? "Non-blocking timing" : "ESP32 timer ISR", sim.paused ? "red" : sim.mode === "delay" ? "yellow" : sim.mode === "millis" ? "green" : "purple");
+      else setStatus(`State = ${sim.phase}${sim.pedestrian ? " | Pedestrian request queued" : ""}`, sim.phase === "YELLOW" ? "yellow" : sim.phase === "RED" ? "red" : "green");
+    }
+    function renderVisual() {
+      if (currentTopicId === "foundations") visualStage.innerHTML = `<div class="visual-wrap"><div class="compare-box">digitalRead(buttonPin) = ${sim.button ? "HIGH" : "LOW"}</div><div class="foundations-io-row"><div class="push-button"><strong>Button</strong><div class="io-button ${sim.button ? "on" : ""}"></div></div><div class="push-button"><strong>LED</strong><div class="led green ${sim.led ? "on" : ""}"></div></div></div></div>`;
+      else if (currentTopicId === "variables") visualStage.innerHTML = `<div class="visual-wrap"><div class="variable-grid"><div class="counter-box"><strong>sensorValue</strong><div>${sim.sensor}</div></div><div class="counter-box"><strong>pwmValue</strong><div>${sim.pwm}</div></div></div><div class="bar-shell"><div class="bar-fill" style="width:${sim.brightness}%"></div></div><div class="rig-row"><div class="sensor-box"><strong>Brightness</strong><div>${sim.brightness}%</div></div><div class="led blue ${sim.brightness > 3 ? "on" : ""}" style="opacity:${0.25 + sim.brightness / 100 * 0.75};"></div></div></div>`;
+      else if (currentTopicId === "conditionals") {
+        if (sim.mode === "comparison") {
+          const compareText = `if(sensorValue ${getComparisonLabel(sim.compareOp)} threshold)`;
+          visualStage.innerHTML = `<div class="visual-wrap"><div class="io-mini-row"><div class="mini-io-card"><strong>Sensor</strong><div>${sim.sensor}</div></div><div class="mini-io-card"><strong>Threshold</strong><div>${sim.threshold}</div></div><div class="mini-io-card"><strong>Main LED</strong><div class="led green small ${sim.led ? "on" : ""}"></div></div></div><div class="compare-box">${compareText}<br />sensor=${sim.sensor} | threshold=${sim.threshold}</div></div>`;
+        } else if (sim.mode === "nested") {
+          const nestedLabel = getNestedPatternLabel(sim.nestedPattern);
+          const comboCards = [
+            { key: "ab", title: "Combo 1", text: "A AND B" },
+            { key: "a_cd", title: "Combo 2", text: "A AND (C OR D)" },
+            { key: "ab_or_cd", title: "Combo 3", text: "(A AND B) OR (C AND D)" },
+            { key: "a_notb_cd", title: "Combo 4", text: "A AND NOT B AND (C OR D)" }
+          ];
+          visualStage.innerHTML = `<div class="visual-wrap"><div class="io-mini-row five"><div class="mini-io-card"><strong>Input A</strong><div class="io-button small ${sim.buttonA ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input B</strong><div class="io-button small ${sim.buttonB ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input C</strong><div class="io-button small ${sim.buttonC ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input D</strong><div class="io-button small ${sim.buttonD ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Main LED</strong><div class="led green small ${sim.led ? "on" : ""}"></div></div></div><div class="compare-box">Nested if using ${nestedLabel}<br />Current inputs: A=${sim.buttonA ? 1 : 0} | B=${sim.buttonB ? 1 : 0} | C=${sim.buttonC ? 1 : 0} | D=${sim.buttonD ? 1 : 0}</div><div class="combo-grid">${comboCards.map(card => `<div class="combo-card ${evaluateNestedCombination(card.key, sim.buttonA, sim.buttonB, sim.buttonC, sim.buttonD) ? "active" : ""} ${card.key === sim.nestedPattern ? "selected" : ""}"><strong>${card.title}</strong><span>${card.text}</span></div>`).join("")}</div></div>`;
+        } else {
+          const operationLabel = getLogicOperatorLabel(sim.operation);
+          const truthRows = [
+            { a: 0, b: 0, out: evaluateLogicOperation(sim.operation, false, false) ? 1 : 0 },
+            { a: 0, b: 1, out: evaluateLogicOperation(sim.operation, false, true) ? 1 : 0 },
+            { a: 1, b: 0, out: evaluateLogicOperation(sim.operation, true, false) ? 1 : 0 },
+            { a: 1, b: 1, out: evaluateLogicOperation(sim.operation, true, true) ? 1 : 0 }
+          ];
+          const activeKey = `${sim.buttonA ? 1 : 0}${sim.buttonB ? 1 : 0}`;
+          const compareText = `if (${operationLabel})`;
+          visualStage.innerHTML = `<div class="conditional-layout"><div class="visual-wrap"><div class="io-mini-row"><div class="mini-io-card"><strong>Input A</strong><div class="io-button small ${sim.buttonA ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input B</strong><div class="io-button small ${sim.buttonB ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Main LED</strong><div class="led green small ${sim.led ? "on" : ""}"></div></div></div><div class="compare-box">${compareText}<br />Current inputs: A=${sim.buttonA ? 1 : 0} | B=${sim.buttonB ? 1 : 0}</div></div><div class="truth-card"><strong>Truth table</strong><table class="truth-table"><thead><tr><th>A</th><th>B</th><th>OUT</th></tr></thead><tbody>${truthRows.map(row => `<tr class="${`${row.a}${row.b}` === activeKey ? "active-row" : ""}"><td>${row.a}</td><td>${row.b}</td><td>${row.out}</td></tr>`).join("")}</tbody></table><div class="truth-note">${operationLabel} is highlighted with the current input row.</div></div></div>`;
+        }
+      } else if (currentTopicId === "loops") visualStage.innerHTML = `<div class="visual-wrap"><div class="compare-box">${sim.mode === "for" ? "for (int i = 0; i < 4; i++)" : sim.mode === "while" ? "while (index < 4)" : "do { ... } while (index < 4)"}<br />Current index = ${sim.index} | GPIO = ${[4, 21, 22, 23][sim.index]}</div><div class="loop-led-grid">${[{ color: "yellow", label: "Yellow", pin: 4 }, { color: "red", label: "Red", pin: 21 }, { color: "green", label: "Green", pin: 22 }, { color: "blue", label: "Blue", pin: 23 }].map((item, index) => `<div class="loop-led-item"><div class="led ${item.color} ${sim.leds[index] ? "on" : ""}"></div><strong>${item.label}</strong><span>GPIO ${item.pin}</span></div>`).join("")}</div></div>`;
+      else if (currentTopicId === "adc") {
+        const adcMax = getAdcMax(sim.adcBits);
+        const percent = Math.round(sim.analog / adcMax * 100);
+        visualStage.innerHTML = `<div class="visual-wrap"><div class="stat-grid"><div class="counter-box"><strong>ADC reading (${sim.adcBits}-bit)</strong><div>${sim.analog}</div></div><div class="counter-box"><strong>Voltage</strong><div>${sim.voltage.toFixed(2)} V</div></div></div><div class="bar-shell"><div class="bar-fill" style="width:${percent}%"></div></div><div class="rig-row"><div class="sensor-box"><strong>PWM</strong><div>${sim.pwm}</div></div><div class="led yellow ${sim.pwm > 5 ? "on" : ""}" style="opacity:${0.25 + sim.pwm / 255 * 0.75};"></div></div></div>`;
+      } else if (currentTopicId === "uart") visualStage.innerHTML = `<div class="visual-wrap"><div class="serial-lanes"><div class="lane"><strong>UART TX</strong><code>${escapeHtml(sim.sent)}</code></div><div class="lane"><strong>UART RX</strong><code>${escapeHtml(sim.received)}</code></div></div><div class="rig-row"><div class="led blue ${sim.txPulse > 0 ? "on" : ""}"></div><div class="compare-box">Queue = ${sim.buffer} frame(s)</div><div class="led green ${sim.rxPulse > 0 ? "on" : ""}"></div></div></div>`;
+      else if (currentTopicId === "i2c") visualStage.innerHTML = `<div class="visual-wrap"><div class="serial-lanes"><div class="lane"><strong>Master write</strong><code>${escapeHtml(sim.lastWrite)}</code></div><div class="lane"><strong>Slave response</strong><code>${escapeHtml(sim.lastAck)}</code></div></div><div class="rig-row"><div class="led blue ${sim.sdaPulse > 0 ? "on" : ""}"></div><div class="led purple ${sim.sclPulse > 0 ? "on" : ""}"></div><div class="led green ${sim.ackPulse > 0 ? "on" : ""}"></div></div><div class="compare-box">Address = ${escapeHtml(normalizeHexInput(sim.address, 2, "0x3C"))} | Data = ${escapeHtml(normalizeHexInput(sim.dataByte, 2, "0xA5"))}<br />Queue = ${sim.buffer} write(s)</div></div>`;
+      else if (currentTopicId === "functions") visualStage.innerHTML = `<div class="visual-wrap"><div class="function-box"><strong>Last call</strong><div>${escapeHtml(sim.lastCall)}</div></div><div class="rig-row"><div class="led purple ${sim.callPulse > 0 ? "on" : ""}"></div><div class="compare-box">pending toggles = ${sim.pendingBlinks}</div><div class="led green ${sim.led ? "on" : ""}"></div></div></div>`;
+      else if (currentTopicId === "interrupts") visualStage.innerHTML = `<div class="visual-wrap"><div class="rig-row"><div class="counter-box"><strong>IRQ count</strong><div>${sim.irqCount}</div></div><div class="counter-box"><strong>Poll count</strong><div>${sim.pollCount}</div></div></div><div class="rig-row"><div class="push-button"><strong>Event</strong><div class="led blue ${sim.eventPulse > 0 ? "on" : ""}"></div></div><div class="push-button"><strong>Interrupt path</strong><div class="led green ${sim.interruptPulse > 0 ? "on" : ""}"></div></div><div class="push-button"><strong>Polling path</strong><div class="led yellow ${sim.pollingPulse > 0 ? "on" : ""}"></div></div></div></div>`;
+      else if (currentTopicId === "timers") visualStage.innerHTML = sim.mode === "esp32_timer" ? `<div class="visual-wrap"><div class="rig-row"><div class="counter-box"><strong>Handled</strong><div>${sim.handled}</div></div><div class="counter-box"><strong>Missed</strong><div>${sim.missed}</div></div><div class="counter-box"><strong>ISR count</strong><div>${sim.isrCount}</div></div></div><div class="rig-row"><div class="push-button"><strong>Button event</strong><div class="led blue ${sim.buttonPulse > 0 ? "on" : ""}"></div></div><div class="push-button"><strong>Loop service</strong><div class="led yellow ${sim.servicePulse > 0 ? "on" : ""}"></div></div><div class="push-button"><strong>Timer ISR</strong><div class="led purple ${sim.timerPulse > 0 ? "on" : ""}"></div></div><div class="push-button"><strong>Blink LED</strong><div class="led green ${sim.led ? "on" : ""}"></div></div></div><div class="compare-box">ESP32 hardware timer triggers an ISR every 400 ms<br />busy = ${sim.busyTimer.toFixed(2)} s</div></div>` : `<div class="visual-wrap"><div class="rig-row"><div class="counter-box"><strong>Handled</strong><div>${sim.handled}</div></div><div class="counter-box"><strong>Missed</strong><div>${sim.missed}</div></div></div><div class="rig-row"><div class="push-button"><strong>Button event</strong><div class="led blue ${sim.buttonPulse > 0 ? "on" : ""}"></div></div><div class="push-button"><strong>Service</strong><div class="led yellow ${sim.servicePulse > 0 ? "on" : ""}"></div></div><div class="push-button"><strong>Blink LED</strong><div class="led green ${sim.led ? "on" : ""}"></div></div></div><div class="compare-box">${sim.mode === "delay" ? "delay() blocks other checks" : "millis() keeps loop responsive"}<br />busy = ${sim.busyTimer.toFixed(2)} s</div></div>`;
+      else visualStage.innerHTML = `<div class="state-machine-wrap"><div class="traffic-light"><div class="led red ${sim.red ? "on" : ""}"></div><div class="led yellow ${sim.yellow ? "on" : ""}"></div><div class="led green ${sim.green ? "on" : ""}"></div></div><div class="state-machine-status"><div class="state-chip"><strong>Current state</strong><span>${sim.phase}</span></div><div class="state-chip"><strong>Pedestrian request</strong><span>${sim.pedestrian ? "QUEUED" : "IDLE"}</span></div></div></div>`;
+      renderTimelineExtra();
+      updateStatusFromTopic();
+    }
+    function roundRect(ctx, x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.arcTo(x + width, y, x + width, y + height, radius);
+      ctx.arcTo(x + width, y + height, x, y + height, radius);
+      ctx.arcTo(x, y + height, x, y, radius);
+      ctx.arcTo(x, y, x + width, y, radius);
+      ctx.closePath();
+    }
+    function formatSignalValue(value, signal) {
+      if (signal.max <= 1) return Number(value).toFixed(1);
+      if (signal.max <= 5) return Number(value).toFixed(2);
+      return Number(value).toFixed(0);
+    }
+    function drawSignalSeries(signal, x, y, width, height) {
+      if (samples.length < 2) return;
+      timelineCtx.strokeStyle = signal.color;
+      timelineCtx.lineWidth = 2.2;
+      timelineCtx.beginPath();
+      samples.forEach((sample, index) => {
+        const age = getTimelineReferenceTime() - sample.t;
+        const px = x + width - Math.min(age / 12, 1) * width;
+        const normalized = (sample.values[signal.key] - signal.min) / (signal.max - signal.min || 1);
+        const py = y + height - normalized * height;
+        if (index === 0) timelineCtx.moveTo(px, py);
+        else timelineCtx.lineTo(px, py);
+      });
+      timelineCtx.stroke();
+      const last = samples[samples.length - 1];
+      timelineCtx.fillStyle = signal.color;
+      timelineCtx.textAlign = "right";
+      timelineCtx.fillText(formatSignalValue(last.values[signal.key], signal), x + width - 8, y + 14);
+    }
+    function drawMultiSeriesSignal(signal, x, y, width, height) {
+      if (samples.length < 2) return;
+      signal.series.forEach(series => {
+        timelineCtx.strokeStyle = series.color;
+        timelineCtx.lineWidth = 2;
+        timelineCtx.beginPath();
+        samples.forEach((sample, index) => {
+          const age = getTimelineReferenceTime() - sample.t;
+          const px = x + width - Math.min(age / 12, 1) * width;
+          const normalized = (sample.values[series.key] - signal.min) / (signal.max - signal.min || 1);
+          const py = y + height - normalized * height;
+          if (index === 0) timelineCtx.moveTo(px, py);
+          else timelineCtx.lineTo(px, py);
+        });
+        timelineCtx.stroke();
+      });
+      const last = samples[samples.length - 1];
+      const activeSeries = signal.series.find(series => last.values[series.key] > 0.5);
+      timelineCtx.fillStyle = activeSeries ? activeSeries.color : "rgba(255,255,255,0.55)";
+      timelineCtx.textAlign = "right";
+      timelineCtx.fillText(activeSeries ? activeSeries.label : "none", x + width - 8, y + 14);
+    }
+    function drawSignalPlot(signal, x, y, width, height) {
+      timelineCtx.fillStyle = "rgba(255,255,255,0.03)";
+      timelineCtx.strokeStyle = "rgba(255,255,255,0.08)";
+      roundRect(timelineCtx, x, y, width, height, 14);
+      timelineCtx.fill();
+      timelineCtx.stroke();
+      timelineCtx.save();
+      timelineCtx.translate(x - 52, y + height / 2);
+      timelineCtx.rotate(-Math.PI / 2);
+      timelineCtx.fillStyle = signal.color;
+      timelineCtx.font = "700 13px Segoe UI";
+      timelineCtx.textAlign = "center";
+      timelineCtx.fillText(signal.label, 0, 0);
+      timelineCtx.restore();
+      timelineCtx.fillStyle = signal.color;
+      timelineCtx.font = "12px Segoe UI";
+      timelineCtx.textAlign = "left";
+      timelineCtx.fillText(`${signal.min}${signal.unit ? ` ${signal.unit}` : ""}`, x - 52, y + height - 12);
+      timelineCtx.fillText(`${signal.max}${signal.unit ? ` ${signal.unit}` : ""}`, x - 52, y + 12);
+      for (let g = 1; g < 5; g++) {
+        const gy = y + (g / 5) * height;
+        timelineCtx.strokeStyle = "rgba(255,255,255,0.10)";
+        timelineCtx.beginPath();
+        timelineCtx.moveTo(x + 4, gy);
+        timelineCtx.lineTo(x + width - 4, gy);
+        timelineCtx.stroke();
+      }
+      for (let t = 0; t <= 12; t += 3) {
+        const gx = x + width - (t / 12) * width;
+        timelineCtx.strokeStyle = "rgba(255,255,255,0.12)";
+        timelineCtx.beginPath();
+        timelineCtx.moveTo(gx, y + 4);
+        timelineCtx.lineTo(gx, y + height - 4);
+        timelineCtx.stroke();
+        timelineCtx.fillStyle = "rgba(255,255,255,0.52)";
+        timelineCtx.textAlign = "center";
+        timelineCtx.fillText(`-${t}s`, gx, y + height + 12);
+      }
+      if (signal.series) drawMultiSeriesSignal(signal, x, y, width, height);
+      else drawSignalSeries(signal, x, y, width, height);
+    }
+    function drawTimelineHoverLine(x, y, height) {
+      timelineCtx.save();
+      timelineCtx.setLineDash([6, 6]);
+      timelineCtx.strokeStyle = "rgba(255,255,255,0.55)";
+      timelineCtx.lineWidth = 1.2;
+      timelineCtx.beginPath();
+      timelineCtx.moveTo(x, y + 4);
+      timelineCtx.lineTo(x, y + height - 4);
+      timelineCtx.stroke();
+      timelineCtx.restore();
+    }
+    function renderTimeline() {
+      const rect = timelineCanvas.getBoundingClientRect();
+      const width = rect.width || timelineCanvas.width;
+      const height = rect.height || timelineCanvas.height;
+      const ratio = window.devicePixelRatio || 1;
+      if (timelineCanvas.width !== Math.round(width * ratio) || timelineCanvas.height !== Math.round(height * ratio)) {
+        timelineCanvas.width = Math.round(width * ratio);
+        timelineCanvas.height = Math.round(height * ratio);
+      }
+      timelineCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      timelineCtx.clearRect(0, 0, width, height);
+      const signals = getSignals();
+      const margin = { left: 76, right: 18, top: 18, bottom: 24 };
+      const gap = 10;
+      const plotHeight = (height - margin.top - margin.bottom - gap * (signals.length - 1)) / signals.length;
+      const plotWidth = width - margin.left - margin.right;
+      timelineCtx.font = "12px Segoe UI";
+      timelineCtx.textAlign = "left";
+      timelineCtx.textBaseline = "middle";
+      for (let i = 0; i < signals.length; i++) {
+        const signal = signals[i];
+        const x = margin.left;
+        const y = margin.top + i * (plotHeight + gap);
+        drawSignalPlot(signal, x, y, plotWidth, plotHeight);
+        if (timelineHoverX !== null && timelineHoverX >= x && timelineHoverX <= x + plotWidth) {
+          drawTimelineHoverLine(timelineHoverX, y, plotHeight);
+        }
+      }
+    }
+    function lineRange(start, end) {
+      const values = [];
+      for (let line = start; line <= end; line++) values.push(line);
+      return values;
+    }
+    function renderCode() {
+      let codeText = "";
+      let activeLines = [];
+      codeNote.textContent = TOPIC_INFO[currentTopicId].codeNote;
+      if (currentTopicId === "foundations") {
+        codeText = `const int buttonPin = 2;\nconst int ledPin = 13;\n\nvoid setup() {\n  pinMode(buttonPin, INPUT_PULLUP);\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  bool buttonPressed = digitalRead(buttonPin) == LOW;\n  digitalWrite(ledPin, buttonPressed ? HIGH : LOW);\n}`;
+        activeLines = [10, 11];
+        renderHighlightedCode(codeText, activeLines);
+        return;
+      }
+      if (currentTopicId === "variables") {
+        codeText = `const int sensorPin = A0;\nconst int ledPin = 9;\n\nvoid setup() {\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  int sensorValue = analogRead(sensorPin);\n  int pwmValue = map(sensorValue, 0, 1023, 0, 255);\n\n  analogWrite(ledPin, pwmValue);\n}`;
+        activeLines = [9, 10, 12];
+        renderHighlightedCode(codeText, activeLines);
+        return;
+      }
+      if (currentTopicId === "conditionals") {
+        if (sim.mode === "basic") {
+          codeText = `const int buttonAPin = 2;\nconst int buttonBPin = 3;\nconst int ledPin = 13;\n\nvoid loop() {\n  bool buttonA = digitalRead(buttonAPin) == LOW;\n  bool buttonB = digitalRead(buttonBPin) == LOW;\n  bool output = ${sim.operation === "or" ? "buttonA || buttonB" : sim.operation === "xor" ? "buttonA != buttonB" : sim.operation === "nand" ? "!(buttonA && buttonB)" : sim.operation === "nor" ? "!(buttonA || buttonB)" : "buttonA && buttonB"};\n\n  if (output) {\n    digitalWrite(ledPin, HIGH);\n  } else {\n    digitalWrite(ledPin, LOW);\n  }\n}`;
+          activeLines = sim.led ? [6, 7, 8, 10, 11] : [6, 7, 8, 10, 12, 13];
+        } else if (sim.mode === "nested") {
+          const nestedSnippet = getNestedLogicSnippet(sim.nestedPattern);
+          const nestedSnippetLines = nestedSnippet.split("\n").length;
+          codeText = `const int buttonAPin = 2;\nconst int buttonBPin = 3;\nconst int buttonCPin = 4;\nconst int buttonDPin = 5;\nconst int ledPin = 13;\n\nvoid loop() {\n  bool buttonA = digitalRead(buttonAPin) == LOW;\n  bool buttonB = digitalRead(buttonBPin) == LOW;\n  bool buttonC = digitalRead(buttonCPin) == LOW;\n  bool buttonD = digitalRead(buttonDPin) == LOW;\n  bool output = LOW;\n\n${nestedSnippet}\n\n  digitalWrite(ledPin, output);\n}`;
+          activeLines = [8, 9, 10, 11, 12, ...lineRange(14, 13 + nestedSnippetLines), 15 + nestedSnippetLines];
+        } else {
+          codeText = `const int sensorPin = A0;\nconst int ledPin = 13;\nconst int threshold = ${sim.threshold};\n\nvoid loop() {\n  int sensorValue = analogRead(sensorPin);\n\n  if (sensorValue ${getComparisonLabel(sim.compareOp)} threshold) {\n    digitalWrite(ledPin, HIGH);\n  } else {\n    digitalWrite(ledPin, LOW);\n  }\n}`;
+          activeLines = sim.led ? [6, 8, 9] : [6, 8, 10, 11];
+        }
+        renderHighlightedCode(codeText, activeLines);
+        return;
+      }
+      if (currentTopicId === "loops") {
+        codeText = sim.mode === "for" ? `const int leds[] = {4, 21, 22, 23}; // yellow, red, green, blue\n\nvoid loop() {\n  for (int i = 0; i < 4; i++) {\n    digitalWrite(leds[i], HIGH);\n    delay(${Math.round(sim.speed * 1000)});\n    digitalWrite(leds[i], LOW);\n  }\n}` : sim.mode === "while" ? `const int leds[] = {4, 21, 22, 23}; // yellow, red, green, blue\n\nvoid loop() {\n  int index = 0;\n\n  while (index < 4) {\n    digitalWrite(leds[index], HIGH);\n    delay(${Math.round(sim.speed * 1000)});\n    digitalWrite(leds[index], LOW);\n    index++;\n  }\n}` : `const int leds[] = {4, 21, 22, 23}; // yellow, red, green, blue\n\nvoid loop() {\n  int index = 0;\n\n  do {\n    digitalWrite(leds[index], HIGH);\n    delay(${Math.round(sim.speed * 1000)});\n    digitalWrite(leds[index], LOW);\n    index++;\n  } while (index < 4);\n}`;
+        activeLines = sim.mode === "for" ? (sim.running ? [4, 5, 6, 7] : [4]) : sim.mode === "while" ? (sim.running ? [4, 6, 7, 8, 9, 10] : [6]) : (sim.running ? [4, 6, 7, 8, 9, 10, 11] : [6, 11]);
+        renderHighlightedCode(codeText, activeLines);
+        return;
+      }
+      if (currentTopicId === "adc") {
+        codeText = `const int analogPin = A0;\nconst int ledPin = 9;\nconst int adcBits = ${sim.adcBits};\nconst long adcMax = (1L << adcBits) - 1;\n\nvoid setup() {\n  Serial.begin(115200);\n  analogReadResolution(adcBits);\n}\n\nvoid loop() {\n  int rawValue = analogRead(analogPin);\n  float voltage = rawValue * (${getAdcReferenceVoltage().toFixed(1)} / adcMax);\n  int pwmValue = map(rawValue, 0, adcMax, 0, 255);\n\n  analogWrite(ledPin, pwmValue);\n  Serial.println(voltage);\n}`;
+        activeLines = [12, 13, 14, 16, 17];
+        renderHighlightedCode(codeText, activeLines);
+        return;
+      }
+      if (currentTopicId === "uart") {
+        codeText = `void setup() {\n  Serial.begin(115200);\n}\n\nvoid loop() {\n  if (Serial.available()) {\n    String frame = Serial.readStringUntil('\\n');\n    Serial.print("ACK:");\n    Serial.println(frame);\n  }\n\n  Serial.println("${sim.text || "HELLO"}");\n  delay(800);\n}`;
+        activeLines = sim.buffer > 0 || sim.rxPulse > 0 ? [6, 7, 8, 9] : [12, 13];
+        renderHighlightedCode(codeText, activeLines);
+        return;
+      }
+      if (currentTopicId === "i2c") {
+        codeText = `#include <Wire.h>\n\nconst uint8_t slaveAddress = ${normalizeHexInput(sim.address, 2, "0x3C")};\nconst uint8_t dataByte = ${normalizeHexInput(sim.dataByte, 2, "0xA5")};\n\nvoid setup() {\n  Wire.begin();\n}\n\nvoid loop() {\n  Wire.beginTransmission(slaveAddress);\n  Wire.write(dataByte);\n  byte status = Wire.endTransmission();\n\n  if (status == 0) {\n    // Slave acknowledged the write.\n  }\n\n  delay(800);\n}`;
+        activeLines = sim.buffer > 0 || sim.ackPulse > 0 || sim.sclPulse > 0 || sim.sdaPulse > 0 ? [11, 12, 13, 15] : [19];
+        renderHighlightedCode(codeText, activeLines);
+        return;
+      }
+      if (currentTopicId === "functions") {
+        codeText = `const int ledPin = 13;\n\nvoid blinkLed(int times, int delayMs) {\n  for (int i = 0; i < times; i++) {\n    digitalWrite(ledPin, HIGH);\n    delay(delayMs);\n    digitalWrite(ledPin, LOW);\n    delay(delayMs);\n  }\n}\n\nvoid loop() {\n  blinkLed(1, 150);\n  blinkLed(3, 150);\n  blinkLed(5, 150);\n}`;
+        activeLines = [3, 4, 5, 6, 7, 8];
+        if (sim.lastCall === "blinkLed(1)") activeLines.push(13);
+        else if (sim.lastCall === "blinkLed(3)") activeLines.push(14);
+        else if (sim.lastCall === "blinkLed(5)") activeLines.push(15);
+        renderHighlightedCode(codeText, activeLines);
+        return;
+      }
+      if (currentTopicId === "interrupts") {
+        codeText = `volatile bool eventFlag = false;\nconst int buttonPin = 2;\nconst int ledPin = 13;\n\nvoid onButtonPress() {\n  eventFlag = true;\n}\n\nvoid setup() {\n  pinMode(buttonPin, INPUT_PULLUP);\n  pinMode(ledPin, OUTPUT);\n  attachInterrupt(digitalPinToInterrupt(buttonPin), onButtonPress, FALLING);\n}\n\nvoid loop() {\n  if (eventFlag) {\n    eventFlag = false;\n    digitalWrite(ledPin, HIGH);\n    delay(120);\n    digitalWrite(ledPin, LOW);\n  }\n}`;
+        activeLines = sim.interruptPulse > 0 || sim.eventPulse > 0 ? [5, 6, 12] : sim.pollingPulse > 0 ? [16, 17, 18, 19, 20] : [16];
+        renderHighlightedCode(codeText, activeLines);
+        return;
+      }
+      if (currentTopicId === "timers") {
+        codeNote.textContent = sim.mode === "delay" ? "delay() blocks the loop, so unrelated work can be missed while the MCU waits." : sim.mode === "millis" ? "millis() keeps the main loop responsive by checking elapsed time without blocking." : "An ESP32 hardware timer can trigger an ISR on schedule, independent of the main loop timing.";
+        if (sim.mode === "delay") {
+          codeText = `const int ledPin = 13;\nconst int buttonPin = 2;\n\nvoid loop() {\n  digitalWrite(ledPin, HIGH);\n  delay(400);\n  digitalWrite(ledPin, LOW);\n  delay(400);\n\n  if (digitalRead(buttonPin) == LOW) {\n    // The event is only checked after the delays.\n  }\n}`;
+          activeLines = sim.running ? [5, 6, 7, 8] : [4];
+          if (sim.buttonPulse > 0) activeLines.push(10);
+        } else if (sim.mode === "millis") {
+          codeText = `const int ledPin = 13;\nconst int buttonPin = 2;\nunsigned long previousBlink = 0;\nbool ledState = false;\n\nvoid loop() {\n  if (millis() - previousBlink >= 400) {\n    previousBlink = millis();\n    ledState = !ledState;\n    digitalWrite(ledPin, ledState);\n  }\n\n  if (digitalRead(buttonPin) == LOW) {\n    // Event is handled without stopping the blink logic.\n  }\n}`;
+          activeLines = sim.running ? [7, 8, 9, 10] : [7];
+          if (sim.buttonPulse > 0) activeLines.push(13);
+        } else {
+          codeText = `const int ledPin = 13;\nconst int buttonPin = 2;\nhw_timer_t *blinkTimer = NULL;\nportMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;\nvolatile bool ledState = false;\nvolatile bool blinkFlag = false;\n\nvoid ARDUINO_ISR_ATTR onTimer() {\n  portENTER_CRITICAL_ISR(&timerMux);\n  ledState = !ledState;\n  blinkFlag = true;\n  portEXIT_CRITICAL_ISR(&timerMux);\n}\n\nvoid setup() {\n  pinMode(ledPin, OUTPUT);\n  pinMode(buttonPin, INPUT_PULLUP);\n\n  blinkTimer = timerBegin(1000000);\n  timerAttachInterrupt(blinkTimer, &onTimer);\n  timerAlarm(blinkTimer, 400000, true, 0);\n}\n\nvoid loop() {\n  if (blinkFlag) {\n    portENTER_CRITICAL(&timerMux);\n    bool copyLedState = ledState;\n    blinkFlag = false;\n    portEXIT_CRITICAL(&timerMux);\n    digitalWrite(ledPin, copyLedState);\n  }\n\n  if (digitalRead(buttonPin) == LOW) {\n    // Loop work can still run while the timer ISR keeps the blink schedule.\n  }\n}`;
+          activeLines = sim.timerPulse > 0 ? [8, 9, 10, 11] : [24, 25, 26, 27, 28];
+          if (sim.buttonPulse > 0) activeLines.push(31);
+        }
+        renderHighlightedCode(codeText, activeLines);
+        return;
+      }
+      codeText = `enum TrafficState {\n  RED,\n  GREEN,\n  YELLOW,\n  WALK\n};\n\nTrafficState currentState = ${sim.phase};\nunsigned long stateStarted = 0;\nbool pedestrianRequest = ${sim.pedestrian ? "true" : "false"};\n\nvoid loop() {\n  switch (currentState) {\n    case RED:\n      if (millis() - stateStarted > 2400) {\n        currentState = GREEN;\n        stateStarted = millis();\n      }\n      break;\n\n    case GREEN:\n      if (pedestrianRequest || millis() - stateStarted > 3400) {\n        currentState = YELLOW;\n        stateStarted = millis();\n      }\n      break;\n\n    case YELLOW:\n      if (millis() - stateStarted > 1100) {\n        currentState = pedestrianRequest ? WALK : RED;\n        stateStarted = millis();\n      }\n      break;\n\n    case WALK:\n      if (millis() - stateStarted > 1800) {\n        pedestrianRequest = false;\n        currentState = RED;\n        stateStarted = millis();\n      }\n      break;\n  }\n}`;
+      activeLines = sim.phase === "RED" ? [13, 14, 15, 16, 17, 19] : sim.phase === "GREEN" ? [13, 21, 22, 23, 24, 26] : sim.phase === "YELLOW" ? [13, 28, 29, 30, 31, 33] : [13, 35, 36, 37, 38, 39, 41];
+      renderHighlightedCode(codeText, activeLines);
+    }
+    copyCodeBtn.addEventListener("click", async () => {
+      const originalLabel = copyCodeBtn.textContent;
+      try {
+        await copyTextToClipboard(codeBlock.dataset.rawCode || codeBlock.textContent);
+        copyCodeBtn.textContent = "Copied";
+        copyCodeBtn.classList.add("copied");
+      } catch (error) {
+        copyCodeBtn.textContent = "Copy failed";
+      }
+      window.setTimeout(() => {
+        copyCodeBtn.textContent = originalLabel;
+        copyCodeBtn.classList.remove("copied");
+      }, 1400);
+    });
+    timelineCanvas.addEventListener("mousemove", event => {
+      const rect = timelineCanvas.getBoundingClientRect();
+      timelineHoverX = event.clientX - rect.left;
+      renderTimeline();
+    });
+    timelineCanvas.addEventListener("mouseleave", () => {
+      timelineHoverX = null;
+      renderTimeline();
+    });
+    toggleTimelineBtn.addEventListener("click", () => {
+      setTimelinePaused(!timelinePaused);
+    });
+    function animate(ts) {
+      if (!lastTs) lastTs = ts;
+      const dt = isSimulationPaused() ? 0 : Math.min(0.05, (ts - lastTs) / 1000);
+      lastTs = ts;
+      updateTopicModel(dt);
+      sampleAccum += dt;
+      if (sampleAccum >= 0.1) {
+        sampleAccum = 0;
+        sampleSignals();
+      }
+      renderVisual();
+      renderTimeline();
+      renderCode();
+      requestAnimationFrame(animate);
+    }
+    window.addEventListener("keydown", event => {
+      if (isTypingTarget(document.activeElement)) return;
+      if (currentTopicId === "loops") {
+        const step = 0.1;
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          sim.speed = clamp(Number((sim.speed - step).toFixed(1)), 0.2, 1.4);
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          sim.speed = clamp(Number((sim.speed + step).toFixed(1)), 0.2, 1.4);
+        } else {
+          return;
+        }
+        renderControls();
+        renderVisual();
+        renderCode();
+        updateStatusFromTopic();
+        return;
+      }
+      if (currentTopicId === "adc") {
+        const step = 0.1;
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          setAdcVoltage(Number((sim.voltage - step).toFixed(2)));
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          setAdcVoltage(Number((sim.voltage + step).toFixed(2)));
+        } else {
+          return;
+        }
+        renderControls();
+        renderVisual();
+        renderCode();
+        updateStatusFromTopic();
+        return;
+      }
+      if (currentTopicId === "variables") {
+        const step = 10;
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          sim.sensor = adjustDiscreteValue(sim.sensor, -1, step, 0, 1023);
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          sim.sensor = adjustDiscreteValue(sim.sensor, 1, step, 0, 1023);
+        } else {
+          return;
+        }
+        renderControls();
+        renderVisual();
+        renderCode();
+        updateStatusFromTopic();
+        return;
+      }
+      if (currentTopicId !== "conditionals" || sim.mode !== "comparison") return;
+      const step = 10;
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        sim.sensor = adjustDiscreteValue(sim.sensor, -1, step, 0, 1023);
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        sim.sensor = adjustDiscreteValue(sim.sensor, 1, step, 0, 1023);
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        sim.threshold = adjustDiscreteValue(sim.threshold, 1, step, 0, 1023);
+      } else if (event.key === "ArrowDown") {
+        event.preventDefault();
+        sim.threshold = adjustDiscreteValue(sim.threshold, -1, step, 0, 1023);
+      } else {
+        return;
+      }
+      renderControls();
+      renderVisual();
+      renderCode();
+      updateStatusFromTopic();
+    });
+    window.addEventListener("resize", renderTimeline);
+    renderTopicTabs();
+    updateTimelinePauseButton();
+    renderTopicShell();
+    sampleSignals();
+    renderVisual();
+    renderTimeline();
+    renderCode();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

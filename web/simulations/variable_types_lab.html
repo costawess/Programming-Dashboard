@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Embedded Programming - Variable Types and Memory Lab</title>
+  <script>document.documentElement.classList.add("theme-dark");</script>
+  <style>
+    :root {
+      --bg: #0f2230;
+      --panel: rgba(20, 36, 48, 0.94);
+      --card: rgba(30, 50, 65, 0.96);
+      --line: #37586d;
+      --text: #edf7fb;
+      --subtle: #9db9c8;
+      --accent: #63c4ff;
+      --accent-soft: rgba(99, 196, 255, 0.14);
+      --green: #2fc76b;
+      --yellow: #ffcc45;
+      --purple: #b98cff;
+      --white: #f6fbff;
+      --button-bg: #173245;
+      --code-bg: #0d1720;
+      --stage-bg: linear-gradient(180deg, #162c3b 0%, #11202a 100%);
+      --shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; font-family: "Segoe UI", Arial, sans-serif; color: var(--text); background: radial-gradient(circle at top, #193549 0%, var(--bg) 58%, #081118 100%); }
+    .app { padding: 22px; display: grid; gap: 18px; }
+    .header, .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 28px; box-shadow: var(--shadow); }
+    .header { padding: 18px 20px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: center; }
+    .back { color: var(--text); text-decoration: none; border: 2px solid var(--line); border-radius: 16px; padding: 12px 16px; background: var(--button-bg); font-weight: 800; }
+    .brand-logo { width: 132px; max-width: 100%; height: auto; object-fit: contain; }
+    .title h1 { margin: 0; font-size: clamp(28px, 3vw, 46px); }
+    .title p { margin: 6px 0 0; color: var(--subtle); line-height: 1.45; }
+    .layout { display: grid; grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1fr) minmax(390px, 1.02fr); gap: 18px; align-items: start; }
+    .panel { padding: 18px; display: grid; gap: 14px; }
+    .panel h2, .panel h3, .panel p { margin: 0; }
+    .topic-head { display: grid; gap: 8px; }
+    .topic-head p, .panel-note, .code-note, .memory-note, .tip-note { color: var(--subtle); line-height: 1.45; }
+    .status-pill { justify-self: start; border: 2px solid var(--accent); border-radius: 999px; padding: 10px 16px; background: var(--accent-soft); color: var(--accent); font-weight: 800; }
+    .controls-card, .visual-card, .memory-card, .code-card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 14px; display: grid; gap: 12px; }
+    .controls-grid, .control-row, .memory-grid, .summary-grid, .value-grid { display: grid; gap: 10px; }
+    .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .value-grid { grid-template-columns: minmax(0, 1fr) 116px; align-items: end; }
+    .field-label, .value-line { color: var(--subtle); font-size: 14px; font-weight: 700; }
+    .value-line { display: flex; justify-content: space-between; gap: 12px; }
+    select, input[type="number"], input[type="text"] { width: 100%; padding: 11px 12px; border-radius: 14px; border: 2px solid var(--line); background: rgba(11, 24, 34, 0.84); color: var(--text); font: inherit; }
+    input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent); }
+    button.action-btn, .copy-btn { appearance: none; border: 2px solid var(--line); border-radius: 14px; padding: 10px 14px; background: var(--button-bg); color: var(--text); font-weight: 800; cursor: pointer; }
+    button.action-btn:hover, .copy-btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--white); }
+    .copy-btn.copied { border-color: var(--green); background: rgba(47, 199, 107, 0.14); }
+    .button-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .summary-box, .interpret-box, .memory-byte, .bit-chip { border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); }
+    .summary-box, .interpret-box { padding: 12px; display: grid; gap: 6px; text-align: center; }
+    .summary-box strong, .interpret-box strong { font-size: 13px; color: var(--subtle); }
+    .summary-box span, .interpret-box span { color: var(--white); font-size: 21px; font-weight: 900; }
+    .memory-stage { min-height: 420px; border-radius: 20px; border: 1px solid var(--line); background: var(--stage-bg); padding: 18px; display: grid; gap: 16px; align-content: start; }
+    .memory-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .memory-byte { padding: 12px 10px; text-align: center; display: grid; gap: 6px; min-height: 112px; align-content: start; }
+    .memory-byte.empty { opacity: 0.35; }
+    .memory-byte strong { color: var(--subtle); font-size: 12px; }
+    .memory-byte .address { color: var(--accent); font-size: 12px; font-weight: 800; }
+    .memory-byte .hex { color: var(--white); font-size: 28px; font-weight: 900; letter-spacing: 0.04em; }
+    .memory-byte .ascii { color: var(--subtle); font-size: 12px; }
+    .bit-row { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+    .bit-chip { padding: 8px 0; text-align: center; font: 800 13px Consolas, monospace; color: var(--subtle); }
+    .bit-chip.one { color: var(--white); background: rgba(99, 196, 255, 0.16); border-color: rgba(99, 196, 255, 0.4); }
+    .interpret-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .memory-path { border-radius: 18px; border: 2px dashed var(--line); padding: 14px; text-align: center; color: var(--subtle); line-height: 1.45; }
+    pre.code-block { margin: 0; min-height: 420px; padding: 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--code-bg); color: #d8f2ff; font-family: Consolas, "Courier New", monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; user-select: text; -webkit-user-select: text; cursor: text; }
+    .code-line { display: block; margin: 0 -6px; padding: 1px 6px; border-radius: 8px; transition: background 0.16s ease, box-shadow 0.16s ease; }
+    .code-line.active { background: rgba(99, 196, 255, 0.16); box-shadow: inset 3px 0 0 rgba(99, 196, 255, 0.9); color: var(--white); }
+    code.inline-chip { display: inline-block; padding: 3px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); color: var(--white); }
+    @media (max-width: 1320px) { .layout { grid-template-columns: 1fr; } }
+    @media (max-width: 760px) {
+      .header { grid-template-columns: 1fr; }
+      .summary-grid, .value-grid, .interpret-grid, .memory-strip { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a class="back" href="../heater_sim.html">Back to menu</a>
+      <div class="title">
+        <h1>Variable Types and Memory Lab</h1>
+        <p>Change the variable type, store a value, and inspect the exact bytes that would be placed in memory.</p>
+      </div>
+      <img class="brand-logo" src="../../assets/branding/hanze_logo.png" alt="Hanze logo" />
+    </header>
+
+    <section class="layout">
+      <section class="panel">
+        <div class="topic-head">
+          <h2>Stored Variable</h2>
+          <p>Different variable types change the numeric range, signed behavior, and the number of bytes reserved in RAM.</p>
+          <div class="status-pill" id="statusPill">uint16_t | 2 bytes</div>
+        </div>
+
+        <div class="controls-card">
+          <h3>Interactive controls</h3>
+          <div class="controls-grid">
+            <div class="control-row">
+              <div class="field-label">Variable type</div>
+              <select id="typeSelect"></select>
+            </div>
+            <div class="control-row">
+              <div class="value-line">
+                <span id="valueLabel">Stored value (← →)</span>
+                <span id="valueReadout">1024</span>
+              </div>
+              <div class="value-grid">
+                <input id="valueSlider" type="range" />
+                <input id="valueInput" type="number" />
+              </div>
+            </div>
+            <div class="button-row" id="presetButtons"></div>
+            <div class="memory-path" id="typeHint"></div>
+          </div>
+        </div>
+
+        <div class="visual-card">
+          <h3>Type summary</h3>
+          <div class="summary-grid">
+            <div class="summary-box"><strong>Type</strong><span id="summaryType">uint16_t</span></div>
+            <div class="summary-box"><strong>Size</strong><span id="summarySize">2 B</span></div>
+            <div class="summary-box"><strong>Range</strong><span id="summaryRange">0..65535</span></div>
+            <div class="summary-box"><strong>Meaning</strong><span id="summaryMeaning">Unsigned integer</span></div>
+          </div>
+          <p class="tip-note" id="typeExplanation"></p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="memory-card">
+          <h2>Memory View</h2>
+          <p class="memory-note">The bytes below are shown in RAM order: lowest address first. ESP32 and most classroom MCUs store multi-byte values in little-endian order.</p>
+          <div class="memory-stage">
+            <div class="memory-strip" id="memoryStrip"></div>
+            <div class="interpret-grid">
+              <div class="interpret-box"><strong>Hex value</strong><span id="hexValue">0x0400</span></div>
+              <div class="interpret-box"><strong>Binary</strong><span id="binaryValue">00000100 00000000</span></div>
+              <div class="interpret-box"><strong>Bytes used</strong><span id="bytesUsed">2</span></div>
+            </div>
+            <div class="memory-path" id="memoryNote"></div>
+            <div class="memory-grid" id="bitGrid"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="code-card">
+          <div class="card-head">
+            <h2>Arduino C++</h2>
+            <button class="copy-btn" id="copyCodeBtn" type="button">Copy code</button>
+          </div>
+          <p class="code-note">The code below declares the selected type, prints its value, and then dumps the raw bytes from memory.</p>
+          <pre class="code-block" id="codeBlock"></pre>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <script>
+    const TYPE_CONFIGS = {
+      bool: {
+        label: "bool",
+        kind: "logic",
+        bytes: 1,
+        min: 0,
+        max: 1,
+        step: 1,
+        defaultValue: 1,
+        meaning: "True or false",
+        rangeLabel: "0 or 1",
+        hint: "A bool reserves one byte, but it only uses logical false (0) or true (1).",
+        explain: "Useful for flags such as buttonPressed, alarmEnabled, or systemReady."
+      },
+      uint8: {
+        label: "uint8_t",
+        kind: "uint8",
+        bytes: 1,
+        min: 0,
+        max: 255,
+        step: 1,
+        defaultValue: 120,
+        meaning: "Unsigned integer",
+        rangeLabel: "0..255",
+        hint: "One byte stores 8 bits, so uint8_t is ideal for PWM values, counters, and packed flags.",
+        explain: "No sign bit is reserved, so the full byte is available for magnitude."
+      },
+      int8: {
+        label: "int8_t",
+        kind: "int8",
+        bytes: 1,
+        min: -128,
+        max: 127,
+        step: 1,
+        defaultValue: -42,
+        meaning: "Signed integer",
+        rangeLabel: "-128..127",
+        hint: "Signed integers use two's complement, so the most significant bit acts as the sign.",
+        explain: "Great when you need small positive and negative values such as offsets or corrections."
+      },
+      uint16: {
+        label: "uint16_t",
+        kind: "uint16",
+        bytes: 2,
+        min: 0,
+        max: 65535,
+        step: 1,
+        defaultValue: 1024,
+        meaning: "Unsigned integer",
+        rangeLabel: "0..65535",
+        hint: "Two bytes allow 16 bits of storage, which is common for ADC samples, timers, and sensor words.",
+        explain: "In little-endian memory, the low byte is stored first and the high byte comes next."
+      },
+      int16: {
+        label: "int16_t",
+        kind: "int16",
+        bytes: 2,
+        min: -32768,
+        max: 32767,
+        step: 1,
+        defaultValue: -1200,
+        meaning: "Signed integer",
+        rangeLabel: "-32768..32767",
+        hint: "The same two bytes can be interpreted as a signed value, which changes how the upper bits are read.",
+        explain: "Very common for signed sensor offsets, PID errors, and intermediate math in embedded code."
+      },
+      float32: {
+        label: "float",
+        kind: "float32",
+        bytes: 4,
+        min: -10,
+        max: 10,
+        step: 0.1,
+        defaultValue: 3.3,
+        meaning: "IEEE-754 float",
+        rangeLabel: "demo range -10.0..10.0",
+        hint: "A float reserves four bytes and stores sign, exponent, and fraction instead of a simple integer count.",
+        explain: "Useful for engineering units such as voltage, temperature, or filtered values with fractional parts."
+      }
+    };
+
+    const BASE_ADDRESS = 0x2000;
+    const state = {
+      typeId: "uint16",
+      value: TYPE_CONFIGS.uint16.defaultValue
+    };
+
+    const statusPill = document.getElementById("statusPill");
+    const typeSelect = document.getElementById("typeSelect");
+    const valueSlider = document.getElementById("valueSlider");
+    const valueInput = document.getElementById("valueInput");
+    const valueLabel = document.getElementById("valueLabel");
+    const valueReadout = document.getElementById("valueReadout");
+    const presetButtons = document.getElementById("presetButtons");
+    const typeHint = document.getElementById("typeHint");
+    const summaryType = document.getElementById("summaryType");
+    const summarySize = document.getElementById("summarySize");
+    const summaryRange = document.getElementById("summaryRange");
+    const summaryMeaning = document.getElementById("summaryMeaning");
+    const typeExplanation = document.getElementById("typeExplanation");
+    const memoryStrip = document.getElementById("memoryStrip");
+    const hexValue = document.getElementById("hexValue");
+    const binaryValue = document.getElementById("binaryValue");
+    const bytesUsed = document.getElementById("bytesUsed");
+    const memoryNote = document.getElementById("memoryNote");
+    const bitGrid = document.getElementById("bitGrid");
+    const codeBlock = document.getElementById("codeBlock");
+    const copyCodeBtn = document.getElementById("copyCodeBtn");
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
+    }
+
+    function renderHighlightedCode(text, activeLines = []) {
+      const normalized = String(text || "");
+      const activeSet = new Set(activeLines);
+      codeBlock.dataset.rawCode = normalized;
+      codeBlock.innerHTML = normalized.split("\n").map((line, index) => {
+        const safeLine = line.length ? escapeHtml(line) : "&nbsp;";
+        return `<span class="code-line ${activeSet.has(index + 1) ? "active" : ""}">${safeLine}</span>`;
+      }).join("");
+    }
+
+    function getCurrentConfig() {
+      return TYPE_CONFIGS[state.typeId];
+    }
+
+    function formatDecimal(value, config) {
+      return config.kind === "float32" ? Number(value).toFixed(2) : String(value);
+    }
+
+    function getPrintableAscii(byte) {
+      return byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : ".";
+    }
+
+    function normalizeValue(typeId, rawValue) {
+      const config = TYPE_CONFIGS[typeId];
+      if (config.kind === "bool") return rawValue ? 1 : 0;
+      if (config.kind === "float32") return Number(clamp(Number(rawValue) || 0, config.min, config.max).toFixed(2));
+      return Math.round(clamp(Number(rawValue) || 0, config.min, config.max));
+    }
+
+    function encodeBytes(typeId, value) {
+      const config = TYPE_CONFIGS[typeId];
+      const buffer = new ArrayBuffer(config.bytes);
+      const view = new DataView(buffer);
+      if (config.kind === "bool" || config.kind === "uint8") view.setUint8(0, value);
+      else if (config.kind === "int8") view.setInt8(0, value);
+      else if (config.kind === "uint16") view.setUint16(0, value, true);
+      else if (config.kind === "int16") view.setInt16(0, value, true);
+      else if (config.kind === "float32") view.setFloat32(0, value, true);
+      return Array.from(new Uint8Array(buffer));
+    }
+
+    function getFullHex(bytes) {
+      return `0x${bytes.slice().reverse().map(byte => byte.toString(16).toUpperCase().padStart(2, "0")).join("")}`;
+    }
+
+    function getFullBinary(bytes) {
+      return bytes.slice().reverse().map(byte => byte.toString(2).padStart(8, "0")).join(" ");
+    }
+
+    function getPresetDefinitions(config) {
+      if (config.kind === "bool") {
+        return [
+          { label: "False", value: 0 },
+          { label: "True", value: 1 }
+        ];
+      }
+      if (config.kind === "float32") {
+        return [
+          { label: "Min", value: config.min },
+          { label: "Zero", value: 0 },
+          { label: "3.3 V", value: 3.3 },
+          { label: "Max", value: config.max }
+        ];
+      }
+      return [
+        { label: "Min", value: config.min },
+        { label: "Zero", value: 0 },
+        { label: "Max", value: config.max }
+      ];
+    }
+
+    function renderTypeOptions() {
+      typeSelect.innerHTML = Object.entries(TYPE_CONFIGS).map(([typeId, config]) => `<option value="${typeId}">${config.label}</option>`).join("");
+      typeSelect.value = state.typeId;
+    }
+
+    function renderPresets(config) {
+      presetButtons.innerHTML = "";
+      getPresetDefinitions(config).forEach(preset => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "action-btn";
+        button.textContent = preset.label;
+        button.addEventListener("click", () => {
+          state.value = normalizeValue(state.typeId, preset.value);
+          renderAll();
+        });
+        presetButtons.appendChild(button);
+      });
+    }
+
+    function renderControls() {
+      const config = getCurrentConfig();
+      valueLabel.textContent = config.kind === "bool" ? "Stored value" : "Stored value (← →)";
+      valueSlider.min = String(config.min);
+      valueSlider.max = String(config.max);
+      valueSlider.step = String(config.step);
+      valueSlider.value = String(state.value);
+      valueInput.min = String(config.min);
+      valueInput.max = String(config.max);
+      valueInput.step = String(config.step);
+      valueInput.value = String(state.value);
+      valueReadout.textContent = formatDecimal(state.value, config);
+      renderPresets(config);
+    }
+
+    function renderSummary(bytes) {
+      const config = getCurrentConfig();
+      statusPill.textContent = `${config.label} | ${config.bytes} byte${config.bytes > 1 ? "s" : ""}`;
+      typeHint.textContent = config.hint;
+      summaryType.textContent = config.label;
+      summarySize.textContent = `${config.bytes} B`;
+      summaryRange.textContent = config.rangeLabel;
+      summaryMeaning.textContent = config.meaning;
+      typeExplanation.textContent = config.explain;
+      hexValue.textContent = getFullHex(bytes);
+      binaryValue.textContent = getFullBinary(bytes);
+      bytesUsed.textContent = String(config.bytes);
+      memoryNote.innerHTML = config.kind === "float32"
+        ? `These 4 bytes are the IEEE-754 encoding of <code class="inline-chip">${formatDecimal(state.value, config)}</code>. The byte at <code class="inline-chip">0x${BASE_ADDRESS.toString(16).toUpperCase()}</code> is the least significant byte in memory.`
+        : `The value <code class="inline-chip">${formatDecimal(state.value, config)}</code> occupies ${config.bytes} byte${config.bytes > 1 ? "s" : ""}. In little-endian order, the least significant byte is written to the lowest address first.`;
+    }
+
+    function renderMemory(bytes) {
+      memoryStrip.innerHTML = "";
+      bitGrid.innerHTML = "";
+
+      for (let index = 0; index < 4; index++) {
+        const byte = bytes[index];
+        const isUsed = index < bytes.length;
+        const byteCard = document.createElement("div");
+        byteCard.className = `memory-byte${isUsed ? "" : " empty"}`;
+        byteCard.innerHTML = isUsed
+          ? `<strong>Byte ${index}</strong><div class="address">0x${(BASE_ADDRESS + index).toString(16).toUpperCase()}</div><div class="hex">${byte.toString(16).toUpperCase().padStart(2, "0")}</div><div class="ascii">ASCII ${getPrintableAscii(byte)}</div>`
+          : `<strong>Byte ${index}</strong><div class="address">0x${(BASE_ADDRESS + index).toString(16).toUpperCase()}</div><div class="hex">--</div><div class="ascii">unused</div>`;
+        memoryStrip.appendChild(byteCard);
+
+        const row = document.createElement("div");
+        row.className = "control-row";
+        const label = document.createElement("div");
+        label.className = "field-label";
+        label.textContent = `Bits in byte ${index}${isUsed ? "" : " (unused)"}`;
+        row.appendChild(label);
+
+        const bits = document.createElement("div");
+        bits.className = "bit-row";
+        if (isUsed) {
+          byte.toString(2).padStart(8, "0").split("").forEach(bit => {
+            const chip = document.createElement("div");
+            chip.className = `bit-chip${bit === "1" ? " one" : ""}`;
+            chip.textContent = bit;
+            bits.appendChild(chip);
+          });
+        } else {
+          for (let bitIndex = 0; bitIndex < 8; bitIndex++) {
+            const chip = document.createElement("div");
+            chip.className = "bit-chip";
+            chip.textContent = "-";
+            bits.appendChild(chip);
+          }
+        }
+        row.appendChild(bits);
+        bitGrid.appendChild(row);
+      }
+    }
+
+    function renderCode(bytes) {
+      const config = getCurrentConfig();
+      const declaration = config.kind === "float32"
+        ? `${config.label} sample = ${Number(state.value).toFixed(2)}f;`
+        : `${config.label} sample = ${state.value};`;
+      const printValueLine = config.kind === "float32"
+        ? `  Serial.println(sample, 2);`
+        : `  Serial.println(sample);`;
+      const codeText = `#include <Arduino.h>\n\n${declaration}\n\nvoid setup() {\n  Serial.begin(115200);\n\n  Serial.print("sizeof(sample) = ");\n  Serial.println(sizeof(sample));\n\n  Serial.print("value = ");\n${printValueLine}\n\n  const uint8_t* raw = reinterpret_cast<const uint8_t*>(&sample);\n  for (size_t i = 0; i < sizeof(sample); i++) {\n    Serial.print("byte[");\n    Serial.print(i);\n    Serial.print("] = 0x");\n    if (raw[i] < 16) Serial.print("0");\n    Serial.println(raw[i], HEX);\n  }\n}\n\nvoid loop() {\n}\n\n// Current bytes in memory: ${bytes.map(byte => `0x${byte.toString(16).toUpperCase().padStart(2, "0")}`).join(", ")}`;
+      renderHighlightedCode(codeText, [3, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 27]);
+    }
+
+    function renderAll() {
+      const bytes = encodeBytes(state.typeId, state.value);
+      renderControls();
+      renderSummary(bytes);
+      renderMemory(bytes);
+      renderCode(bytes);
+    }
+
+    typeSelect.addEventListener("change", event => {
+      state.typeId = event.target.value;
+      state.value = TYPE_CONFIGS[state.typeId].defaultValue;
+      renderAll();
+    });
+
+    valueSlider.addEventListener("input", event => {
+      state.value = normalizeValue(state.typeId, event.target.value);
+      renderAll();
+    });
+
+    valueInput.addEventListener("change", event => {
+      state.value = normalizeValue(state.typeId, event.target.value);
+      renderAll();
+    });
+
+    window.addEventListener("keydown", event => {
+      if (document.activeElement && ["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+      const config = getCurrentConfig();
+      if (config.kind === "bool") return;
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      const direction = event.key === "ArrowRight" ? 1 : -1;
+      state.value = normalizeValue(state.typeId, Number(state.value) + direction * config.step);
+      renderAll();
+    });
+
+    copyCodeBtn.addEventListener("click", async () => {
+      const originalLabel = copyCodeBtn.textContent;
+      try {
+        await navigator.clipboard.writeText(codeBlock.dataset.rawCode || codeBlock.textContent);
+        copyCodeBtn.textContent = "Copied";
+        copyCodeBtn.classList.add("copied");
+      } catch (error) {
+        copyCodeBtn.textContent = "Copy failed";
+      }
+      window.setTimeout(() => {
+        copyCodeBtn.textContent = originalLabel;
+        copyCodeBtn.classList.remove("copied");
+      }, 1400);
+    });
+
+    renderTypeOptions();
+    renderAll();
+  </script>
+</body>
+</html>

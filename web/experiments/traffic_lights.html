@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Embedded Programming - Traffic Lights</title>
+  <script>
+    document.documentElement.classList.add("theme-dark");
+  </script>
+  <style>
+    :root {
+      --bg: #152116;
+      --panel: rgba(24, 36, 25, 0.94);
+      --line: #4a6250;
+      --text: #eff7ef;
+      --subtle: #bfd3c1;
+      --accent: #95d59f;
+      --control-bg: #223227;
+      --control-border: #6e8a75;
+      --card-bg: rgba(35, 50, 38, 0.94);
+      --log-bg: rgba(27, 39, 29, 0.96);
+      --log-item-bg: rgba(39, 56, 42, 0.96);
+      --log-item-border: #648068;
+      --shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
+      --housing: #23333d;
+      --housing-edge: #0a1115;
+      --hood: #19262d;
+      --hood-line: #0b1114;
+      --pole: #d8d3cd;
+      --pole-dark: #918a83;
+      --red: #ff4a43;
+      --yellow: #ffd93a;
+      --green: #2fd060;
+      --off: #1f2c21;
+      --danger: #ff8d82;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top, #37523a 0%, var(--bg) 56%, #0a0f0b 100%);
+    }
+
+    .app {
+      padding: 22px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .header, .panel, .side-panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .header {
+      padding: 18px 20px;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .back {
+      text-decoration: none;
+      color: var(--text);
+      border: 2px solid var(--control-border);
+      border-radius: 16px;
+      padding: 12px 16px;
+      font-weight: 800;
+      background: var(--control-bg);
+    }
+
+    .brand-logo {
+      width: 132px;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .title h1 { margin: 0; font-size: clamp(28px, 3vw, 46px); }
+    .title p { margin: 6px 0 0; color: var(--subtle); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 0.9fr) minmax(280px, 0.82fr) minmax(340px, 0.95fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel,
+    .side-panel {
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+    }
+
+    h2, h3, p { margin: 0; }
+
+    .signal-wrapper {
+      display: grid;
+      justify-items: center;
+      gap: 14px;
+    }
+
+    .traffic-illustration {
+      position: relative;
+      width: min(100%, 300px);
+      min-height: 560px;
+      display: grid;
+      justify-items: center;
+      align-items: start;
+      padding-top: 8px;
+      padding-bottom: 150px;
+    }
+
+    .traffic-light {
+      position: relative;
+      width: 182px;
+      height: 372px;
+      border-radius: 26px;
+      background: linear-gradient(180deg, #324752 0%, var(--housing) 70%, #1b262d 100%);
+      border: 5px solid var(--housing-edge);
+      box-shadow:
+        inset 0 0 0 3px rgba(193, 222, 233, 0.18),
+        0 16px 30px rgba(0, 0, 0, 0.28);
+      padding: 28px 22px;
+      display: grid;
+      gap: 18px;
+      z-index: 2;
+    }
+
+    .traffic-light::before {
+      content: "";
+      position: absolute;
+      inset: -18px auto auto 50%;
+      width: 52px;
+      height: 28px;
+      transform: translateX(-50%);
+      border-radius: 26px 26px 0 0;
+      background: #ece5de;
+      border: 4px solid var(--housing-edge);
+      border-bottom: none;
+    }
+
+    .traffic-light::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -154px;
+      width: 28px;
+      height: 154px;
+      transform: translateX(-50%);
+      background: linear-gradient(180deg, var(--pole) 0%, #f3efea 28%, var(--pole-dark) 100%);
+      border-left: 4px solid rgba(0, 0, 0, 0.26);
+      border-right: 4px solid rgba(255, 255, 255, 0.22);
+      z-index: -1;
+    }
+
+    .lamp-row {
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+
+    .lamp-row::before,
+    .lamp-row::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 44px;
+      height: 52px;
+      transform: translateY(-50%);
+      background: linear-gradient(180deg, #273842 0%, var(--hood) 100%);
+      border: 4px solid var(--hood-line);
+      border-radius: 0 0 20px 20px;
+      z-index: -1;
+    }
+
+    .lamp-row::before {
+      left: -40px;
+      border-right: none;
+      border-radius: 24px 0 24px 24px;
+    }
+
+    .lamp-row::after {
+      right: -40px;
+      border-left: none;
+      border-radius: 0 24px 24px 24px;
+    }
+
+    .lamp {
+      width: 102px;
+      height: 102px;
+      border-radius: 50%;
+      border: 7px solid #040708;
+      background: radial-gradient(circle at 35% 30%, #2d3a2f 0%, #121913 58%, #040608 100%);
+      box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.42);
+      position: relative;
+    }
+
+    .lamp::after {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: 22px;
+      width: 48px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      transform: rotate(-28deg);
+    }
+
+    .lamp.active-red {
+      background: radial-gradient(circle at 38% 34%, #ff765e 0%, var(--red) 42%, #8e100e 100%);
+      box-shadow: 0 0 26px rgba(255, 74, 67, 0.42), inset 0 0 18px rgba(255, 255, 255, 0.08);
+    }
+
+    .lamp.active-yellow {
+      background: radial-gradient(circle at 38% 34%, #fff58d 0%, var(--yellow) 42%, #a77d00 100%);
+      box-shadow: 0 0 26px rgba(255, 217, 58, 0.42), inset 0 0 18px rgba(255, 255, 255, 0.08);
+    }
+
+    .lamp.active-green {
+      background: radial-gradient(circle at 38% 34%, #78ef99 0%, var(--green) 42%, #0d7c32 100%);
+      box-shadow: 0 0 26px rgba(47, 208, 96, 0.42), inset 0 0 18px rgba(255, 255, 255, 0.08);
+    }
+
+    .state-badge,
+    .timer-card,
+    .serial-card,
+    .history-card,
+    .state-card,
+    .history-item,
+    .utility-card {
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 14px;
+    }
+
+    .state-badge {
+      text-align: center;
+      font-weight: 800;
+      border-width: 2px;
+    }
+
+    .timer-card {
+      display: grid;
+      gap: 8px;
+      width: min(100%, 320px);
+      text-align: center;
+    }
+
+    .timer-card strong {
+      font-size: clamp(28px, 4vw, 42px);
+      letter-spacing: 0.03em;
+    }
+
+    .timer-card .sub {
+      color: var(--subtle);
+      font-size: 14px;
+    }
+
+    .state-stack {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .state-diagram {
+      display: grid;
+      justify-items: center;
+      gap: 14px;
+      margin-top: 6px;
+    }
+
+    .state-node {
+      width: min(100%, 220px);
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      text-align: center;
+      padding: 14px 12px;
+      border-radius: 22px;
+      border: 2px solid var(--line);
+      background: rgba(19, 29, 20, 0.58);
+      transition: 0.2s ease;
+    }
+
+    .state-dot {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      border: 6px solid #09100a;
+      background: #253328;
+      box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.42);
+    }
+
+    .state-node strong { font-size: 18px; }
+    .state-node span { color: var(--subtle); font-size: 13px; line-height: 1.4; }
+
+    .state-node.red.active {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(255, 74, 67, 0.12);
+    }
+    .state-node.yellow.active {
+      border-color: var(--yellow);
+      box-shadow: 0 0 0 3px rgba(255, 217, 58, 0.12);
+    }
+    .state-node.green.active {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(47, 208, 96, 0.12);
+    }
+
+    .state-node.red.active .state-dot {
+      background: radial-gradient(circle at 38% 34%, #ff765e 0%, var(--red) 42%, #8e100e 100%);
+      box-shadow: 0 0 20px rgba(255, 74, 67, 0.34);
+    }
+    .state-node.yellow.active .state-dot {
+      background: radial-gradient(circle at 38% 34%, #fff58d 0%, var(--yellow) 42%, #a77d00 100%);
+      box-shadow: 0 0 20px rgba(255, 217, 58, 0.34);
+    }
+    .state-node.green.active .state-dot {
+      background: radial-gradient(circle at 38% 34%, #78ef99 0%, var(--green) 42%, #0d7c32 100%);
+      box-shadow: 0 0 20px rgba(47, 208, 96, 0.34);
+    }
+
+    .state-link {
+      color: var(--subtle);
+      font-weight: 800;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .state-return {
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+      color: var(--subtle);
+      margin-top: 2px;
+    }
+
+    .state-return .arrow {
+      font-size: 28px;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .state-return small {
+      font-size: 12px;
+      letter-spacing: 0.03em;
+    }
+
+    .serial-card,
+    .history-card,
+    .utility-card {
+      display: grid;
+      gap: 12px;
+    }
+
+    .serial-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .tool-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      color: var(--subtle);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 2px solid var(--control-border);
+      background: var(--control-bg);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .uart-test-input {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 2px solid var(--control-border);
+      background: var(--control-bg);
+      color: var(--text);
+      font: inherit;
+    }
+
+    button {
+      appearance: none;
+      border: 2px solid var(--control-border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      background: var(--control-bg);
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .serial-state {
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .serial-hint,
+    .muted {
+      color: var(--subtle);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .shortcut-hint {
+      display: block;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--subtle);
+      opacity: 0.92;
+    }
+
+    .history-list {
+      min-height: 360px;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .history-item {
+      background: var(--log-item-bg);
+      border-color: var(--log-item-border);
+      display: grid;
+      gap: 4px;
+    }
+
+    .history-item strong {
+      font-size: 16px;
+    }
+
+    .history-item span {
+      color: var(--subtle);
+      font-family: Consolas, monospace;
+      font-size: 13px;
+    }
+
+    .history-item.red strong { color: var(--red); }
+    .history-item.yellow strong { color: var(--yellow); }
+    .history-item.green strong { color: var(--green); }
+
+    @media (max-width: 1180px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .header,
+      .serial-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .traffic-illustration {
+        min-height: 520px;
+        padding-bottom: 130px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a class="back" href="../heater_sim.html">Back to menu</a>
+      <div class="title">
+        <h1>Traffic Lights Experiment</h1>
+        <p>UART writes the active color in English. The GUI follows it live, measures the real active time, and stores each finished interval in history.</p>
+      </div>
+      <img class="brand-logo" src="../../assets/branding/hanze_logo.png" alt="Hanze logo" />
+    </header>
+
+    <section class="layout">
+      <section class="panel">
+        <h2>Traffic light</h2>
+        <div class="signal-wrapper">
+          <div class="state-badge" id="stateBadge">Current state: waiting</div>
+          <div class="traffic-illustration">
+            <div class="traffic-light">
+              <div class="lamp-row"><div class="lamp" id="lampRed"></div></div>
+              <div class="lamp-row"><div class="lamp" id="lampYellow"></div></div>
+              <div class="lamp-row"><div class="lamp" id="lampGreen"></div></div>
+            </div>
+          </div>
+          <div class="timer-card">
+            <span class="sub">Active duration</span>
+            <strong id="activeTimer">00:00.000</strong>
+            <span class="sub" id="activeSince">No active color yet.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>State diagram</h2>
+        <div class="state-stack">
+          <p class="muted">Each circle represents a valid UART state. The highlighted one is the current active color.</p>
+          <div class="state-diagram">
+            <div class="state-node red" id="nodeRed">
+              <div class="state-dot"></div>
+              <strong>RED</strong>
+              <span>Stop traffic</span>
+            </div>
+            <div class="state-link">↓</div>
+            <div class="state-node yellow" id="nodeYellow">
+              <div class="state-dot"></div>
+              <strong>YELLOW</strong>
+              <span>Transition / caution</span>
+            </div>
+            <div class="state-link">↓</div>
+            <div class="state-node green" id="nodeGreen">
+              <div class="state-dot"></div>
+              <strong>GREEN</strong>
+              <span>Go traffic</span>
+            </div>
+            <div class="state-return">
+              <div class="arrow">↺</div>
+              <small>back to RED</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <div class="serial-card">
+          <h3>ESP32 / UART</h3>
+          <div class="serial-controls">
+            <label class="field">
+              <span>Baud rate</span>
+              <select id="baudSelect">
+                <option value="115200">115200</option>
+                <option value="9600">9600</option>
+              </select>
+            </label>
+            <button id="serialToggleBtn" type="button">Connect ESP32<small class="shortcut-hint">(Key C)</small></button>
+          </div>
+          <div class="serial-state" id="serialStatus">Not connected</div>
+          <div class="serial-hint" id="serialHint">Accepted UART lines: `RED`, `YELLOW`, `GREEN`, and also `AMBER` as an alias for yellow.</div>
+        </div>
+
+        <div class="utility-card">
+          <h3>History tools</h3>
+          <div class="tool-row">
+            <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example RED, then press Enter" />
+            <button id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
+          </div>
+          <div class="muted">Every finished color interval is stored with milliseconds when the next valid color arrives.</div>
+        </div>
+
+        <div class="history-card">
+          <h2>History</h2>
+          <div class="history-list" id="historyList"></div>
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <script src="../shared/sound_fx.js"></script>
+  <script src="../shared/web_serial_bridge.js"></script>
+  <script>
+    const lampEls = {
+      RED: document.getElementById("lampRed"),
+      YELLOW: document.getElementById("lampYellow"),
+      GREEN: document.getElementById("lampGreen")
+    };
+
+    const nodeEls = {
+      RED: document.getElementById("nodeRed"),
+      YELLOW: document.getElementById("nodeYellow"),
+      GREEN: document.getElementById("nodeGreen")
+    };
+
+    const stateBadge = document.getElementById("stateBadge");
+    const activeTimer = document.getElementById("activeTimer");
+    const activeSince = document.getElementById("activeSince");
+    const baudSelect = document.getElementById("baudSelect");
+    const serialToggleBtn = document.getElementById("serialToggleBtn");
+    const serialStatus = document.getElementById("serialStatus");
+    const serialHint = document.getElementById("serialHint");
+    const uartTestInput = document.getElementById("uartTestInput");
+    const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+    const historyList = document.getElementById("historyList");
+
+    const state = {
+      currentColor: null,
+      activeSinceMs: null,
+      activeSinceLabel: null,
+      serialConnected: false,
+      history: [
+        { color: "SYSTEM", durationMs: 0, label: "Traffic Lights HTML experiment ready.", meta: "Waiting for the first color." }
+      ]
+    };
+
+    const serialBridge = new WebSerialLineBridge({
+      onLine: handleSerialLine,
+      onStatus: handleSerialStatus,
+      onError: error => {
+        addHistoryEntry({
+          color: "SYSTEM",
+          durationMs: 0,
+          label: `UART error: ${error.message || error}`,
+          meta: "Check the serial connection."
+        });
+        updateBadge("UART error", "danger");
+      }
+    });
+
+    function normalizeColor(input) {
+      const raw = String(input || "").trim().toUpperCase();
+      if (raw === "RED") return "RED";
+      if (raw === "YELLOW" || raw === "AMBER") return "YELLOW";
+      if (raw === "GREEN") return "GREEN";
+      return null;
+    }
+
+    function formatDuration(ms) {
+      const totalMs = Math.max(0, Math.round(ms));
+      const minutes = Math.floor(totalMs / 60000);
+      const seconds = Math.floor((totalMs % 60000) / 1000);
+      const millis = totalMs % 1000;
+      return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(millis).padStart(3, "0")}`;
+    }
+
+    function timestampLabel(date) {
+      return date.toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+    }
+
+    function addHistoryEntry(entry) {
+      state.history.push(entry);
+      if (state.history.length > 24) state.history.shift();
+      renderHistory();
+    }
+
+    function renderHistory() {
+      historyList.innerHTML = "";
+      for (const item of [...state.history].reverse()) {
+        const card = document.createElement("div");
+        card.className = `history-item ${String(item.color || "").toLowerCase()}`;
+
+        const title = document.createElement("strong");
+        title.textContent = item.label;
+        card.appendChild(title);
+
+        const duration = document.createElement("span");
+        duration.textContent = item.durationMs > 0 ? `Active for ${formatDuration(item.durationMs)}` : item.meta;
+        card.appendChild(duration);
+
+        if (item.durationMs > 0 && item.meta) {
+          const meta = document.createElement("span");
+          meta.textContent = item.meta;
+          card.appendChild(meta);
+        }
+
+        historyList.appendChild(card);
+      }
+    }
+
+    function updateBadge(message, tone = "normal") {
+      stateBadge.textContent = message;
+      if (tone === "danger") {
+        stateBadge.style.color = "var(--danger)";
+        stateBadge.style.borderColor = "var(--danger)";
+        stateBadge.style.background = "rgba(255, 141, 130, 0.12)";
+      } else if (tone === "red") {
+        stateBadge.style.color = "var(--red)";
+        stateBadge.style.borderColor = "var(--red)";
+        stateBadge.style.background = "rgba(255, 74, 67, 0.12)";
+      } else if (tone === "yellow") {
+        stateBadge.style.color = "var(--yellow)";
+        stateBadge.style.borderColor = "var(--yellow)";
+        stateBadge.style.background = "rgba(255, 217, 58, 0.12)";
+      } else if (tone === "green") {
+        stateBadge.style.color = "var(--green)";
+        stateBadge.style.borderColor = "var(--green)";
+        stateBadge.style.background = "rgba(47, 208, 96, 0.12)";
+      } else {
+        stateBadge.style.color = "var(--accent)";
+        stateBadge.style.borderColor = "var(--accent)";
+        stateBadge.style.background = "rgba(149, 213, 159, 0.12)";
+      }
+    }
+
+    function updateSerialUi() {
+      if (!serialBridge.supported) {
+        serialToggleBtn.disabled = true;
+        serialStatus.textContent = "Web Serial unavailable";
+        serialHint.textContent = "Open this page in Chrome or Edge on localhost or https.";
+        return;
+      }
+
+      serialToggleBtn.disabled = false;
+      serialToggleBtn.innerHTML = `${state.serialConnected ? "Disconnect" : "Connect ESP32"}<small class="shortcut-hint">(Key C)</small>`;
+      serialStatus.textContent = state.serialConnected ? `Connected at ${baudSelect.value} baud` : "Not connected";
+      serialHint.textContent = state.serialConnected
+        ? "Incoming UART lines now control the active traffic light state."
+        : "Accepted UART lines: RED, YELLOW, GREEN, and AMBER.";
+    }
+
+    function renderActiveState() {
+      for (const [key, lamp] of Object.entries(lampEls)) {
+        lamp.className = "lamp";
+        nodeEls[key].classList.remove("active");
+      }
+
+      if (!state.currentColor) {
+        updateBadge(state.serialConnected ? "Waiting for UART color" : "Waiting for UART connection", "normal");
+        activeSince.textContent = "No active color yet.";
+        return;
+      }
+
+      lampEls[state.currentColor].classList.add(`active-${state.currentColor.toLowerCase()}`);
+      nodeEls[state.currentColor].classList.add("active");
+      updateBadge(`Current state: ${state.currentColor}`, state.currentColor.toLowerCase());
+      activeSince.textContent = `Active since ${state.activeSinceLabel}`;
+    }
+
+    function commitFinishedInterval(nextColor) {
+      if (!state.currentColor || state.activeSinceMs === null) return;
+
+      const durationMs = performance.now() - state.activeSinceMs;
+      addHistoryEntry({
+        color: state.currentColor,
+        durationMs,
+        label: `${state.currentColor} finished`,
+        meta: `Changed to ${nextColor} at ${timestampLabel(new Date())}`
+      });
+    }
+
+    function setColor(color, source = "UART") {
+      const normalized = normalizeColor(color);
+      if (!normalized) return false;
+
+      if (normalized === state.currentColor) return true;
+
+      commitFinishedInterval(normalized);
+
+      state.currentColor = normalized;
+      state.activeSinceMs = performance.now();
+      state.activeSinceLabel = timestampLabel(new Date());
+      renderActiveState();
+
+      addHistoryEntry({
+        color: normalized,
+        durationMs: 0,
+        label: `${source}: ${normalized}`,
+        meta: "Current interval started."
+      });
+
+      return true;
+    }
+
+    function handleSerialLine(line) {
+      const normalized = normalizeColor(line);
+      if (normalized) {
+        setColor(normalized, "UART");
+      } else {
+        addHistoryEntry({
+          color: "SYSTEM",
+          durationMs: 0,
+          label: `Ignored UART line: ${line}`,
+          meta: "Use RED, YELLOW, GREEN, or AMBER."
+        });
+      }
+    }
+
+    function handleSerialStatus(status) {
+      state.serialConnected = status === "connected";
+      updateSerialUi();
+      addHistoryEntry({
+        color: "SYSTEM",
+        durationMs: 0,
+        label: state.serialConnected
+          ? `UART connected at ${baudSelect.value} baud.`
+          : "UART disconnected.",
+        meta: state.serialConnected ? "Waiting for the first valid color." : "The last active state remains visible."
+      });
+      renderActiveState();
+    }
+
+    async function toggleSerialConnection() {
+      serialToggleBtn.disabled = true;
+      try {
+        if (state.serialConnected) {
+          await serialBridge.disconnect();
+        } else {
+          await serialBridge.connect(Number(baudSelect.value));
+        }
+      } catch (error) {
+        addHistoryEntry({
+          color: "SYSTEM",
+          durationMs: 0,
+          label: error.message || String(error),
+          meta: "Unable to change the UART connection."
+        });
+        updateBadge("Connection failed", "danger");
+        updateSerialUi();
+      }
+    }
+
+    function clearHistory() {
+      state.history = [{
+        color: "SYSTEM",
+        durationMs: 0,
+        label: "History cleared.",
+        meta: "The active color remains unchanged."
+      }];
+      renderHistory();
+    }
+
+    function submitTestUartLine() {
+      const line = uartTestInput.value.trim();
+      if (!line) return;
+      handleSerialLine(line);
+      uartTestInput.value = "";
+    }
+
+    function tick() {
+      if (state.currentColor && state.activeSinceMs !== null) {
+        activeTimer.textContent = formatDuration(performance.now() - state.activeSinceMs);
+      } else {
+        activeTimer.textContent = "00:00.000";
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    serialToggleBtn.addEventListener("click", toggleSerialConnection);
+    clearHistoryBtn.addEventListener("click", clearHistory);
+    uartTestInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submitTestUartLine();
+      }
+    });
+
+    window.addEventListener("keydown", event => {
+      const tag = document.activeElement?.tagName || "";
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      const key = event.key.toLowerCase();
+      if (key === "c") {
+        event.preventDefault();
+        toggleSerialConnection();
+      } else if (key === "h") {
+        event.preventDefault();
+        clearHistory();
+      }
+    });
+
+    updateSerialUi();
+    renderHistory();
+    renderActiveState();
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
