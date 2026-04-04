@@ -466,10 +466,10 @@
       return Boolean(a && b);
     }
     function getNestedPatternLabel(pattern) {
-      if (pattern === "a_cd") return "A AND (C OR D)";
-      if (pattern === "ab_or_cd") return "(A AND B) OR (C AND D)";
-      if (pattern === "a_notb_cd") return "A AND NOT B AND (C OR D)";
-      return "A AND B";
+      if (pattern === "a_cd") return "A && (C || D)";
+      if (pattern === "ab_or_cd") return "(A && B) || (C && D)";
+      if (pattern === "a_notb_cd") return "A && !B && (C || D)";
+      return "A && B";
     }
     function evaluateComparison(compareOp, left, right) {
       if (compareOp === "gte") return left >= right;
@@ -597,7 +597,7 @@
         return `<div class="state-machine-wrap"><div class="state-machine-status"><div class="state-chip"><strong>Current state</strong><span>${sim.elevatorPhase}</span></div><div class="state-chip"><strong>Target floor</strong><span>F${sim.elevatorTargetFloor}</span></div></div><svg class="state-diagram-svg" viewBox="0 0 460 330" aria-label="Elevator state diagram"><defs><marker id="elevatorArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="rgba(157, 185, 200, 0.72)"></path></marker></defs><path class="diagram-path" d="M134 98 C182 42 278 42 326 98" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="38">target above</text><path class="diagram-path" d="M360 138 C396 156 396 194 360 212" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="408" y="178">arrive</text><path class="diagram-path" d="M326 252 C278 302 182 302 134 252" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="314">doors close</text><path class="diagram-path" d="M100 212 C64 194 64 156 100 138" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="52" y="178">target below</text><path class="diagram-path dashed" d="M134 238 C188 216 272 216 326 238" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="214">same floor request</text><text class="diagram-note" x="230" y="292">Floors: F0, F1, F2, F3</text>${getElevatorStateCircleMarkup("IDLE", 100, 100, "cyan", sim.elevatorPhase === "IDLE")}${getElevatorStateCircleMarkup("UP", 360, 100, "green", sim.elevatorPhase === "MOVING_UP")}${getElevatorStateCircleMarkup("OPEN", 360, 250, "yellow", sim.elevatorPhase === "DOOR_OPEN")}${getElevatorStateCircleMarkup("DOWN", 100, 250, "orange", sim.elevatorPhase === "MOVING_DOWN")}</svg></div>`;
       }
       const activeTone = getStateTone(sim.phase);
-      return `<div class="state-machine-wrap"><div class="state-machine-status"><div class="state-chip"><strong>Current state</strong><span>${sim.phase}</span></div><div class="state-chip"><strong>Pedestrian request</strong><span>${sim.pedestrian ? "QUEUED" : "IDLE"}</span></div></div><svg class="state-diagram-svg" viewBox="0 0 460 330" aria-label="Traffic light state diagram"><defs><marker id="trafficArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="rgba(157, 185, 200, 0.72)"></path></marker></defs><path class="diagram-path" d="M126 86 C176 34 284 34 334 86" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="230" y="34">after 2.4 s</text><path class="diagram-path" d="M370 126 C404 146 404 194 370 214" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="414" y="168">after 3.4 s</text><text class="diagram-note" x="414" y="184">or pedestrian</text><path class="diagram-path" d="M334 254 C282 304 178 304 126 254" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="230" y="314">if no request</text><path class="diagram-path dashed" d="M326 238 C268 214 192 214 134 238" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="230" y="212">if pedestrian</text><path class="diagram-path" d="M90 214 C56 194 56 146 90 126" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="46" y="168">after 1.8 s</text>${getStateCircleMarkup("RED", 90, 90, "red", sim.phase === "RED")}${getStateCircleMarkup("GREEN", 370, 90, "green", sim.phase === "GREEN")}${getStateCircleMarkup("YELLOW", 370, 250, "yellow", sim.phase === "YELLOW")}${getStateCircleMarkup("WALK", 90, 250, "purple", sim.phase === "WALK")}<text class="diagram-note" x="230" y="292" style="fill: var(--${activeTone});">${sim.phase} is active and highlighted.</text></svg></div>`;
+      return `<div class="state-machine-wrap"><div class="state-machine-status"><div class="state-chip"><strong>Current state</strong><span>${sim.phase}</span></div><div class="state-chip"><strong>Pedestrian request</strong><span>${sim.pedestrian ? "QUEUED" : "IDLE"}</span></div></div><svg class="state-diagram-svg" viewBox="0 0 460 330" aria-label="Traffic light state diagram"><defs><marker id="trafficArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="rgba(157, 185, 200, 0.72)"></path></marker></defs><path class="diagram-path" d="M126 86 C176 34 284 34 334 86" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="230" y="34">after 2.4 s</text><path class="diagram-path" d="M370 126 C404 146 404 194 370 214" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="414" y="164">after 3.4 s</text><text class="diagram-note" x="414" y="180">or pedestrian</text><path class="diagram-path dashed" d="M326 238 C268 214 192 214 134 238" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="230" y="212">if pedestrian</text><path class="diagram-path" d="M334 226 C268 164 190 132 124 112" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="232" y="148">if no request</text><path class="diagram-path" d="M90 214 C56 194 56 146 90 126" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="46" y="168">after 1.8 s</text>${getStateCircleMarkup("RED", 90, 90, "red", sim.phase === "RED")}${getStateCircleMarkup("GREEN", 370, 90, "green", sim.phase === "GREEN")}${getStateCircleMarkup("YELLOW", 370, 250, "yellow", sim.phase === "YELLOW")}${getStateCircleMarkup("WALK", 90, 250, "purple", sim.phase === "WALK")}<text class="diagram-note" x="230" y="294" style="fill: var(--${activeTone});">${sim.phase} is active and highlighted.</text></svg></div>`;
     }
     function renderTimelineExtra() {
       if (currentTopicId !== "state_machines") {
@@ -678,7 +678,7 @@
       }
       if (currentTopicId === "conditionals") {
         const basicControls = `<div class="control-row"><div class="field-label">Logic operation</div><select id="logicOperation"><option value="and" ${sim.operation === "and" ? "selected" : ""}>AND</option><option value="or" ${sim.operation === "or" ? "selected" : ""}>OR</option><option value="xor" ${sim.operation === "xor" ? "selected" : ""}>XOR</option><option value="nand" ${sim.operation === "nand" ? "selected" : ""}>NAND</option><option value="nor" ${sim.operation === "nor" ? "selected" : ""}>NOR</option></select></div><div class="control-row"><div class="control-inline"><button class="action-btn ${sim.buttonA ? "active" : ""}" id="buttonABtn">Button A</button><button class="action-btn ${sim.buttonB ? "active" : ""}" id="buttonBBtn">Button B</button></div></div>`;
-        const nestedControls = `<div class="control-row"><div class="field-label">Nested combination</div><select id="nestedPattern"><option value="ab" ${sim.nestedPattern === "ab" ? "selected" : ""}>A AND B</option><option value="a_cd" ${sim.nestedPattern === "a_cd" ? "selected" : ""}>A AND (C OR D)</option><option value="ab_or_cd" ${sim.nestedPattern === "ab_or_cd" ? "selected" : ""}>(A AND B) OR (C AND D)</option><option value="a_notb_cd" ${sim.nestedPattern === "a_notb_cd" ? "selected" : ""}>A AND NOT B AND (C OR D)</option></select></div><div class="control-row"><div class="control-inline"><button class="action-btn ${sim.buttonA ? "active" : ""}" id="buttonABtn">Button A</button><button class="action-btn ${sim.buttonB ? "active" : ""}" id="buttonBBtn">Button B</button><button class="action-btn ${sim.buttonC ? "active" : ""}" id="buttonCBtn">Button C</button><button class="action-btn ${sim.buttonD ? "active" : ""}" id="buttonDBtn">Button D</button></div></div>`;
+        const nestedControls = `<div class="control-row"><div class="field-label">Nested combination</div><select id="nestedPattern"><option value="ab" ${sim.nestedPattern === "ab" ? "selected" : ""}>A && B</option><option value="a_cd" ${sim.nestedPattern === "a_cd" ? "selected" : ""}>A && (C || D)</option><option value="ab_or_cd" ${sim.nestedPattern === "ab_or_cd" ? "selected" : ""}>(A && B) || (C && D)</option><option value="a_notb_cd" ${sim.nestedPattern === "a_notb_cd" ? "selected" : ""}>A && !B && (C || D)</option></select></div><div class="control-row"><div class="control-inline"><button class="action-btn ${sim.buttonA ? "active" : ""}" id="buttonABtn">Button A</button><button class="action-btn ${sim.buttonB ? "active" : ""}" id="buttonBBtn">Button B</button><button class="action-btn ${sim.buttonC ? "active" : ""}" id="buttonCBtn">Button C</button><button class="action-btn ${sim.buttonD ? "active" : ""}" id="buttonDBtn">Button D</button></div></div>`;
         const comparisonControls = `<div class="control-row"><div class="field-label">Comparison operator</div><select id="comparisonOperator"><option value="gt" ${sim.compareOp === "gt" ? "selected" : ""}>&gt;</option><option value="gte" ${sim.compareOp === "gte" ? "selected" : ""}>&gt;=</option><option value="lt" ${sim.compareOp === "lt" ? "selected" : ""}>&lt;</option><option value="lte" ${sim.compareOp === "lte" ? "selected" : ""}>&lt;=</option><option value="eq" ${sim.compareOp === "eq" ? "selected" : ""}>==</option><option value="neq" ${sim.compareOp === "neq" ? "selected" : ""}>!=</option></select></div><div class="control-row"><div class="value-line"><span>Sensor (← →)</span><span>${sim.sensor}</span></div><input id="conditionalSensor" type="range" min="0" max="1023" step="10" value="${sim.sensor}" /></div><div class="control-row"><div class="value-line"><span>Threshold (↑ ↓)</span><span>${sim.threshold}</span></div><input id="conditionalThreshold" type="range" min="0" max="1023" step="10" value="${sim.threshold}" /></div>`;
         controlsPane.innerHTML = `<div class="control-row"><div class="field-label">Conditional mode</div><select id="conditionalMode"><option value="basic" ${sim.mode === "basic" ? "selected" : ""}>Basic if</option><option value="nested" ${sim.mode === "nested" ? "selected" : ""}>Nested if</option><option value="comparison" ${sim.mode === "comparison" ? "selected" : ""}>Comparison</option></select></div>${sim.mode === "comparison" ? comparisonControls : sim.mode === "nested" ? nestedControls : basicControls}`;
         document.getElementById("conditionalMode").addEventListener("change", event => {
@@ -870,11 +870,6 @@
         txBitIndex: 0,
         txTimer: getUartBitDuration(),
         txDone: false,
-        rxDelay: 0.24,
-        rxGroupIndex: 0,
-        rxBitIndex: 0,
-        rxTimer: getUartBitDuration(),
-        rxStarted: false,
         rxDone: false
       });
       sim.txPulse = 0.35;
@@ -972,55 +967,36 @@
         sim.txBits = sim.lastSentBits;
         sim.rxBits = sim.lastReceivedBits;
 
-        const txFrame = sim.queue.find(frame => !frame.txDone);
-        if (txFrame) {
-          const txGroup = txFrame.groups[txFrame.txGroupIndex];
-          sim.txBit = txGroup[txFrame.txBitIndex];
-          sim.txBitIndex = txFrame.txBitIndex;
-          sim.txBits = txFrame.groupedBits;
-          txFrame.txTimer -= dt;
-          if (txFrame.txTimer <= 0) {
-            txFrame.txTimer += getUartBitDuration();
-            txFrame.txBitIndex += 1;
+        const activeFrame = sim.queue.find(frame => !frame.txDone);
+        if (activeFrame) {
+          const txGroup = activeFrame.groups[activeFrame.txGroupIndex];
+          const currentBit = txGroup[activeFrame.txBitIndex];
+          sim.txBit = currentBit;
+          sim.rxBitValue = currentBit;
+          sim.txBitIndex = activeFrame.txBitIndex;
+          sim.rxBitIndex = activeFrame.txBitIndex;
+          sim.txBits = activeFrame.groupedBits;
+          sim.rxBits = activeFrame.groupedBits;
+          activeFrame.txTimer -= dt;
+          if (activeFrame.txTimer <= 0) {
+            activeFrame.txTimer += getUartBitDuration();
+            activeFrame.txBitIndex += 1;
             sim.txPulse = 0.18;
-            if (txFrame.txBitIndex >= txGroup.length) {
-              txFrame.txBitIndex = 0;
-              txFrame.txGroupIndex += 1;
-              if (txFrame.txGroupIndex >= txFrame.groups.length) txFrame.txDone = true;
-            }
-          }
-        }
-
-        const rxFrame = sim.queue.find(frame => frame.txDone && !frame.rxDone);
-        if (rxFrame) {
-          if (!rxFrame.rxStarted) {
-            rxFrame.rxDelay -= dt;
-            if (rxFrame.rxDelay <= 0) rxFrame.rxStarted = true;
-          }
-          if (rxFrame.rxStarted) {
-            const rxGroup = rxFrame.groups[rxFrame.rxGroupIndex];
-            sim.rxBitValue = rxGroup[rxFrame.rxBitIndex];
-            sim.rxBitIndex = rxFrame.rxBitIndex;
-            sim.rxBits = rxFrame.groupedBits;
-            rxFrame.rxTimer -= dt;
-            if (rxFrame.rxTimer <= 0) {
-              rxFrame.rxTimer += getUartBitDuration();
-              rxFrame.rxBitIndex += 1;
-              sim.rxPulse = 0.18;
-              if (rxFrame.rxBitIndex >= rxGroup.length) {
-                rxFrame.rxBitIndex = 0;
-                rxFrame.rxGroupIndex += 1;
-                if (rxFrame.rxGroupIndex >= rxFrame.groups.length) {
-                  rxFrame.rxDone = true;
-                  sim.received = `ACK:${rxFrame.text}`;
-                  sim.lastReceivedBits = rxFrame.groupedBits;
-                  playUiSound("success");
-                }
+            sim.rxPulse = 0.18;
+            if (activeFrame.txBitIndex >= txGroup.length) {
+              activeFrame.txBitIndex = 0;
+              activeFrame.txGroupIndex += 1;
+              if (activeFrame.txGroupIndex >= activeFrame.groups.length) {
+                activeFrame.txDone = true;
+                activeFrame.rxDone = true;
+                sim.received = activeFrame.text;
+                sim.lastReceivedBits = activeFrame.groupedBits;
+                playUiSound("success");
               }
             }
           }
         }
-        sim.queue = sim.queue.filter(frame => !frame.rxDone);
+        sim.queue = sim.queue.filter(frame => !frame.txDone);
         sim.buffer = sim.queue.length;
         return;
       }
@@ -1095,15 +1071,15 @@
         return;
       }
       if (sim.auto) stepStateMachine(false);
-      sim.red = sim.phase === "RED";
+      sim.red = sim.phase === "RED" || sim.phase === "WALK";
       sim.yellow = sim.phase === "YELLOW";
-      sim.green = sim.phase === "GREEN" || sim.phase === "WALK";
+      sim.green = sim.phase === "GREEN";
     }
     function getSignals() {
       if (currentTopicId === "foundations") return [{ key: "button", label: "Button", color: "#63c4ff", min: 0, max: 1, unit: "0-1" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }];
       if (currentTopicId === "variables") return [{ key: "sensor", label: "Sensor", color: "#63c4ff", min: 0, max: 1023, unit: "raw" }, { key: "pwm", label: "PWM", color: "#ffcc45", min: 0, max: 255, unit: "8-bit" }, { key: "brightness", label: "Brightness", color: "#2fc76b", min: 0, max: 100, unit: "%" }];
       if (currentTopicId === "conditionals") return sim.mode === "comparison" ? [{ key: "sensor", label: "Sensor", color: "#63c4ff", min: 0, max: 1023, unit: "raw" }, { key: "threshold", label: "Threshold", color: "#ff9f43", min: 0, max: 1023, unit: "raw" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }] : sim.mode === "nested" ? [{ key: "buttonA", label: "Input A", color: "#63c4ff", min: 0, max: 1, unit: "0-1" }, { key: "buttonB", label: "Input B", color: "#b98cff", min: 0, max: 1, unit: "0-1" }, { key: "buttonC", label: "Input C", color: "#ff9f43", min: 0, max: 1, unit: "0-1" }, { key: "buttonD", label: "Input D", color: "#ff6b65", min: 0, max: 1, unit: "0-1" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }] : [{ key: "buttonA", label: "Input A", color: "#63c4ff", min: 0, max: 1, unit: "0-1" }, { key: "buttonB", label: "Input B", color: "#b98cff", min: 0, max: 1, unit: "0-1" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }];
-      if (currentTopicId === "loops") return [{ key: "running", label: "Run", color: "#63c4ff", min: 0, max: 1, unit: "0-1" }, { key: sim.pattern === "blink" ? "blinkState" : "index", label: sim.pattern === "blink" ? "Blink" : "Index", color: "#ffcc45", min: 0, max: sim.pattern === "blink" ? 1 : 3, unit: sim.pattern === "blink" ? "0-1" : "id" }, { key: "cyclePulse", label: "Cycle", color: "#2fc76b", min: 0, max: 1, unit: "pulse" }, { key: "loopLeds", label: "LEDs", color: "#63c4ff", min: 0, max: 1, unit: "0-1", series: [{ key: "ledYellow", label: "Y", color: "#ffcc45" }, { key: "ledRed", label: "R", color: "#ff6b65" }, { key: "ledGreen", label: "G", color: "#2fc76b" }, { key: "ledBlue", label: "B", color: "#63c4ff" }] }];
+      if (currentTopicId === "loops") return [{ key: sim.pattern === "blink" ? "blinkState" : "index", label: sim.pattern === "blink" ? "Blink" : "Index", color: "#ffcc45", min: sim.pattern === "blink" ? 0 : 0, max: sim.pattern === "blink" ? 1 : 3, unit: sim.pattern === "blink" ? "0-1" : "id" }, { key: "cyclePulse", label: "Cycle", color: "#2fc76b", min: 0, max: 1, unit: "pulse" }, { key: "loopLeds", label: "LEDs", color: "#63c4ff", min: 0, max: 1, unit: "0-1", series: [{ key: "ledYellow", label: "Y", color: "#ffcc45" }, { key: "ledRed", label: "R", color: "#ff6b65" }, { key: "ledGreen", label: "G", color: "#2fc76b" }, { key: "ledBlue", label: "B", color: "#63c4ff" }] }];
       if (currentTopicId === "adc") return sim.adcScenario === "esp32_nonlinear"
         ? [{ key: "voltage", label: "Voltage", color: "#2fc76b", min: 0, max: getAdcReferenceVoltage(), unit: "V" }, { key: "esp32Word", label: "Digital word", color: "#ff9f43", min: 0, max: getAdcMax(12), unit: "raw" }]
         : sim.adcScenario === "calibration"
@@ -1121,7 +1097,14 @@
     function sampleSignals() {
       if (timelinePaused) return;
       const sample = { t: sim.time, values: {} };
-      for (const signal of getSignals()) sample.values[signal.key] = Number(sim[signal.key] || 0);
+      for (const signal of getSignals()) {
+        sample.values[signal.key] = Number(sim[signal.key] || 0);
+        if (signal.series) {
+          signal.series.forEach(series => {
+            sample.values[series.key] = Number(sim[series.key] || 0);
+          });
+        }
+      }
       samples.push(sample);
       samples = samples.filter(item => getTimelineReferenceTime() - item.t <= 12);
     }
@@ -1154,12 +1137,12 @@
         } else if (sim.mode === "nested") {
           const nestedLabel = getNestedPatternLabel(sim.nestedPattern);
           const comboCards = [
-            { key: "ab", title: "Combo 1", text: "A AND B" },
-            { key: "a_cd", title: "Combo 2", text: "A AND (C OR D)" },
-            { key: "ab_or_cd", title: "Combo 3", text: "(A AND B) OR (C AND D)" },
-            { key: "a_notb_cd", title: "Combo 4", text: "A AND NOT B AND (C OR D)" }
+            { key: "ab", title: "Combo 1", text: "A && B" },
+            { key: "a_cd", title: "Combo 2", text: "A && (C || D)" },
+            { key: "ab_or_cd", title: "Combo 3", text: "(A && B) || (C && D)" },
+            { key: "a_notb_cd", title: "Combo 4", text: "A && !B && (C || D)" }
           ];
-          visualStage.innerHTML = `<div class="visual-wrap"><div class="io-mini-row five"><div class="mini-io-card"><strong>Input A</strong><div class="io-button small ${sim.buttonA ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input B</strong><div class="io-button small ${sim.buttonB ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input C</strong><div class="io-button small ${sim.buttonC ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input D</strong><div class="io-button small ${sim.buttonD ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Main LED</strong><div class="led green small ${sim.led ? "on" : ""}"></div></div></div><div class="compare-box">Nested if using ${nestedLabel}<br />Current inputs: A=${sim.buttonA ? 1 : 0} | B=${sim.buttonB ? 1 : 0} | C=${sim.buttonC ? 1 : 0} | D=${sim.buttonD ? 1 : 0}</div><div class="combo-grid">${comboCards.map(card => `<div class="combo-card ${evaluateNestedCombination(card.key, sim.buttonA, sim.buttonB, sim.buttonC, sim.buttonD) ? "active" : ""} ${card.key === sim.nestedPattern ? "selected" : ""}"><strong>${card.title}</strong><span>${card.text}</span></div>`).join("")}</div></div>`;
+          visualStage.innerHTML = `<div class="visual-wrap"><div class="io-mini-row five"><div class="mini-io-card"><strong>Input A</strong><div class="io-button small ${sim.buttonA ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input B</strong><div class="io-button small ${sim.buttonB ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input C</strong><div class="io-button small ${sim.buttonC ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input D</strong><div class="io-button small ${sim.buttonD ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Main LED</strong><div class="led green small ${sim.led ? "on" : ""}"></div></div></div><div class="compare-box">if (${nestedLabel})<br />A=${sim.buttonA ? 1 : 0} | B=${sim.buttonB ? 1 : 0} | C=${sim.buttonC ? 1 : 0} | D=${sim.buttonD ? 1 : 0}</div><div class="combo-grid">${comboCards.map(card => `<div class="combo-card ${evaluateNestedCombination(card.key, sim.buttonA, sim.buttonB, sim.buttonC, sim.buttonD) ? "active" : ""} ${card.key === sim.nestedPattern ? "selected" : ""}"><strong>${card.title}</strong><span>if (${card.text})</span></div>`).join("")}</div></div>`;
         } else {
           const operationLabel = getLogicOperatorLabel(sim.operation);
           const operationExpression = getLogicOperatorExpression(sim.operation);
@@ -1192,7 +1175,7 @@
           const percent = Math.round(sim.analog / adcMax * 100);
           visualStage.innerHTML = `<div class="visual-wrap"><div class="stat-grid"><div class="counter-box"><strong>ADC reading (${sim.adcBits}-bit)</strong><div>${sim.analog}</div></div><div class="counter-box"><strong>Voltage</strong><div>${sim.voltage.toFixed(2)} V</div></div></div><div class="bar-shell"><div class="bar-fill" style="width:${percent}%"></div></div><div class="rig-row"><div class="sensor-box"><strong>PWM</strong><div>${sim.pwm}</div></div><div class="led yellow ${sim.pwm > 5 ? "on" : ""}" style="opacity:${0.25 + sim.pwm / 255 * 0.75};"></div></div></div>`;
         }
-      } else if (currentTopicId === "uart") visualStage.innerHTML = `<div class="visual-wrap"><div class="serial-lanes"><div class="lane"><strong>UART TX</strong><code>${escapeHtml(sim.sent)}</code><strong>Bits to send (8N1)</strong><code>${escapeHtml(sim.txBits)}</code></div><div class="lane"><strong>UART RX</strong><code>${escapeHtml(sim.received)}</code><strong>Bits received (8N1)</strong><code>${escapeHtml(sim.rxBits)}</code></div></div><div class="rig-row"><div class="counter-box"><strong>TX bit</strong><div>${sim.txBit}</div><div>idx ${sim.txBitIndex >= 0 ? sim.txBitIndex : "-"}</div></div><div class="compare-box">Queue = ${sim.buffer} frame(s)<br />8N1 = start bit 0, 8 data bits, stop bit 1</div><div class="counter-box"><strong>RX bit</strong><div>${sim.rxBitValue}</div><div>idx ${sim.rxBitIndex >= 0 ? sim.rxBitIndex : "-"}</div></div></div></div>`;
+      } else if (currentTopicId === "uart") visualStage.innerHTML = `<div class="visual-wrap"><div class="serial-lanes"><div class="lane"><strong>UART TX</strong><code>${escapeHtml(sim.sent)}</code><strong>Bits to send (8N1)</strong><code>${escapeHtml(sim.txBits)}</code></div><div class="lane"><strong>UART RX</strong><code>${escapeHtml(sim.received)}</code><strong>Bits received (8N1)</strong><code>${escapeHtml(sim.rxBits)}</code></div></div><div class="rig-row"><div class="counter-box"><strong>TX bit</strong><div>${sim.txBit}</div><div>idx ${sim.txBitIndex >= 0 ? sim.txBitIndex : "-"}</div></div><div class="compare-box">Queue = ${sim.buffer} frame(s)<br />Loopback demo: RX follows TX on the line</div><div class="counter-box"><strong>RX bit</strong><div>${sim.rxBitValue}</div><div>idx ${sim.rxBitIndex >= 0 ? sim.rxBitIndex : "-"}</div></div></div></div>`;
       else if (currentTopicId === "i2c") visualStage.innerHTML = `<div class="visual-wrap"><div class="serial-lanes"><div class="lane"><strong>Master write</strong><code>${escapeHtml(sim.lastWrite)}</code></div><div class="lane"><strong>Slave response</strong><code>${escapeHtml(sim.lastAck)}</code></div></div><div class="rig-row"><div class="led blue ${sim.sdaPulse > 0 ? "on" : ""}"></div><div class="led purple ${sim.sclPulse > 0 ? "on" : ""}"></div><div class="led green ${sim.ackPulse > 0 ? "on" : ""}"></div></div><div class="compare-box">Address = ${escapeHtml(normalizeHexInput(sim.address, 2, "0x3C"))} | Data = ${escapeHtml(normalizeHexInput(sim.dataByte, 2, "0xA5"))}<br />Queue = ${sim.buffer} write(s)</div></div>`;
       else if (currentTopicId === "functions") visualStage.innerHTML = `<div class="visual-wrap"><div class="function-box"><strong>Last call</strong><div>${escapeHtml(sim.lastCall)}</div></div><div class="rig-row"><div class="led purple ${sim.callPulse > 0 ? "on" : ""}"></div><div class="compare-box">pending toggles = ${sim.pendingBlinks}</div><div class="led green ${sim.led ? "on" : ""}"></div></div></div>`;
       else if (currentTopicId === "interrupts") visualStage.innerHTML = `<div class="visual-wrap"><div class="rig-row"><div class="counter-box"><strong>IRQ count</strong><div>${sim.irqCount}</div></div><div class="counter-box"><strong>Poll count</strong><div>${sim.pollCount}</div></div></div><div class="rig-row"><div class="push-button"><strong>Event</strong><div class="led blue ${sim.eventPulse > 0 ? "on" : ""}"></div></div><div class="push-button"><strong>Interrupt path</strong><div class="led green ${sim.interruptPulse > 0 ? "on" : ""}"></div></div><div class="push-button"><strong>Polling path</strong><div class="led yellow ${sim.pollingPulse > 0 ? "on" : ""}"></div></div></div></div>`;
@@ -1253,10 +1236,11 @@
         timelineCtx.stroke();
       });
       const last = samples[samples.length - 1];
-      const activeSeries = signal.series.find(series => last.values[series.key] > 0.5);
-      timelineCtx.fillStyle = activeSeries ? activeSeries.color : "rgba(255,255,255,0.55)";
+      const activeSeries = signal.series.filter(series => last.values[series.key] > 0.5);
+      const activeLabel = activeSeries.length ? activeSeries.map(series => series.label).join(" ") : "none";
+      timelineCtx.fillStyle = activeSeries.length === 1 ? activeSeries[0].color : activeSeries.length > 1 ? "#e8f4ff" : "rgba(255,255,255,0.55)";
       timelineCtx.textAlign = "right";
-      timelineCtx.fillText(activeSeries ? activeSeries.label : "none", x + width - 8, y + 14);
+      timelineCtx.fillText(activeLabel, x + width - 8, y + 14);
     }
     function drawSignalPlot(signal, x, y, width, height) {
       timelineCtx.fillStyle = "rgba(255,255,255,0.03)";
@@ -1663,8 +1647,8 @@
         return;
       }
       if (currentTopicId === "uart") {
-        codeText = `void setup() {\n  Serial.begin(115200);\n}\n\nvoid loop() {\n  if (Serial.available()) {\n    String frame = Serial.readStringUntil('\\n');\n    Serial.print("ACK:");\n    Serial.println(frame);\n  }\n\n  Serial.println("${sim.text || "HELLO"}");\n  delay(800);\n}`;
-        activeLines = sim.buffer > 0 || sim.rxPulse > 0 ? [6, 7, 8, 9] : [12, 13];
+        codeText = `void setup() {\n  Serial.begin(115200);\n}\n\nvoid loop() {\n  Serial.println("${sim.text || "HELLO"}");\n\n  if (Serial.available()) {\n    String frame = Serial.readStringUntil('\\n');\n    // In this demo, RX sees the same bits that TX is sending.\n  }\n\n  delay(800);\n}`;
+        activeLines = sim.buffer > 0 || sim.txPulse > 0 || sim.rxPulse > 0 ? [5, 7, 8, 9] : [11];
         renderHighlightedCode(codeText, activeLines);
         return;
       }

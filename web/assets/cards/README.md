@@ -7,6 +7,7 @@ Current filenames:
 - `gas_water_heater.svg`
 - `foundations_lab.svg`
 - `pull_resistors_lab.svg`
+- `debouncing_lab.svg`
 - `variables_lab.svg`
 - `variable_types_lab.svg`
 - `memory_layout_lab.svg`

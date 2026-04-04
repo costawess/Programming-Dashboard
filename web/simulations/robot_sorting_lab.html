@@ -40,8 +40,8 @@
 
     <main class="layout">
       <section class="panel">
-        <div><h2>Mission</h2><p class="muted">Choose the target shape, inspect the incoming part, and arrange the controller steps in the correct order. Then run the cycle manually or automatically.</p></div>
-        <div class="badge warn" id="missionBadge">Arrange the robot program</div>
+        <div><h2>Mission</h2><p class="muted">Choose the target shape, inspect the incoming part, and follow the controller logic. If the part matches, let it pass. If it does not match, reject it safely into the bucket.</p></div>
+        <div class="badge ok" id="missionBadge">Correct logic loaded</div>
         <div class="mission-box">
           <div class="field"><label for="targetShape">Target shape</label><select id="targetShape"><option value="circle">Circle</option><option value="square">Square</option><option value="triangle">Triangle</option><option value="hexagon">Hexagon</option></select></div>
           <div class="field" style="margin-top:12px;"><label for="currentShape">Incoming belt item</label><select id="currentShape"><option value="circle">Circle</option><option value="square">Square</option><option value="triangle">Triangle</option><option value="hexagon">Hexagon</option></select></div>
@@ -54,13 +54,13 @@
           <button id="stepBtn">Next step</button>
           <button class="secondary" id="resetBtn">Reset scene</button>
         </div>
-        <div class="status-box"><h3>Current reasoning</h3><p class="muted" id="statusText">The robot is waiting at home. Arrange the logic blocks, then validate the sequence before running the scene.</p></div>
+        <div class="status-box"><h3>Current reasoning</h3><p class="muted" id="statusText">The robot is waiting at home. The expected order is already loaded so you can test the cycle, or shuffle the logic to turn it into a challenge.</p></div>
         <div class="metrics-grid"><div><strong>Accepted on belt</strong><span id="acceptedCount">0</span></div><div><strong>Rejected to bucket</strong><span id="rejectedCount">0</span></div></div>
       </section>
 
       <section class="panel scene-panel">
         <div class="scene-topbar">
-          <div><h2>Robot cell</h2><p class="muted">Watch the scan, the decision, the arm motion, and the final result while the current logic step is highlighted.</p></div>
+          <div><h2>Robot cell</h2><p class="muted">Watch one part at a time: scan, decide, then either let it pass on the belt or reject it with the robot arm.</p></div>
           <div class="legend"><span><i style="background:#62d3ff;"></i>target</span><span><i style="background:#ffb14a;"></i>scanner</span><span><i style="background:#48d38a;"></i>accepted</span><span><i style="background:#ff6d64;"></i>rejected</span></div>
         </div>
         <div class="robot-stage-wrap">
@@ -90,7 +90,7 @@
 
       <aside class="panel">
         <div><h2>Program builder</h2><p class="muted">Move the blocks into the order you think the robot controller should execute. This is the algorithm the arm will follow.</p></div>
-        <div class="builder-box"><div class="builder-heading">Target mission</div><div id="targetMissionPill" class="target-pill"></div><div class="helper-note">Correct order idea: sense first, reason second, act last. If the item matches, it stays on the conveyor. If it does not match, reject it safely.</div></div>
+          <div class="builder-box"><div class="builder-heading">Target mission</div><div id="targetMissionPill" class="target-pill"></div><div class="helper-note">Controller order: Scan -> Identify -> Compare -> Decide -> Pass if match. If it does not match: Pick -> Move to bucket -> Release -> Home.</div></div>
         <div class="builder-list" id="builderList"></div>
       </aside>
     </main>
@@ -98,8 +98,8 @@
 
   <script>
     const SHAPES={circle:{label:"Circle",color:"#63c4ff",dark:"#1d84c9"},square:{label:"Square",color:"#ff7d78",dark:"#cc3f4d"},triangle:{label:"Triangle",color:"#ffd45f",dark:"#d69d18"},hexagon:{label:"Hexagon",color:"#7de89f",dark:"#26a65c"}};
-    const STEP_LIBRARY={scan:{title:"Scan the item",detail:"Wait until the part reaches the sensor window and read it.",short:"Scan",duration:.9},identify:{title:"Identify the shape",detail:"Convert the sensor reading into a shape name.",short:"Identify",duration:.7},compare:{title:"Compare with target",detail:"Check if the detected shape is the one the process wants to keep.",short:"Compare",duration:.8},decision:{title:"Decide pass or reject",detail:"Matching parts stay on the belt; different parts go to reject handling.",short:"Decide",duration:1.15},pickup:{title:"Pick wrong item",detail:"Move to the pick pose and close the gripper around the part.",short:"Pick",duration:1.05},move_bin:{title:"Move to reject bucket",detail:"Carry the wrong item away from the conveyor.",short:"Move bin",duration:1.05},release:{title:"Release into bucket",detail:"Open the gripper above the bin so the part drops inside.",short:"Release",duration:.85},home:{title:"Return home",detail:"Go back to the standby pose and wait for the next part.",short:"Home",duration:.9}};
-    const EXPECTED_ORDER=["scan","identify","compare","decision","pickup","move_bin","release","home"];
+    const STEP_LIBRARY={scan:{title:"Scan the item",detail:"Wait until the part reaches the sensor window and read it.",short:"Scan",duration:.9},identify:{title:"Identify the shape",detail:"Convert the sensor reading into a shape name.",short:"Identify",duration:.7},compare:{title:"Compare with target",detail:"Check if the detected shape is the one the process wants to keep.",short:"Compare",duration:.8},decision:{title:"Decide pass or reject",detail:"Matching parts stay on the belt; different parts go to reject handling.",short:"Decide",duration:1.15},pass:{title:"Let target pass",detail:"Keep the arm clear and allow the correct part to continue on the conveyor.",short:"Pass",duration:1.05},pickup:{title:"Pick wrong item",detail:"Move to the pick pose and close the gripper around the part.",short:"Pick",duration:1.05},move_bin:{title:"Move to reject bucket",detail:"Carry the wrong item away from the conveyor.",short:"Move bin",duration:1.05},release:{title:"Release into bucket",detail:"Open the gripper above the bin so the part drops inside.",short:"Release",duration:.85},home:{title:"Return home",detail:"Go back to the standby pose and wait for the next part.",short:"Home",duration:.9}};
+    const EXPECTED_ORDER=["scan","identify","compare","decision","pass","pickup","move_bin","release","home"];
     const ROBOT_BASE={x:550,y:206},ARM_LENGTHS={shoulder:118,elbow:92,wrist:54},POSES={home:{shoulder:-148,elbow:54,wrist:42,grip:18},inspect:{shoulder:-174,elbow:64,wrist:52,grip:18},pickup:{shoulder:-184,elbow:76,wrist:64,grip:8},bucket:{shoulder:-132,elbow:22,wrist:18,grip:8}};
     const ui={targetShape:document.getElementById("targetShape"),currentShape:document.getElementById("currentShape"),randomItemBtn:document.getElementById("randomItemBtn"),shuffleBtn:document.getElementById("shuffleBtn"),checkBtn:document.getElementById("checkBtn"),runBtn:document.getElementById("runBtn"),stepBtn:document.getElementById("stepBtn"),resetBtn:document.getElementById("resetBtn"),missionBadge:document.getElementById("missionBadge"),statusText:document.getElementById("statusText"),acceptedCount:document.getElementById("acceptedCount"),rejectedCount:document.getElementById("rejectedCount"),stepTrace:document.getElementById("stepTrace"),builderList:document.getElementById("builderList"),targetMissionPill:document.getElementById("targetMissionPill"),currentItemPill:document.getElementById("currentItemPill"),beltStripeGroup:document.getElementById("beltStripeGroup"),scannerBeam:document.getElementById("scannerBeam"),upcomingItems:document.getElementById("upcomingItems"),currentItemGroup:document.getElementById("currentItemGroup"),bucketItems:document.getElementById("bucketItems"),shoulderGroup:document.getElementById("shoulderGroup"),elbowGroup:document.getElementById("elbowGroup"),wristGroup:document.getElementById("wristGroup"),gripperFingerTop:document.getElementById("gripperFingerTop"),gripperFingerBottom:document.getElementById("gripperFingerBottom")};
     const state={targetShape:"circle",currentShape:"triangle",programOrder:[],currentProgramStepIndex:-1,mismatchIndex:null,acceptedCount:0,rejectedCount:0,bucketShapes:[],upcomingShapes:[],executionPlan:[],activePlanIndex:-1,executing:false,autoRun:false,waitForNextStep:false,currentStepId:null,currentPose:{...POSES.home},poseFrom:{...POSES.home},poseTo:{...POSES.home},stepElapsed:0,stepDuration:1,itemMode:"belt",decisionResult:null,itemX:248,itemY:294,itemRotation:0,scannerPulse:0,beltStripeOffset:0,phaseMessage:"Arrange the program and choose an incoming part."};
@@ -111,7 +111,7 @@
     function lerp(a,b,t){return a+(b-a)*t}
     function easeInOut(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2}
     function formatShapeLabel(shapeId){return SHAPES[shapeId].label}
-    function getExpectedPlanForCurrentItem(){return state.currentShape===state.targetShape?["scan","identify","compare","decision"]:EXPECTED_ORDER}
+    function getExpectedPlanForCurrentItem(){return state.currentShape===state.targetShape?["scan","identify","compare","decision","pass","home"]:["scan","identify","compare","decision","pickup","move_bin","release","home"]}
     function validateProgram(){for(let i=0;i<EXPECTED_ORDER.length;i+=1)if(state.programOrder[i]!==EXPECTED_ORDER[i])return i;return-1}
     function updateMissionText(message,tone="warn"){ui.missionBadge.textContent=message;ui.missionBadge.className=`badge ${tone}`}
     function updateHeaderPills(){ui.targetMissionPill.innerHTML=`<span class="shape-chip ${state.targetShape}"></span>Keep only ${formatShapeLabel(state.targetShape)} on the conveyor`;ui.currentItemPill.innerHTML=`<span class="shape-chip ${state.currentShape}"></span>Current item: ${formatShapeLabel(state.currentShape)}`}
@@ -121,7 +121,7 @@
     function renderBuilder(){ui.builderList.innerHTML="";state.programOrder.forEach((stepId,index)=>{const step=STEP_LIBRARY[stepId],card=document.createElement("div"),active=state.currentProgramStepIndex===index,bad=state.mismatchIndex===index,ok=state.mismatchIndex===-1&&!active;card.className=`logic-card${active?" active":""}${bad?" bad":""}${ok?" ok":""}`;card.innerHTML=`<div class="logic-card-header"><div><strong>${index+1}. ${step.title}</strong><p>${step.detail}</p></div><div class="logic-actions"><button type="button" data-move="up" data-index="${index}" aria-label="Move step up">↑</button><button type="button" data-move="down" data-index="${index}" aria-label="Move step down">↓</button></div></div>`;ui.builderList.appendChild(card)});ui.builderList.querySelectorAll("button[data-move]").forEach(button=>button.addEventListener("click",()=>{if(state.executing)return;const index=Number(button.dataset.index),swapIndex=index+(button.dataset.move==="up"?-1:1);if(swapIndex<0||swapIndex>=state.programOrder.length)return;[state.programOrder[index],state.programOrder[swapIndex]]=[state.programOrder[swapIndex],state.programOrder[index]];state.mismatchIndex=null;state.currentProgramStepIndex=-1;updateMissionText("Program edited - validate again","warn");renderBuilder()}))}
     function renderStepTrace(){const plan=getExpectedPlanForCurrentItem();ui.stepTrace.innerHTML="";EXPECTED_ORDER.forEach((stepId,index)=>{const step=STEP_LIBRARY[stepId],card=document.createElement("div");let cls="pending";if(!plan.includes(stepId))cls="skip";if(plan.includes(stepId)&&state.currentProgramStepIndex>plan.indexOf(stepId))cls="done";if(stepId===state.currentStepId)cls="current";card.className=`trace-step ${cls}`;card.innerHTML=`<strong>${index+1}. ${step.short}</strong><span>${step.detail}</span>`;ui.stepTrace.appendChild(card)})}
     function buildShapeMarkup(shapeId,x,y,scale=1,rotation=0){const shape=SHAPES[shapeId],s=scale,shadow=`<ellipse cx="${x}" cy="${y+24*s}" rx="${24*s}" ry="${10*s}" fill="rgba(0,0,0,0.28)"></ellipse>`,gloss=`<ellipse cx="${x-6*s}" cy="${y-8*s}" rx="${8*s}" ry="${5*s}" fill="rgba(255,255,255,0.22)" transform="rotate(-20 ${x-6*s} ${y-8*s})"></ellipse>`;if(shapeId==="circle")return`${shadow}<g transform="rotate(${rotation} ${x} ${y})"><circle cx="${x}" cy="${y}" r="${18*s}" fill="${shape.color}" stroke="${shape.dark}" stroke-width="${4*s}"></circle>${gloss}</g>`;if(shapeId==="square")return`${shadow}<g transform="rotate(${rotation} ${x} ${y})"><rect x="${x-18*s}" y="${y-18*s}" width="${36*s}" height="${36*s}" rx="${6*s}" fill="${shape.color}" stroke="${shape.dark}" stroke-width="${4*s}"></rect>${gloss}</g>`;if(shapeId==="triangle")return`${shadow}<g transform="rotate(${rotation} ${x} ${y})"><polygon points="${x},${y-22*s} ${x+20*s},${y+18*s} ${x-20*s},${y+18*s}" fill="${shape.color}" stroke="${shape.dark}" stroke-width="${4*s}" stroke-linejoin="round"></polygon>${gloss}</g>`;return`${shadow}<g transform="rotate(${rotation} ${x} ${y})"><polygon points="${x-12*s},${y-20*s} ${x+12*s},${y-20*s} ${x+24*s},${y} ${x+12*s},${y+20*s} ${x-12*s},${y+20*s} ${x-24*s},${y}" fill="${shape.color}" stroke="${shape.dark}" stroke-width="${4*s}" stroke-linejoin="round"></polygon>${gloss}</g>`}
-    function renderUpcomingShapes(){ui.upcomingItems.innerHTML=state.upcomingShapes.map((shapeId,index)=>buildShapeMarkup(shapeId,98+index*64,294,.7,index*9)).join("")}
+    function renderUpcomingShapes(){ui.upcomingItems.innerHTML=""}
     function renderBucketShapes(){ui.bucketItems.innerHTML=state.bucketShapes.map((shapeId,index)=>buildShapeMarkup(shapeId,44+(index%3)*24,118+Math.floor(index/3)*22,.42,index*7)).join("")}
     function renderBeltStripes(){const stripes=[];for(let i=-1;i<15;i+=1){const x=28+((i*34+state.beltStripeOffset)%510);stripes.push(`<rect x="${x}" y="10" width="14" height="72" rx="7" fill="rgba(255,255,255,0.08)"></rect>`)}ui.beltStripeGroup.innerHTML=stripes.join("")}
     function applyPose(pose){state.currentPose={...pose};ui.shoulderGroup.setAttribute("transform",`translate(${ROBOT_BASE.x} ${ROBOT_BASE.y}) rotate(${pose.shoulder})`);ui.elbowGroup.setAttribute("transform",`translate(${ARM_LENGTHS.shoulder} 0) rotate(${pose.elbow})`);ui.wristGroup.setAttribute("transform",`translate(${ARM_LENGTHS.elbow} 0) rotate(${pose.wrist})`);ui.gripperFingerTop.setAttribute("y",String(-12-pose.grip));ui.gripperFingerBottom.setAttribute("y",String(pose.grip))}
@@ -135,6 +135,7 @@
     function beginExecution(autoRun){if(state.executing||state.waitForNextStep)return;if(!checkProgram(false)){state.phaseMessage=`The controller logic is wrong at step ${state.mismatchIndex+1}. Fix the order before running the robot.`;refreshSceneText();renderBuilder();return}resetExecutionScene();state.executionPlan=getExpectedPlanForCurrentItem();state.autoRun=autoRun;playUiSound("tap");startStep(0)}
     function startStep(planIndex){if(planIndex>=state.executionPlan.length){finishCycle();return}state.activePlanIndex=planIndex;state.currentStepId=state.executionPlan[planIndex];state.currentProgramStepIndex=EXPECTED_ORDER.indexOf(state.currentStepId);state.stepDuration=STEP_LIBRARY[state.currentStepId].duration;state.stepElapsed=0;state.executing=true;state.waitForNextStep=false;state.poseFrom={...state.currentPose};state.poseTo={...state.currentPose};
       if(["scan","identify","compare","decision"].includes(state.currentStepId))state.poseTo={...POSES.inspect,grip:state.currentPose.grip};
+      if(state.currentStepId==="pass")state.poseTo={...POSES.home,grip:18};
       if(state.currentStepId==="pickup")state.poseTo={...POSES.pickup};
       if(["move_bin","release"].includes(state.currentStepId))state.poseTo={...POSES.bucket};
       if(state.currentStepId==="home")state.poseTo={...POSES.home,grip:18};
@@ -142,10 +143,11 @@
       else if(state.currentStepId==="identify")state.phaseMessage=`Step 2: the vision logic identifies the part as ${formatShapeLabel(state.currentShape)}.`;
       else if(state.currentStepId==="compare")state.phaseMessage=`Step 3: compare ${formatShapeLabel(state.currentShape)} with target ${formatShapeLabel(state.targetShape)}.`;
       else if(state.currentStepId==="decision"){const matches=state.currentShape===state.targetShape;state.decisionResult=matches?"pass":"reject";state.phaseMessage=matches?"Step 4: it matches the target, so the belt may keep it.":"Step 4: it does not match, so the robot must reject it."}
-      else if(state.currentStepId==="pickup"){state.phaseMessage="Step 5: the robot moves down to grab the wrong item.";playUiSound("warning")}
-      else if(state.currentStepId==="move_bin")state.phaseMessage="Step 6: the robot carries the wrong item toward the reject bucket.";
-      else if(state.currentStepId==="release")state.phaseMessage="Step 7: the gripper opens so the part drops inside the bucket.";
-      else if(state.currentStepId==="home")state.phaseMessage="Step 8: the arm returns to the home pose for the next cycle.";
+      else if(state.currentStepId==="pass"){state.phaseMessage="Step 5: the target part is correct, so it continues on the conveyor.";playUiSound("success")}
+      else if(state.currentStepId==="pickup"){state.phaseMessage="Step 6: the robot moves down to grab the wrong item.";playUiSound("warning")}
+      else if(state.currentStepId==="move_bin")state.phaseMessage="Step 7: the robot carries the wrong item toward the reject bucket.";
+      else if(state.currentStepId==="release")state.phaseMessage="Step 8: the gripper opens so the part drops inside the bucket.";
+      else if(state.currentStepId==="home")state.phaseMessage="Step 9: the arm returns to the home pose for the next cycle.";
       refreshSceneText();renderBuilder();renderStepTrace()
     }
     function finishCurrentStep(){state.executing=false;if(state.autoRun)window.setTimeout(()=>startStep(state.activePlanIndex+1),120);else state.waitForNextStep=true}
@@ -153,12 +155,12 @@
     function updateExecution(dt){state.beltStripeOffset=(state.beltStripeOffset+dt*58)%34;renderBeltStripes();state.scannerPulse=Math.max(0,state.scannerPulse-dt*1.8);if(!state.executing){ui.scannerBeam.setAttribute("opacity",String(.1+state.scannerPulse*.55));renderCurrentItem();return}
       state.stepElapsed=Math.min(state.stepDuration,state.stepElapsed+dt);const t=easeInOut(clamp(state.stepElapsed/state.stepDuration,0,1)),pose={shoulder:lerp(state.poseFrom.shoulder,state.poseTo.shoulder,t),elbow:lerp(state.poseFrom.elbow,state.poseTo.elbow,t),wrist:lerp(state.poseFrom.wrist,state.poseTo.wrist,t),grip:lerp(state.poseFrom.grip,state.poseTo.grip,t)};applyPose(pose);
       if(state.currentStepId==="scan")state.scannerPulse=1;
-      if(state.currentStepId==="decision"){if(state.decisionResult==="pass"){state.itemX=lerp(248,666,t);state.itemRotation=lerp(0,14,t)}}
+      if(state.currentStepId==="pass"){state.itemMode="belt";state.itemX=lerp(248,666,t);state.itemRotation=lerp(0,14,t)}
       else if(state.currentStepId==="pickup"){if(t<.45){state.itemMode="belt";state.itemX=248}else state.itemMode="gripper"}
       else if(state.currentStepId==="move_bin")state.itemMode="gripper";
       else if(state.currentStepId==="release"){if(t<.45)state.itemMode="gripper";else{state.itemMode="belt";state.itemX=lerp(176,150,t);state.itemY=lerp(176,238,t);state.itemRotation=lerp(-10,24,t)}}
-      else if(state.currentStepId==="home")state.itemMode="bucket";
-      else if(state.currentStepId!=="decision"){state.itemX=248;state.itemY=294;state.itemRotation=0}
+      else if(state.currentStepId==="home")state.itemMode=state.decisionResult==="pass"?"hidden":"bucket";
+      else if(!["decision","pass"].includes(state.currentStepId)){state.itemX=248;state.itemY=294;state.itemRotation=0}
       ui.scannerBeam.setAttribute("opacity",String(.1+state.scannerPulse*.62));renderCurrentItem();
       if(state.stepElapsed>=state.stepDuration){if(state.currentStepId==="release")playUiSound("drop");finishCurrentStep()}
     }
@@ -174,7 +176,7 @@
     ui.stepBtn.addEventListener("click",()=>{if(state.executing)return;if(state.waitForNextStep){startStep(state.activePlanIndex+1);return}beginExecution(false)});
     ui.resetBtn.addEventListener("click",()=>{resetScene();playUiSound("tap")});
 
-    state.programOrder=shuffleArray(EXPECTED_ORDER);
+    state.programOrder=[...EXPECTED_ORDER];
     state.targetShape=ui.targetShape.value;
     state.currentShape=ui.currentShape.value;
     state.upcomingShapes=[state.currentShape,randomShape(),randomShape()];

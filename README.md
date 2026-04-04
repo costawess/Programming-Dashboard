@@ -68,6 +68,16 @@ This repository contains the browser-based simulations, UART/Web Serial experime
 - Main interaction:
   Switch between pull-up and pull-down, then press the button and watch the GPIO input and LED state.
 
+### Button Debouncing Lab
+
+- File: `web/simulations/debouncing_lab.html`
+- Use it to:
+  Explain mechanical button ricochet, the raw chattering contact, and the filtered press produced by a software debounce timer.
+- Main interaction:
+  Press and hold the button, change the debounce interval, and compare the raw signal against the debounced signal and LED.
+- Keyboard:
+  `Space` presses the button while held.
+
 ### Variables Lab
 
 - File: `web/simulations/course_topics_lab.html?topic=variables`

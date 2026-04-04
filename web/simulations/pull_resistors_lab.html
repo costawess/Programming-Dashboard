@@ -59,24 +59,25 @@
     .logic-box strong { color: var(--subtle); font-size: 13px; }
     .logic-box span { color: var(--white); font-size: 22px; font-weight: 900; }
     .circuit-area { position: relative; height: 280px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.02); overflow: hidden; }
-    .rail { position: absolute; left: 32px; right: 138px; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.38); }
+    .rail { position: absolute; left: 32px; right: 78px; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.38); }
     .rail.top { top: 28px; }
     .rail.bottom { bottom: 28px; }
     .rail-label { position: absolute; left: 8px; color: var(--subtle); font-size: 13px; font-weight: 800; letter-spacing: 0.04em; }
-    .rail-label.top { top: 18px; }
-    .rail-label.bottom { bottom: 18px; }
+    .rail-label.top { top: 12px; }
+    .rail-label.bottom { bottom: 12px; }
     .node { position: absolute; left: 102px; top: 126px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(99, 196, 255, 0.16); }
-    .pin-wire { position: absolute; left: 124px; top: 136px; width: 150px; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.38); }
-    .pin-label { position: absolute; left: 176px; top: 107px; color: var(--subtle); font-size: 13px; font-weight: 800; }
-    .mcu-pin { position: absolute; left: 272px; top: 113px; width: 84px; height: 50px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); display: grid; place-items: center; text-align: center; }
+    .pin-wire { position: absolute; left: 124px; top: 136px; width: 78px; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.38); }
+    .pin-label { position: absolute; left: 146px; top: 107px; color: var(--subtle); font-size: 13px; font-weight: 800; }
+    .mcu-pin { position: absolute; left: 198px; top: 113px; width: 74px; height: 50px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); display: grid; place-items: center; text-align: center; }
     .mcu-pin strong { color: var(--white); font-size: 15px; }
     .branch-device { position: absolute; left: 85px; width: 58px; height: 92px; }
-    .branch-device::before, .branch-device::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); width: 4px; height: 15px; border-radius: 999px; background: rgba(255,255,255,0.38); }
+    .branch-device::before, .branch-device::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); width: 4px; height: 22px; border-radius: 999px; background: rgba(255,255,255,0.38); }
     .branch-device::before { top: 0; }
     .branch-device::after { bottom: 0; }
-    .branch-device.top { top: 18px; }
-    .branch-device.bottom { bottom: 18px; }
-    .device-label { position: absolute; left: 50%; top: -28px; width: 96px; transform: translateX(-50%); color: var(--subtle); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; }
+    .branch-device.top { top: 42px; }
+    .branch-device.top::before { top: -14px; height: 36px; }
+    .branch-device.bottom { bottom: 30px; }
+    .device-label { position: absolute; left: -8px; top: 50%; width: 82px; transform: translate(-100%, -50%); color: var(--subtle); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; text-align: right; line-height: 1.2; }
     .branch-device > .resistor, .branch-device > .switch { position: absolute; left: 50%; top: 15px; transform: translateX(-50%); }
     .resistor { position: relative; width: 16px; height: 62px; }
     .resistor::before, .resistor::after { display: none; }
@@ -92,10 +93,24 @@
     .switch-contact::after { content: ""; position: absolute; left: -5px; bottom: -8px; width: 14px; height: 14px; border-radius: 50%; background: var(--white); box-shadow: 0 0 0 2px rgba(8, 17, 24, 0.6); }
     .switch.closed .switch-contact { left: 25px; height: 36px; transform: rotate(0deg); }
     .switch.open .switch-contact { left: 17px; height: 28px; transform: rotate(-18deg); }
-    .led-stack { position: absolute; right: 28px; top: 62px; display: grid; gap: 10px; justify-items: center; }
-    .led-label { color: var(--subtle); font-size: 12px; font-weight: 800; }
-    .led { width: 74px; height: 74px; border-radius: 50%; border: 6px solid #081118; background: radial-gradient(circle at 35% 30%, #29343a 0%, #11191f 70%, #060b0f 100%); box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.4); }
-    .led.on { background: radial-gradient(circle at 35% 30%, #97f7bb 0%, var(--green) 52%, #0d7e38 100%); }
+    .led-branch { position: absolute; left: 252px; top: 50px; width: 104px; height: 198px; }
+    .led-branch-label { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); color: var(--subtle); font-size: 12px; font-weight: 800; white-space: nowrap; }
+    .led-schematic { position: absolute; left: 2px; top: 22px; width: 98px; height: 176px; overflow: visible; color: #d9e9f4; }
+    .led-schematic .wire { stroke: rgba(255,255,255,0.38); stroke-width: 4; stroke-linecap: round; fill: none; }
+    .led-schematic .symbol-ring { stroke: rgba(255,255,255,0.55); stroke-width: 3; fill: rgba(255,255,255,0.03); }
+    .led-schematic .symbol-line,
+    .led-schematic .symbol-triangle,
+    .led-schematic .symbol-bar,
+    .led-schematic .light-arrow { stroke: #d9e9f4; fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .led-schematic .symbol-triangle { fill: rgba(217,233,244,0.08); }
+    .led-schematic .light-arrow { marker-end: url(#ledArrowHead); opacity: 0.38; }
+    .led-schematic.on .symbol-ring { stroke: #75f1a1; fill: rgba(47,199,107,0.14); filter: drop-shadow(0 0 8px rgba(47,199,107,0.32)); }
+    .led-schematic.on .symbol-line,
+    .led-schematic.on .symbol-triangle,
+    .led-schematic.on .symbol-bar,
+    .led-schematic.on .light-arrow { stroke: #97f7bb; }
+    .led-schematic.on .symbol-triangle { fill: rgba(151,247,187,0.16); }
+    .led-schematic.on { color: #97f7bb; }
     .timeline-canvas { width: 100%; height: 460px; display: block; border-radius: 18px; background: rgba(7, 15, 21, 0.86); border: 1px solid var(--line); }
     .timeline-note, .code-note { color: var(--subtle); font-size: 14px; line-height: 1.45; }
     pre.code-block { margin: 0; min-height: 460px; padding: 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--code-bg); color: #d8f2ff; font-family: Consolas, "Courier New", monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; user-select: text; -webkit-user-select: text; cursor: text; }
@@ -106,10 +121,10 @@
       .header { grid-template-columns: 1fr; }
       .logic-row { grid-template-columns: 1fr; }
       .circuit-area { height: 320px; }
-      .rail { right: 84px; }
-      .pin-wire { width: 110px; }
-      .mcu-pin { left: 232px; }
-      .led-stack { right: 12px; }
+      .rail { right: 70px; }
+      .pin-wire { width: 74px; }
+      .mcu-pin { left: 194px; }
+      .led-branch { left: 246px; width: 98px; }
     }
   </style>
 </head>
@@ -143,7 +158,7 @@
             </div>
             <div class="control-row">
               <div class="field-label">Button</div>
-              <button class="action-btn" id="pressButtonBtn" type="button">Press and hold</button>
+              <button class="action-btn" id="pressButtonBtn" type="button">Press and hold (Space)</button>
             </div>
           </div>
         </div>
@@ -164,15 +179,29 @@
                   <div class="rail-label bottom">GND</div>
                   <div class="node"></div>
                   <div class="pin-wire"></div>
-                  <div class="pin-label">Input node</div>
+                  <div class="pin-label" id="pinLabel">3.3 V</div>
                   <div class="mcu-pin"><strong>GPIO IN</strong></div>
 
                   <div class="branch-device top" id="topBranch"></div>
                   <div class="branch-device bottom" id="bottomBranch"></div>
 
-                  <div class="led-stack">
-                    <div class="led-label">LED output</div>
-                    <div class="led" id="ledLamp"></div>
+                  <div class="led-branch">
+                    <div class="led-branch-label">LED to GND</div>
+                    <svg class="led-schematic" id="ledLamp" viewBox="0 0 112 180" aria-hidden="true">
+                      <defs>
+                        <marker id="ledArrowHead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                          <path d="M0 0 L8 4 L0 8 z" fill="currentColor"></path>
+                        </marker>
+                      </defs>
+                      <path class="wire" d="M0 68 H56 V80"></path>
+                      <path class="wire" d="M56 112 V184"></path>
+                      <circle class="symbol-ring" cx="56" cy="96" r="34"></circle>
+                      <path class="symbol-line" d="M56 62 V80"></path>
+                      <path class="symbol-triangle" d="M28 80 H84 L56 112 Z"></path>
+                      <path class="symbol-bar" d="M28 112 H84"></path>
+                      <path class="light-arrow" d="M82 62 L100 44"></path>
+                      <path class="light-arrow" d="M90 82 L108 64"></path>
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -229,6 +258,7 @@
     const inputState = document.getElementById("inputState");
     const ledState = document.getElementById("ledState");
     const ledLamp = document.getElementById("ledLamp");
+    const pinLabel = document.getElementById("pinLabel");
     const topBranch = document.getElementById("topBranch");
     const bottomBranch = document.getElementById("bottomBranch");
     const timelineCanvas = document.getElementById("timelineCanvas");
@@ -302,6 +332,7 @@
       buttonState.textContent = state.buttonPressed ? "CLOSED" : "OPEN";
       inputState.textContent = state.inputHigh ? "HIGH" : "LOW";
       ledState.textContent = state.ledOn ? "ON" : "OFF";
+      pinLabel.textContent = state.inputHigh ? "3.3 V" : "0.0 V";
       ledLamp.classList.toggle("on", state.ledOn);
 
       statusPill.textContent = isPullUp ? `Mode: Pull-up | Released = HIGH` : `Mode: Pull-down | Released = LOW`;
@@ -496,6 +527,13 @@ void loop() {
         }
       });
       button.addEventListener("blur", () => setPressed(false));
+      return setPressed;
+    }
+
+    function isTypingTarget(target) {
+      if (!target) return false;
+      const tagName = target.tagName;
+      return target.isContentEditable || tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT";
     }
 
     async function copyTextToClipboard(text) {
@@ -520,9 +558,21 @@ void loop() {
       renderAll();
     });
 
-    bindMomentaryButton(pressButtonBtn, pressed => {
+    const setMomentaryPress = bindMomentaryButton(pressButtonBtn, pressed => {
       state.buttonPressed = pressed;
       renderAll();
+    });
+
+    window.addEventListener("keydown", event => {
+      if (event.code !== "Space" || event.repeat || isTypingTarget(event.target)) return;
+      event.preventDefault();
+      setMomentaryPress(true);
+    });
+
+    window.addEventListener("keyup", event => {
+      if (event.code !== "Space" || isTypingTarget(event.target)) return;
+      event.preventDefault();
+      setMomentaryPress(false);
     });
 
     copyCodeBtn.addEventListener("click", async () => {
