@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Embedded Programming - Hysteresis Lab</title>
   <script>document.documentElement.classList.add("theme-dark");</script>
+  <script src="../shared/mouse_glow.js"></script>
+  <script src="../shared/page_header.js"></script>
   <style>
     :root {
       --bg: #0f2230;
@@ -121,62 +123,33 @@
       background: linear-gradient(180deg, rgba(18, 35, 46, 0.98) 0%, rgba(13, 24, 33, 0.98) 100%);
     }
 
-    .diagram-wrap { display: grid; gap: 12px; }
-    .diagram-row {
+    .hysteresis-diagram {
+      width: 100%;
       display: grid;
-      grid-template-columns: 110px minmax(0, 1fr) 110px;
-      gap: 10px;
-      align-items: center;
+      justify-items: center;
     }
 
-    .diagram-row.return {
-      grid-template-columns: 110px minmax(0, 1fr) 110px;
+    .state-diagram-svg {
+      width: 100%;
+      max-width: 500px;
+      height: auto;
+      display: block;
+      overflow: visible;
     }
 
-    .state-box {
-      border-radius: 18px;
-      border: 2px solid var(--line);
-      padding: 18px 12px;
-      text-align: center;
-      font-weight: 900;
-      letter-spacing: 0.04em;
-      color: var(--subtle);
-      background: rgba(255, 255, 255, 0.03);
-      transition: 0.18s ease;
-    }
-
-    .state-box.active.off {
-      color: var(--white);
-      border-color: var(--red);
-      background: var(--red-soft);
-      box-shadow: 0 0 0 3px rgba(255, 107, 101, 0.12);
-    }
-
-    .state-box.active.on {
-      color: var(--white);
-      border-color: var(--green);
-      background: var(--green-soft);
-      box-shadow: 0 0 0 3px rgba(47, 199, 107, 0.12);
-    }
-
-    .transition-box {
-      border-radius: 18px;
-      border: 1px dashed var(--line);
-      padding: 12px 14px;
-      display: grid;
-      gap: 4px;
-      text-align: center;
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    .transition-box strong { color: var(--white); font-size: 14px; }
-    .transition-box span { color: var(--subtle); font-size: 13px; }
-    .transition-box.active {
-      border-style: solid;
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      box-shadow: 0 0 0 3px rgba(99, 196, 255, 0.12);
-    }
+    .state-diagram-svg text { font-family: "Segoe UI", Arial, sans-serif; }
+    .state-diagram-svg .diagram-path { fill: none; stroke: rgba(157, 185, 200, 0.46); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .state-diagram-svg .diagram-path.active { stroke: var(--accent); stroke-width: 4; }
+    .state-diagram-svg .diagram-path.loop { stroke-dasharray: 7 7; }
+    .state-diagram-svg .diagram-label { fill: var(--subtle); font-size: 12px; font-weight: 700; text-anchor: middle; }
+    .state-diagram-svg .diagram-arrow { fill: rgba(157, 185, 200, 0.72); }
+    .state-diagram-svg .diagram-arrow.active { fill: var(--accent); }
+    .state-diagram-svg .diagram-node circle { fill: rgba(255, 255, 255, 0.03); stroke: var(--line); stroke-width: 3; }
+    .state-diagram-svg .diagram-node .outer-ring { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 1.5; }
+    .state-diagram-svg .diagram-node text { fill: var(--subtle); font-size: 19px; font-weight: 900; text-anchor: middle; dominant-baseline: middle; }
+    .state-diagram-svg .diagram-node.off.active circle { stroke: var(--red); fill: var(--red-soft); }
+    .state-diagram-svg .diagram-node.on.active circle { stroke: var(--green); fill: var(--green-soft); }
+    .state-diagram-svg .diagram-node.active text { fill: var(--white); }
 
     .band-pill {
       justify-self: start;
@@ -303,24 +276,7 @@
           <h3>Hysteresis state diagram</h3>
           <p>The hysteresis comparator has memory. Inside the band between the two thresholds, the output does not change state.</p>
           <div class="band-pill" id="bandStatus">Waiting for signal samples...</div>
-          <div class="diagram-wrap">
-            <div class="diagram-row">
-              <div class="state-box off" id="offStateBox">OFF</div>
-              <div class="transition-box" id="turnOnTransition">
-                <strong>Turn ON</strong>
-                <span id="turnOnLabel">signal >= 62%</span>
-              </div>
-              <div class="state-box on" id="onStateBox">ON</div>
-            </div>
-            <div class="diagram-row return">
-              <div class="state-box on" style="visibility:hidden;">ON</div>
-              <div class="transition-box" id="turnOffTransition">
-                <strong>Turn OFF</strong>
-                <span id="turnOffLabel">signal <= 48%</span>
-              </div>
-              <div class="state-box off" style="visibility:hidden;">OFF</div>
-            </div>
-          </div>
+          <div class="hysteresis-diagram" id="hysteresisDiagram"></div>
         </div>
 
         <div class="card">
@@ -425,12 +381,7 @@
       signalNow: document.getElementById("signalNow"),
       singleToggles: document.getElementById("singleToggles"),
       hysteresisToggles: document.getElementById("hysteresisToggles"),
-      offStateBox: document.getElementById("offStateBox"),
-      onStateBox: document.getElementById("onStateBox"),
-      turnOnTransition: document.getElementById("turnOnTransition"),
-      turnOffTransition: document.getElementById("turnOffTransition"),
-      turnOnLabel: document.getElementById("turnOnLabel"),
-      turnOffLabel: document.getElementById("turnOffLabel"),
+      hysteresisDiagram: document.getElementById("hysteresisDiagram"),
       bandStatus: document.getElementById("bandStatus")
     };
 
@@ -539,8 +490,6 @@
       ui.singleThresholdValue.textContent = `${settings.singleThreshold.toFixed(1)} %`;
       ui.lowerThresholdValue.textContent = `${settings.lowerThreshold.toFixed(1)} %`;
       ui.upperThresholdValue.textContent = `${settings.upperThreshold.toFixed(1)} %`;
-      ui.turnOnLabel.textContent = `signal >= ${settings.upperThreshold.toFixed(0)}%`;
-      ui.turnOffLabel.textContent = `signal <= ${settings.lowerThreshold.toFixed(0)}%`;
       const last = state.samples[state.samples.length - 1];
       if (!last) return;
       ui.signalNow.textContent = `${last.noisy.toFixed(1)}%`;
@@ -783,13 +732,15 @@
       ctx.fillText("OFF", statePlot.left - 38, statePlot.bottom - 2);
     }
 
-    function updateDiagram(lastSample) {
-      ui.offStateBox.classList.toggle("active", lastSample.hysteresisState === 0);
-      ui.onStateBox.classList.toggle("active", lastSample.hysteresisState === 1);
-
+    function renderHysteresisDiagram(lastSample) {
       const recent = getTimelineReferenceTime() - state.lastHystChangeTime < 0.6;
-      ui.turnOnTransition.classList.toggle("active", recent && state.lastHystChangeType === "on");
-      ui.turnOffTransition.classList.toggle("active", recent && state.lastHystChangeType === "off");
+      const turnOnActive = recent && state.lastHystChangeType === "on";
+      const turnOffActive = recent && state.lastHystChangeType === "off";
+      ui.hysteresisDiagram.innerHTML = `<svg class="state-diagram-svg" viewBox="0 0 460 220" aria-label="Hysteresis state diagram"><defs><marker id="hystArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path class="diagram-arrow" d="M0 0 L10 5 L0 10 z"></path></marker><marker id="hystArrowActive" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path class="diagram-arrow active" d="M0 0 L10 5 L0 10 z"></path></marker></defs><path class="diagram-path loop" d="M84 85 C42 36 42 136 84 136" marker-end="url(#hystArrow)"></path><text class="diagram-label" x="44" y="86">hold OFF</text><path class="diagram-path loop" d="M376 85 C418 36 418 136 376 136" marker-end="url(#hystArrow)"></path><text class="diagram-label" x="416" y="86">hold ON</text><path class="diagram-path ${turnOnActive ? "active" : ""}" d="M124 78 C182 22 278 22 336 78" marker-end="url(#${turnOnActive ? "hystArrowActive" : "hystArrow"})"></path><text class="diagram-label" x="230" y="24">signal &gt;= ${settings.upperThreshold.toFixed(0)}%</text><path class="diagram-path ${turnOffActive ? "active" : ""}" d="M336 142 C278 198 182 198 124 142" marker-end="url(#${turnOffActive ? "hystArrowActive" : "hystArrow"})"></path><text class="diagram-label" x="230" y="208">signal &lt;= ${settings.lowerThreshold.toFixed(0)}%</text><g class="diagram-node off ${lastSample.hysteresisState === 0 ? "active" : ""}" transform="translate(90 110)"><circle class="outer-ring" r="41"></circle><circle r="34"></circle><text y="1">OFF</text></g><g class="diagram-node on ${lastSample.hysteresisState === 1 ? "active" : ""}" transform="translate(370 110)"><circle class="outer-ring" r="41"></circle><circle r="34"></circle><text y="1">ON</text></g></svg>`;
+    }
+
+    function updateDiagram(lastSample) {
+      renderHysteresisDiagram(lastSample);
 
       if (lastSample.noisy >= settings.upperThreshold) {
         ui.bandStatus.textContent = "Signal is above the upper threshold: hysteresis output goes ON.";

@@ -3,15 +3,22 @@
 
   class UiSoundManager {
     constructor() {
-      this.muted = localStorage.getItem(STORAGE_KEY) === "true";
+      this.muted = false;
+      try {
+        this.muted = localStorage.getItem(STORAGE_KEY) === "true";
+      } catch (error) {
+        this.muted = false;
+      }
       this.audioContext = null;
       this.masterGain = null;
       this.lastPlayAt = 0;
+      this.pendingResume = null;
     }
 
     init() {
       this.injectStyles();
       this.installHeaderToggles();
+      this.installAudioUnlock();
       this.installGlobalListeners();
       this.syncToggleLabels();
     }
@@ -48,6 +55,9 @@
     }
 
     installHeaderToggles() {
+      const pageName = window.location.pathname.split("/").pop() || "";
+      if (pageName !== "heater_sim.html") return;
+
       document.querySelectorAll(".brand-logo").forEach((logo, index) => {
         if (logo.parentElement && logo.parentElement.classList.contains("header-tools")) return;
 
@@ -103,26 +113,53 @@
 
     toggleMuted() {
       this.muted = !this.muted;
-      localStorage.setItem(STORAGE_KEY, String(this.muted));
+      try {
+        localStorage.setItem(STORAGE_KEY, String(this.muted));
+      } catch (error) {
+        // Ignore storage failures in restricted browser modes.
+      }
       this.syncToggleLabels();
+    }
+
+    installAudioUnlock() {
+      const unlock = () => {
+        this.ensureAudio();
+      };
+      window.addEventListener("pointerdown", unlock, { passive: true });
+      window.addEventListener("touchstart", unlock, { passive: true });
+      window.addEventListener("keydown", unlock, { passive: true });
     }
 
     ensureAudio() {
       if (!this.audioContext) {
         const Ctx = window.AudioContext || window.webkitAudioContext;
         if (!Ctx) return false;
-        this.audioContext = new Ctx();
+        try {
+          this.audioContext = new Ctx();
+        } catch (error) {
+          return false;
+        }
         this.masterGain = this.audioContext.createGain();
-        this.masterGain.gain.value = 0.08;
+        this.masterGain.gain.value = 0.26;
         this.masterGain.connect(this.audioContext.destination);
       }
-      if (this.audioContext.state === "suspended") this.audioContext.resume();
+      if (this.audioContext.state === "suspended" && !this.pendingResume) {
+        this.pendingResume = this.audioContext.resume().catch(() => {}).finally(() => {
+          this.pendingResume = null;
+        });
+      }
       return true;
     }
 
     beep(frequency, duration, type = "sine", gain = 1) {
       if (this.muted) return;
       if (!this.ensureAudio()) return;
+      if (this.audioContext.state !== "running") {
+        if (this.pendingResume) {
+          this.pendingResume.then(() => this.beep(frequency, duration, type, gain));
+        }
+        return;
+      }
 
       const now = this.audioContext.currentTime;
       const osc = this.audioContext.createOscillator();
@@ -130,7 +167,7 @@
       osc.type = type;
       osc.frequency.setValueAtTime(frequency, now);
       amp.gain.setValueAtTime(0.0001, now);
-      amp.gain.exponentialRampToValueAtTime(0.05 * gain, now + 0.01);
+      amp.gain.exponentialRampToValueAtTime(0.18 * gain, now + 0.01);
       amp.gain.exponentialRampToValueAtTime(0.0001, now + duration);
       osc.connect(amp);
       amp.connect(this.masterGain);

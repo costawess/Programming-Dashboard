@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Embedded Programming - Dual Seven Segment</title>
   <script>document.documentElement.classList.add("theme-dark");</script>
+  <script src="../shared/mouse_glow.js"></script>
+  <script src="../shared/page_header.js"></script>
   <style>
     :root {
       --bg:#120f16; --panel:rgba(23,20,31,.95); --line:#5d536f; --text:#f3efff; --subtle:#c5bddc;
@@ -22,11 +24,19 @@
     .layout{display:grid;grid-template-columns:minmax(560px,1.14fr) minmax(340px,.86fr);gap:20px;align-items:start}
     .panel,.side{padding:18px;display:grid;gap:16px} h2,h3,p{margin:0}
     .display-shell{border-radius:24px;border:1px solid var(--line);background:linear-gradient(180deg,#1f1a2b 0%,#15111f 100%);padding:22px;display:grid;gap:18px}
-    .display-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+    .display-controls{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:14px;align-items:end}
+    .display-row{display:grid;gap:10px;align-items:start;justify-content:center;padding:16px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(11,9,16,.85) 0%,rgba(18,14,24,.72) 100%)}
+    .display-row.count-1{grid-template-columns:auto}
+    .display-row.count-2{grid-template-columns:repeat(2,auto)}
+    .display-row.count-4{grid-template-columns:repeat(4,auto);gap:8px}
     .digit-card,.info-card,.serial-card,.history-card,.history-item{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px}
-    .digit-card{display:grid;gap:12px;justify-items:center;align-content:start;text-align:center}
-    .digit-card h3{justify-self:center;width:auto;text-align:center}
+    .digit-card{display:grid;gap:8px;justify-items:center;align-content:start;text-align:center;background:transparent;border:0;padding:2px}
+    .digit-card h3{justify-self:center;width:auto;text-align:center;font-size:14px;color:var(--subtle)}
     .digit{position:relative;width:230px;height:380px;border-radius:28px;background:linear-gradient(180deg,#0e0c13 0%,var(--screen) 100%);border:4px solid var(--bezel);box-shadow:inset 0 0 0 2px rgba(255,255,255,.06)}
+    .display-row.count-1 .digit-card,.display-row.count-2 .digit-card{width:152px}
+    .display-row.count-1 .digit,.display-row.count-2 .digit{transform:scale(.58);transform-origin:top center;margin-bottom:-156px}
+    .display-row.count-4 .digit-card{width:140px}
+    .display-row.count-4 .digit{transform:scale(.58);transform-origin:top center;margin-bottom:-156px}
     .segment{position:absolute;background:var(--seg-off);opacity:.35;transition:.18s ease;filter:drop-shadow(0 0 0 rgba(0,0,0,0))}
     .segment.on{background:var(--seg-on);opacity:1;filter:drop-shadow(0 0 14px var(--seg-glow))}
     .segment.a,.segment.d,.segment.g{width:98px;height:28px;left:66px;clip-path:polygon(14% 0,86% 0,100% 50%,86% 100%,14% 100%,0 50%)}
@@ -36,7 +46,12 @@
     .segment.dp{width:34px;height:34px;border-radius:50%;right:12px;bottom:18px}
     .segment-label{position:absolute;font-size:13px;font-weight:800;color:rgba(197,189,220,.14);pointer-events:none;letter-spacing:.04em}
     .label-a{left:110px;top:28px}.label-b{right:54px;top:100px}.label-c{right:54px;top:252px}.label-d{left:110px;top:332px}.label-e{left:45px;top:252px}.label-f{left:45px;top:100px}.label-g{left:110px;top:180px}.label-dp{right:14px;bottom:56px}
-    .bits{display:grid;gap:8px;width:100%;justify-items:center;text-align:center}.bits strong{font-size:14px;color:var(--subtle)} .bitline{font-family:Consolas,monospace;font-size:18px;letter-spacing:.16em;color:var(--accent);word-break:break-all}
+    .display-row.count-4 .digit-card h3{font-size:12px}
+    .bits{display:grid;gap:6px;width:100%;justify-items:center;text-align:center}.bits strong{font-size:13px;color:var(--subtle)} .bitline{font-family:Consolas,monospace;font-size:18px;letter-spacing:.16em;color:var(--accent);word-break:break-all}
+    .display-row.count-1 .bits strong,.display-row.count-2 .bits strong{font-size:12px}
+    .display-row.count-1 .bitline,.display-row.count-2 .bitline{font-size:15px;letter-spacing:.12em}
+    .display-row.count-4 .bits strong{font-size:12px}
+    .display-row.count-4 .bitline{font-size:14px;letter-spacing:.12em}
     .info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
     .info-card{display:grid;gap:8px;justify-items:center;text-align:center;align-content:center}
     .status-badge{border:2px solid var(--accent);border-radius:18px;padding:12px 16px;background:rgba(139,200,255,.12);color:var(--accent);font-weight:800;text-align:center}
@@ -54,8 +69,8 @@
     .history-list{min-height:360px;display:grid;gap:10px;align-content:start}
     .history-item{background:var(--log);border:1px solid var(--line);display:grid;gap:4px}
     .history-item strong{font-size:15px}.history-item span{color:var(--subtle);font-family:Consolas,monospace;font-size:13px}
-    @media (max-width:1180px){.layout{grid-template-columns:1fr}.display-row,.info-grid{grid-template-columns:1fr}}
-    @media (max-width:720px){.header,.serial-controls{grid-template-columns:1fr}.digit{width:100%;max-width:230px}}
+    @media (max-width:1180px){.layout{grid-template-columns:1fr}.info-grid,.display-controls{grid-template-columns:1fr}.display-row.count-4 .digit-card{width:120px}.display-row.count-4 .digit{transform:scale(.5);margin-bottom:-178px}.display-row.count-4 .bitline{font-size:12px;letter-spacing:.1em}}
+    @media (max-width:720px){.header,.serial-controls{grid-template-columns:1fr}.display-row{grid-template-columns:1fr;justify-items:center}.display-row.count-2{grid-template-columns:1fr}.display-row.count-4{grid-template-columns:repeat(2,auto)}.digit{width:100%;max-width:230px;height:380px}.display-row.count-4 .digit-card{width:120px}.display-row.count-4 .digit{width:230px;height:380px;transform:scale(.5);transform-origin:top center;margin-bottom:-178px}}
   </style>
 </head>
 <body>
@@ -74,32 +89,19 @@
         <h2>Display view</h2>
         <div class="status-badge" id="statusBadge">Waiting for UART frames</div>
         <div class="display-shell">
-          <div class="display-row">
-            <div class="digit-card">
-              <h3>Left display</h3>
-              <div class="digit" id="digitLeft">
-                <div class="segment a" data-seg="A"></div><div class="segment b" data-seg="B"></div><div class="segment c" data-seg="C"></div><div class="segment d" data-seg="D"></div><div class="segment e" data-seg="E"></div><div class="segment f" data-seg="F"></div><div class="segment g" data-seg="G"></div><div class="segment dp" data-seg="DP"></div>
-                <div class="segment-label label-a">A</div><div class="segment-label label-b">B</div><div class="segment-label label-c">C</div><div class="segment-label label-d">D</div><div class="segment-label label-e">E</div><div class="segment-label label-f">F</div><div class="segment-label label-g">G</div><div class="segment-label label-dp">DP</div>
-              </div>
-              <div class="bits"><strong>Bits received</strong><div class="bitline" id="leftBits">00000000</div></div>
-            </div>
-            <div class="digit-card">
-              <h3>Right display</h3>
-              <div class="digit" id="digitRight">
-                <div class="segment a" data-seg="A"></div><div class="segment b" data-seg="B"></div><div class="segment c" data-seg="C"></div><div class="segment d" data-seg="D"></div><div class="segment e" data-seg="E"></div><div class="segment f" data-seg="F"></div><div class="segment g" data-seg="G"></div><div class="segment dp" data-seg="DP"></div>
-                <div class="segment-label label-a">A</div><div class="segment-label label-b">B</div><div class="segment-label label-c">C</div><div class="segment-label label-d">D</div><div class="segment-label label-e">E</div><div class="segment-label label-f">F</div><div class="segment-label label-g">G</div><div class="segment-label label-dp">DP</div>
-              </div>
-              <div class="bits"><strong>Bits received</strong><div class="bitline" id="rightBits">00000000</div></div>
-            </div>
+          <div class="display-controls">
+            <label class="field"><span>Displays on screen</span><select id="displayCountSelect"><option value="1">1 display</option><option value="2" selected>2 displays</option><option value="4">4 displays</option></select></label>
+            <div class="serial-hint" id="expectedBitsHint">Expected payload: 2 displays x 8 bits = 16 bits total. Use `DISPLAYS:b1,b2` or individual `D1:` / `D2:` frames.</div>
           </div>
+          <div class="display-row count-2" id="displayRow"></div>
           <div class="info-grid">
             <div class="info-card">
               <h3>Active segments</h3>
-              <p class="muted" id="segmentSummary">Left: none | Right: none</p>
+              <p class="muted" id="segmentSummary">D1: none | D2: none</p>
             </div>
             <div class="info-card">
               <h3>Bit order</h3>
-              <p class="muted">The GUI expects bits in the order <strong>ABCDEFGDP</strong>.</p>
+              <p class="muted" id="bitOrderText">Each display expects 8 bits in the order <strong>ABCDEFGDP</strong>.</p>
             </div>
           </div>
         </div>
@@ -113,12 +115,12 @@
             <button id="serialToggleBtn" type="button">Connect ESP32<small class="shortcut-hint">(Key C)</small></button>
           </div>
           <div class="serial-state" id="serialStatus">Not connected</div>
-          <div class="serial-hint" id="serialHint">Accepted UART lines: `LEFT:10111111`, `RIGHT:01100000`, `D1:*`, `D2:*`, or `DISPLAYS:left,right`.</div>
+          <div class="serial-hint" id="serialHint">Accepted UART lines: `LEFT:*`, `RIGHT:*`, `D1:*`, `D2:*`, `D3:*`, `D4:*`, or `DISPLAYS:b1,b2,...`.</div>
         </div>
         <div class="history-card">
           <h2>History</h2>
           <div class="tool-row">
-            <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example LEFT:10111111, then press Enter" />
+            <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example DISPLAYS:10111111,01100000, then press Enter" />
             <button id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
           </div>
           <div class="history-list" id="historyList"></div>
@@ -131,13 +133,14 @@
   <script src="../shared/web_serial_bridge.js"></script>
   <script>
     const SEGMENT_ORDER = ["A", "B", "C", "D", "E", "F", "G", "DP"];
-    const digits = {
-      LEFT: { root: document.getElementById("digitLeft"), bitsEl: document.getElementById("leftBits"), bits: "00000000" },
-      RIGHT: { root: document.getElementById("digitRight"), bitsEl: document.getElementById("rightBits"), bits: "00000000" }
-    };
+    const DIGIT_KEYS = ["D1", "D2", "D3", "D4"];
 
     const statusBadge = document.getElementById("statusBadge");
     const segmentSummary = document.getElementById("segmentSummary");
+    const displayRow = document.getElementById("displayRow");
+    const displayCountSelect = document.getElementById("displayCountSelect");
+    const expectedBitsHint = document.getElementById("expectedBitsHint");
+    const bitOrderText = document.getElementById("bitOrderText");
     const baudSelect = document.getElementById("baudSelect");
     const serialToggleBtn = document.getElementById("serialToggleBtn");
     const serialStatus = document.getElementById("serialStatus");
@@ -147,6 +150,8 @@
     const historyList = document.getElementById("historyList");
 
     const state = {
+      displayCount: 2,
+      digits: { D1: "00000000", D2: "00000000", D3: "00000000", D4: "00000000" },
       serialConnected: false,
       history: [{ title: "Dual seven segment experiment ready.", detail: "Waiting for the first UART frame." }]
     };
@@ -199,6 +204,33 @@
       }
     }
 
+    function displayTitle(index) {
+      return `Display ${index + 1}`;
+    }
+
+    function digitTemplate(index) {
+      return `<div class="digit-card"><h3>${displayTitle(index)}</h3><div class="digit" data-digit="${DIGIT_KEYS[index]}"><div class="segment a" data-seg="A"></div><div class="segment b" data-seg="B"></div><div class="segment c" data-seg="C"></div><div class="segment d" data-seg="D"></div><div class="segment e" data-seg="E"></div><div class="segment f" data-seg="F"></div><div class="segment g" data-seg="G"></div><div class="segment dp" data-seg="DP"></div><div class="segment-label label-a">A</div><div class="segment-label label-b">B</div><div class="segment-label label-c">C</div><div class="segment-label label-d">D</div><div class="segment-label label-e">E</div><div class="segment-label label-f">F</div><div class="segment-label label-g">G</div><div class="segment-label label-dp">DP</div></div><div class="bits"><strong>Bits received</strong><div class="bitline" data-bitline="${DIGIT_KEYS[index]}">${state.digits[DIGIT_KEYS[index]]}</div></div></div>`;
+    }
+
+    function renderDisplays() {
+      displayRow.className = `display-row count-${state.displayCount}`;
+      displayRow.innerHTML = DIGIT_KEYS.slice(0, state.displayCount).map((_, index) => digitTemplate(index)).join("");
+      for (let index = 0; index < state.displayCount; index++) paintDigit(DIGIT_KEYS[index]);
+    }
+
+    function updateDisplayHints() {
+      const totalBits = state.displayCount * 8;
+      const visible = DIGIT_KEYS.slice(0, state.displayCount);
+      const list = visible.join(", ");
+      expectedBitsHint.textContent = `Expected payload: ${state.displayCount} display${state.displayCount > 1 ? "s" : ""} x 8 bits = ${totalBits} bits total. Use DISPLAYS:b1,b2${state.displayCount >= 3 ? ",b3" : ""}${state.displayCount >= 4 ? ",b4" : ""} or individual ${list} frames.`;
+      bitOrderText.innerHTML = `Each display expects <strong>8 bits</strong> in the order <strong>ABCDEFGDP</strong>. Visible now: <strong>${list}</strong>.`;
+      uartTestInput.placeholder = state.displayCount === 1
+        ? "Type a UART line, for example D1:10111111, then press Enter"
+        : state.displayCount === 2
+          ? "Type a UART line, for example DISPLAYS:10111111,01100000, then press Enter"
+          : "Type a UART line, for example DISPLAYS:10111111,01100000,00111111,11100111, then press Enter";
+    }
+
     function updateSerialUi() {
       if (!serialBridge.supported) {
         serialToggleBtn.disabled = true;
@@ -211,20 +243,27 @@
       serialStatus.textContent = state.serialConnected ? `Connected at ${baudSelect.value} baud` : "Not connected";
       serialHint.textContent = state.serialConnected
         ? "UART frames now update the displays in real time."
-        : "Accepted UART lines: LEFT, RIGHT, D1, D2, and DISPLAYS.";
+        : `Accepted UART lines: LEFT, RIGHT, D1...D${state.displayCount}, and DISPLAYS with ${state.displayCount} byte group${state.displayCount > 1 ? "s" : ""}.`;
     }
 
-    function applyDigit(target, bits, source) {
-      const entry = digits[target];
-      if (!entry) return false;
-      entry.bits = bits;
-      entry.bitsEl.textContent = bits;
+    function paintDigit(target) {
+      const root = displayRow.querySelector(`[data-digit="${target}"]`);
+      const bitsEl = displayRow.querySelector(`[data-bitline="${target}"]`);
+      if (!root || !bitsEl) return;
+      const bits = state.digits[target];
+      bitsEl.textContent = bits;
       SEGMENT_ORDER.forEach((segment, index) => {
-        const el = entry.root.querySelector(`[data-seg="${segment}"]`);
+        const el = root.querySelector(`[data-seg="${segment}"]`);
         el.classList.toggle("on", bits[index] === "1");
       });
+    }
+
+    function applyDigit(target, bits, source, skipHistory = false) {
+      if (!DIGIT_KEYS.includes(target)) return false;
+      state.digits[target] = bits;
+      paintDigit(target);
       updateSummary();
-      addHistory(`${source}: ${target}`, bits);
+      if (!skipHistory) addHistory(`${source}: ${target}`, bits);
       return true;
     }
 
@@ -233,8 +272,9 @@
     }
 
     function updateSummary() {
-      segmentSummary.textContent = `Left: ${activeSegments(digits.LEFT.bits)} | Right: ${activeSegments(digits.RIGHT.bits)}`;
-      setStatus(`Left ${digits.LEFT.bits} | Right ${digits.RIGHT.bits}`);
+      const visible = DIGIT_KEYS.slice(0, state.displayCount);
+      segmentSummary.textContent = visible.map(key => `${key}: ${activeSegments(state.digits[key])}`).join(" | ");
+      setStatus(visible.map(key => `${key} ${state.digits[key]}`).join(" | "));
     }
 
     function handleSerialLine(line) {
@@ -243,12 +283,12 @@
 
       if (upper.startsWith("DISPLAYS:")) {
         const payload = raw.slice(raw.indexOf(":") + 1).split(",");
-        if (payload.length === 2) {
-          const leftBits = normalizeBits(payload[0]);
-          const rightBits = normalizeBits(payload[1]);
-          if (leftBits && rightBits) {
-            applyDigit("LEFT", leftBits, "UART");
-            applyDigit("RIGHT", rightBits, "UART");
+        if (payload.length === state.displayCount) {
+          const normalized = payload.map(item => normalizeBits(item));
+          if (normalized.every(Boolean)) {
+            normalized.forEach((bits, index) => applyDigit(DIGIT_KEYS[index], bits, "UART", true));
+            updateSummary();
+            addHistory("UART: DISPLAYS", normalized.join(" | "));
             return;
           }
         }
@@ -259,18 +299,14 @@
         const key = raw.slice(0, colonIndex).trim().toUpperCase();
         const bits = normalizeBits(raw.slice(colonIndex + 1));
         if (bits) {
-          if (key === "LEFT" || key === "D1" || key === "DISPLAY1") {
-            applyDigit("LEFT", bits, "UART");
-            return;
-          }
-          if (key === "RIGHT" || key === "D2" || key === "DISPLAY2") {
-            applyDigit("RIGHT", bits, "UART");
-            return;
-          }
+          if (key === "LEFT" || key === "D1" || key === "DISPLAY1") { applyDigit("D1", bits, "UART"); return; }
+          if (key === "RIGHT" || key === "D2" || key === "DISPLAY2") { applyDigit("D2", bits, "UART"); return; }
+          if (key === "D3" || key === "DISPLAY3") { applyDigit("D3", bits, "UART"); return; }
+          if (key === "D4" || key === "DISPLAY4") { applyDigit("D4", bits, "UART"); return; }
         }
       }
 
-      addHistory(`Ignored UART line: ${raw}`, "Use LEFT, RIGHT, D1, D2, or DISPLAYS with 8 bits in ABCDEFGDP order.");
+      addHistory(`Ignored UART line: ${raw}`, `Use LEFT, RIGHT, D1...D${state.displayCount}, or DISPLAYS with ${state.displayCount} groups of 8 bits in ABCDEFGDP order.`);
     }
 
     function handleSerialStatus(status) {
@@ -299,6 +335,15 @@
       renderHistory();
     }
 
+    function setDisplayCount(nextCount) {
+      state.displayCount = Number(nextCount);
+      renderDisplays();
+      updateDisplayHints();
+      updateSerialUi();
+      updateSummary();
+      addHistory("Display count changed.", `${state.displayCount} display${state.displayCount > 1 ? "s" : ""} visible on screen.`);
+    }
+
     function submitTestUartLine() {
       const line = uartTestInput.value.trim();
       if (!line) return;
@@ -308,6 +353,7 @@
 
     serialToggleBtn.addEventListener("click", toggleSerialConnection);
     clearHistoryBtn.addEventListener("click", clearHistory);
+    displayCountSelect.addEventListener("change", event => setDisplayCount(event.target.value));
     uartTestInput.addEventListener("keydown", event => {
       if (event.key === "Enter") {
         event.preventDefault();
@@ -322,6 +368,8 @@
       else if (key === "h") { event.preventDefault(); clearHistory(); }
     });
 
+    renderDisplays();
+    updateDisplayHints();
     updateSerialUi();
     updateSummary();
     renderHistory();

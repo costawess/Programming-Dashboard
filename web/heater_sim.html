@@ -9,6 +9,7 @@
     // Keep the application permanently in dark mode.
     document.documentElement.classList.add("theme-dark");
   </script>
+  <script src="./shared/mouse_glow.js"></script>
   <style>
     /* Base light theme tokens shared by the menu and simulation screen. */
     :root {
@@ -136,6 +137,7 @@
       display: grid;
       align-content: start;
       gap: 22px;
+      position: relative;
     }
 
     .menu-hero {
@@ -166,12 +168,70 @@
       font-size: clamp(36px, 3vw, 60px);
     }
 
+    .hero-title {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hero-version {
+      color: var(--subtle);
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.2;
+      padding-bottom: 8px;
+      letter-spacing: 0.04em;
+    }
+
     .menu-hero p {
       margin: 10px 0 0;
       max-width: none;
       color: var(--subtle);
       font-size: 18px;
       line-height: 1.5;
+    }
+
+    .menu-search {
+      margin-top: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .menu-search input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 2px solid var(--toggle-border);
+      background: var(--button-bg);
+      color: var(--title);
+      font: inherit;
+      font-size: 16px;
+    }
+
+    .menu-search input::placeholder {
+      color: var(--subtle);
+    }
+
+    .menu-search-note {
+      color: var(--subtle);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .menu-empty {
+      display: none;
+      background: var(--panel);
+      border: 2px dashed var(--panel-line);
+      border-radius: 24px;
+      padding: 18px 20px;
+      color: var(--subtle);
+      font-size: 16px;
+      line-height: 1.45;
+    }
+
+    .menu-empty.visible {
+      display: block;
     }
 
     .menu-columns {
@@ -236,6 +296,26 @@
       margin: 0;
       color: var(--menu-card-text);
       line-height: 1.45;
+    }
+
+    .menu-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .menu-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--menu-card-border);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--subtle);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
     }
 
     .launch-button {
@@ -326,7 +406,7 @@
     }
 
     .canvas-wrap {
-      background: rgba(255, 255, 255, 0.7);
+      background: rgba(9, 18, 24, 0.88);
       border: 1px solid var(--panel-line);
       border-radius: 22px;
       overflow: hidden;
@@ -441,7 +521,8 @@
     }
 
     .canvas-wrap {
-      background: var(--canvas-wrap-bg);
+      background: rgba(9, 18, 24, 0.88);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
     }
 
     button {
@@ -486,10 +567,17 @@
       <div class="menu-hero">
         <div class="brand-lockup">
           <div>
-            <h1>Embedded Programming</h1>
+            <div class="hero-title">
+              <h1>Embedded Programming Dashboard</h1>
+              <span class="hero-version">v1.0</span>
+            </div>
             <p>Select a learning activity to open an interactive simulation or experiment. This start page can grow into a small course hub.</p>
           </div>
           <img class="brand-logo" src="../assets/branding/hanze_logo.png" alt="Hanze logo" />
+        </div>
+        <div class="menu-search">
+          <input id="menuSearchInput" type="search" placeholder="Search simulations and experiments" aria-label="Search simulations and experiments" />
+          <div class="menu-search-note">Search by topic, title, or keywords like UART, ADC, timers, memory, ASCII, traffic, or maze.</div>
         </div>
       </div>
 
@@ -498,18 +586,11 @@
         <section class="menu-column">
           <h2>Simulations</h2>
           <article class="menu-card">
-            <img class="menu-card-image" src="./assets/cards/gas_water_heater.svg" alt="Gas Water Heater card image" />
-            <div class="menu-card-copy">
-              <h3>Gas Water Heater</h3>
-              <p>Interactive heater plant with tap control, temperature setpoint, inlet temperature, flow response, and signal timelines.</p>
-            </div>
-            <button class="launch-button" id="openGasWaterBtn">Open simulation</button>
-          </article>
-          <article class="menu-card">
             <img class="menu-card-image" src="./assets/cards/foundations_lab.svg" alt="Foundations Lab card image" />
             <div class="menu-card-copy">
               <h3>Foundations Lab</h3>
               <p>Start with one digital input and one LED output, and watch the signals evolve in the timeline.</p>
+              <div class="menu-tags"><span class="menu-tag">digital input</span><span class="menu-tag">digital output</span><span class="menu-tag">HIGH/LOW</span></div>
             </div>
             <a class="launch-button" href="./simulations/course_topics_lab.html?topic=foundations">Open simulation</a>
           </article>
@@ -518,6 +599,7 @@
             <div class="menu-card-copy">
               <h3>Pull-Up / Pull-Down Lab</h3>
               <p>Compare pull-up and pull-down resistor wiring with a button, a GPIO input, and an LED that follows the logic level.</p>
+              <div class="menu-tags"><span class="menu-tag">pull-up</span><span class="menu-tag">pull-down</span><span class="menu-tag">GPIO</span><span class="menu-tag">resistor</span></div>
             </div>
             <a class="launch-button" href="./simulations/pull_resistors_lab.html">Open simulation</a>
           </article>
@@ -526,6 +608,7 @@
             <div class="menu-card-copy">
               <h3>Variables Lab</h3>
               <p>Read a changing value, store it in variables, transform it, and map it to an output and a timeline.</p>
+              <div class="menu-tags"><span class="menu-tag">variables</span><span class="menu-tag">map()</span><span class="menu-tag">PWM</span><span class="menu-tag">sensor</span></div>
             </div>
             <a class="launch-button" href="./simulations/course_topics_lab.html?topic=variables">Open simulation</a>
           </article>
@@ -534,14 +617,34 @@
             <div class="menu-card-copy">
               <h3>Variable Types Lab</h3>
               <p>Compare bool, signed and unsigned integers, and float, then inspect exactly how each value is stored byte by byte in memory.</p>
+              <div class="menu-tags"><span class="menu-tag">types</span><span class="menu-tag">signed/unsigned</span><span class="menu-tag">float</span><span class="menu-tag">memory bytes</span></div>
             </div>
             <a class="launch-button" href="./simulations/variable_types_lab.html">Open simulation</a>
+          </article>
+          <article class="menu-card">
+            <img class="menu-card-image" src="./assets/cards/memory_layout_lab.svg" alt="Memory Layout Lab card image" />
+            <div class="menu-card-copy">
+              <h3>Memory Layout Lab</h3>
+              <p>Allocate several variables together, compare the total bytes they consume, and see how declaration order fills RAM.</p>
+              <div class="menu-tags"><span class="menu-tag">RAM usage</span><span class="menu-tag">layout</span><span class="menu-tag">addresses</span><span class="menu-tag">sizeof</span></div>
+            </div>
+            <a class="launch-button" href="./simulations/memory_layout_lab.html">Open simulation</a>
+          </article>
+          <article class="menu-card">
+            <img class="menu-card-image" src="./assets/cards/ascii_char_lab.svg" alt="ASCII Char Lab card image" />
+            <div class="menu-card-copy">
+              <h3>ASCII Char Lab</h3>
+              <p>Explore how a `char` stores one ASCII symbol, compare decimal, hex, and binary, and inspect the single byte that appears in memory.</p>
+              <div class="menu-tags"><span class="menu-tag">char</span><span class="menu-tag">ASCII</span><span class="menu-tag">hex</span><span class="menu-tag">binary</span></div>
+            </div>
+            <a class="launch-button" href="./simulations/ascii_char_lab.html">Open simulation</a>
           </article>
           <article class="menu-card">
             <img class="menu-card-image" src="./assets/cards/number_representation_lab.svg" alt="Number Representation Lab card image" />
             <div class="menu-card-copy">
               <h3>Number Representation Lab</h3>
               <p>Explore decimal, binary, hexadecimal, bit weights, and signed two's complement using the same raw bit pattern.</p>
+              <div class="menu-tags"><span class="menu-tag">binary</span><span class="menu-tag">hexadecimal</span><span class="menu-tag">two's complement</span><span class="menu-tag">bit weights</span></div>
             </div>
             <a class="launch-button" href="./simulations/number_representation_lab.html">Open simulation</a>
           </article>
@@ -550,6 +653,7 @@
             <div class="menu-card-copy">
               <h3>Conditionals Lab</h3>
               <p>Compare a basic condition, nested conditions, and threshold comparisons with LED outputs and time plots.</p>
+              <div class="menu-tags"><span class="menu-tag">if</span><span class="menu-tag">logic</span><span class="menu-tag">nested if</span><span class="menu-tag">comparison</span></div>
             </div>
             <a class="launch-button" href="./simulations/course_topics_lab.html?topic=conditionals">Open simulation</a>
           </article>
@@ -558,6 +662,7 @@
             <div class="menu-card-copy">
               <h3>Loops Lab</h3>
               <p>Explore repeated LED sequences and see how a for-loop and a while-loop change the same system over time.</p>
+              <div class="menu-tags"><span class="menu-tag">for</span><span class="menu-tag">while</span><span class="menu-tag">do while</span><span class="menu-tag">iteration</span></div>
             </div>
             <a class="launch-button" href="./simulations/course_topics_lab.html?topic=loops">Open simulation</a>
           </article>
@@ -566,6 +671,7 @@
             <div class="menu-card-copy">
               <h3>ADC Lab</h3>
               <p>Move an analog signal through the ADC range and observe the raw reading, voltage, and mapped PWM response.</p>
+              <div class="menu-tags"><span class="menu-tag">ADC</span><span class="menu-tag">analogRead()</span><span class="menu-tag">voltage</span><span class="menu-tag">PWM</span></div>
             </div>
             <a class="launch-button" href="./simulations/course_topics_lab.html?topic=adc">Open simulation</a>
           </article>
@@ -574,6 +680,7 @@
             <div class="menu-card-copy">
               <h3>Hysteresis Lab</h3>
               <p>Show noisy threshold chatter first, then compare one-threshold switching against two-threshold hysteresis with a live state diagram.</p>
+              <div class="menu-tags"><span class="menu-tag">noise</span><span class="menu-tag">threshold</span><span class="menu-tag">hysteresis</span><span class="menu-tag">state diagram</span></div>
             </div>
             <a class="launch-button" href="./simulations/hysteresis_lab.html">Open simulation</a>
           </article>
@@ -582,6 +689,7 @@
             <div class="menu-card-copy">
               <h3>UART Lab</h3>
               <p>Send serial frames across a simulated UART link and follow TX, RX, queueing, and acknowledgement in the timeline.</p>
+              <div class="menu-tags"><span class="menu-tag">UART</span><span class="menu-tag">Serial</span><span class="menu-tag">TX/RX</span><span class="menu-tag">frames</span></div>
             </div>
             <a class="launch-button" href="./simulations/course_topics_lab.html?topic=uart">Open simulation</a>
           </article>
@@ -590,6 +698,7 @@
             <div class="menu-card-copy">
               <h3>I2C Lab</h3>
               <p>Write a byte from an I2C master to a slave and watch SDA, SCL, and ACK activity on the bus.</p>
+              <div class="menu-tags"><span class="menu-tag">I2C</span><span class="menu-tag">SDA/SCL</span><span class="menu-tag">ACK</span><span class="menu-tag">Wire</span></div>
             </div>
             <a class="launch-button" href="./simulations/course_topics_lab.html?topic=i2c">Open simulation</a>
           </article>
@@ -598,6 +707,7 @@
             <div class="menu-card-copy">
               <h3>Functions Lab</h3>
               <p>Reuse one function with different parameters and compare repeated output patterns with a live code example.</p>
+              <div class="menu-tags"><span class="menu-tag">functions</span><span class="menu-tag">parameters</span><span class="menu-tag">reuse</span><span class="menu-tag">call flow</span></div>
             </div>
             <a class="launch-button" href="./simulations/course_topics_lab.html?topic=functions">Open simulation</a>
           </article>
@@ -606,6 +716,7 @@
             <div class="menu-card-copy">
               <h3>Interrupts Lab</h3>
               <p>Compare immediate interrupt handling against slower polling and make the response timing visible.</p>
+              <div class="menu-tags"><span class="menu-tag">interrupts</span><span class="menu-tag">polling</span><span class="menu-tag">ISR</span><span class="menu-tag">latency</span></div>
             </div>
             <a class="launch-button" href="./simulations/course_topics_lab.html?topic=interrupts">Open simulation</a>
           </article>
@@ -614,6 +725,7 @@
             <div class="menu-card-copy">
               <h3>Timers Lab</h3>
               <p>Put `delay()` and `millis()` side by side and see why blocking code affects event handling over time.</p>
+              <div class="menu-tags"><span class="menu-tag">delay()</span><span class="menu-tag">millis()</span><span class="menu-tag">hardware timer</span><span class="menu-tag">timing</span></div>
             </div>
             <a class="launch-button" href="./simulations/course_topics_lab.html?topic=timers">Open simulation</a>
           </article>
@@ -622,6 +734,7 @@
             <div class="menu-card-copy">
               <h3>State Machines Lab</h3>
               <p>Run a traffic-light state machine, request transitions, and study the sequence directly on the timeline.</p>
+              <div class="menu-tags"><span class="menu-tag">state machine</span><span class="menu-tag">transitions</span><span class="menu-tag">traffic light</span><span class="menu-tag">events</span></div>
             </div>
             <a class="launch-button" href="./simulations/course_topics_lab.html?topic=state_machines">Open simulation</a>
           </article>
@@ -630,6 +743,7 @@
             <div class="menu-card-copy">
               <h3>Arduino to Flowchart</h3>
               <p>Paste Arduino C++ and generate a teaching-friendly flowchart that highlights setup, loop, decisions, loops, and I/O blocks.</p>
+              <div class="menu-tags"><span class="menu-tag">flowchart</span><span class="menu-tag">code structure</span><span class="menu-tag">setup/loop</span><span class="menu-tag">visualization</span></div>
             </div>
             <a class="launch-button" href="./simulations/arduino_flowchart_converter.html">Open simulation</a>
           </article>
@@ -639,10 +753,20 @@
         <section class="menu-column">
           <h2>Experiments</h2>
           <article class="menu-card">
+            <img class="menu-card-image" src="./assets/cards/gas_water_heater.svg" alt="Gas Water Heater card image" />
+            <div class="menu-card-copy">
+              <h3>Gas Water Heater</h3>
+              <p>Interactive heater plant with tap control, temperature setpoint, inlet temperature, flow response, and signal timelines.</p>
+              <div class="menu-tags"><span class="menu-tag">control</span><span class="menu-tag">feedback</span><span class="menu-tag">signals</span><span class="menu-tag">plant model</span></div>
+            </div>
+            <button class="launch-button" id="openGasWaterBtn">Open experiment</button>
+          </article>
+          <article class="menu-card">
             <img class="menu-card-image" src="./assets/cards/maze.svg" alt="Maze card image" />
             <div class="menu-card-copy">
               <h3>Maze</h3>
               <p>Maze challenge with keyboard control, score tracking, and direct UART movement commands from the ESP32.</p>
+              <div class="menu-tags"><span class="menu-tag">movement</span><span class="menu-tag">UART commands</span><span class="menu-tag">logic</span><span class="menu-tag">game loop</span></div>
             </div>
             <a class="launch-button" href="./experiments/maze.html">Open experiment</a>
           </article>
@@ -651,6 +775,7 @@
             <div class="menu-card-copy">
               <h3>Tic-Tac-Toe</h3>
               <p>Browser-based Tic-Tac-Toe with the original UART handshake, move exchange, and rematch flow used by the pygame version.</p>
+              <div class="menu-tags"><span class="menu-tag">game state</span><span class="menu-tag">UART protocol</span><span class="menu-tag">events</span><span class="menu-tag">logic</span></div>
             </div>
             <a class="launch-button" href="./experiments/tic_tac_toe.html">Open experiment</a>
           </article>
@@ -659,6 +784,7 @@
             <div class="menu-card-copy">
               <h3>Kitchen Timer</h3>
               <p>UART-driven kitchen timer with a circular dial, adjustable maximum scale in the GUI, and limit vibration when the ESP32 value reaches the end.</p>
+              <div class="menu-tags"><span class="menu-tag">timer</span><span class="menu-tag">UART</span><span class="menu-tag">UI feedback</span><span class="menu-tag">limits</span></div>
             </div>
             <a class="launch-button" href="./experiments/kitchen_timer.html">Open experiment</a>
           </article>
@@ -667,6 +793,7 @@
             <div class="menu-card-copy">
               <h3>Traffic Lights</h3>
               <p>UART-driven traffic light monitor with live state display, state-diagram circles, and millisecond timing history for each finished color.</p>
+              <div class="menu-tags"><span class="menu-tag">traffic states</span><span class="menu-tag">UART</span><span class="menu-tag">timing</span><span class="menu-tag">state diagram</span></div>
             </div>
             <a class="launch-button" href="./experiments/traffic_lights.html">Open experiment</a>
           </article>
@@ -675,6 +802,7 @@
             <div class="menu-card-copy">
               <h3>Intersection Controller</h3>
               <p>Street-crossing simulation with main and side traffic lights, walk lamp, walk button, and side-street sensor controlled through UART.</p>
+              <div class="menu-tags"><span class="menu-tag">state machine</span><span class="menu-tag">sensor</span><span class="menu-tag">pedestrian</span><span class="menu-tag">UART</span></div>
             </div>
             <a class="launch-button" href="./experiments/intersection_controller.html">Open experiment</a>
           </article>
@@ -683,6 +811,7 @@
             <div class="menu-card-copy">
               <h3>Dual Seven Segment</h3>
               <p>UART-driven twin 7-segment display visualizer that renders the exact segment bits received for the left and right digits.</p>
+              <div class="menu-tags"><span class="menu-tag">7-segment</span><span class="menu-tag">bits</span><span class="menu-tag">display encoding</span><span class="menu-tag">UART</span></div>
             </div>
             <a class="launch-button" href="./experiments/dual_seven_segment.html">Open experiment</a>
           </article>
@@ -691,11 +820,13 @@
             <div class="menu-card-copy">
               <h3>Coffee Machine</h3>
               <p>HTML experiment with local fallback and UART connection to the ESP32, following the same drink-selection protocol as the pygame project.</p>
+              <div class="menu-tags"><span class="menu-tag">menu logic</span><span class="menu-tag">UART protocol</span><span class="menu-tag">state flow</span><span class="menu-tag">UI interaction</span></div>
             </div>
             <a class="launch-button" href="./experiments/coffee_machine.html">Open experiment</a>
           </article>
         </section>
       </div>
+      <div class="menu-empty" id="menuEmptyState">No simulation or experiment matched this search. Try a broader word such as <code>memory</code>, <code>timer</code>, <code>UART</code>, or <code>traffic</code>.</div>
     </section>
   </div>
 
@@ -936,6 +1067,10 @@
     const menuScreen = document.getElementById("menuScreen");
     const simulationScreen = document.getElementById("simulationScreen");
     const openGasWaterBtn = document.getElementById("openGasWaterBtn");
+    const menuSearchInput = document.getElementById("menuSearchInput");
+    const menuColumns = Array.from(document.querySelectorAll(".menu-column"));
+    const menuCards = Array.from(document.querySelectorAll(".menu-card"));
+    const menuEmptyState = document.getElementById("menuEmptyState");
     const backToMenuBtn = document.getElementById("backToMenuBtn");
     const plantCanvas = document.getElementById("plantCanvas");
     const plotCanvas = document.getElementById("plotCanvas");
@@ -1231,8 +1366,8 @@
     // Draw a single chart row including grid, axes, hover guide, and signal trace.
     function drawSinglePlot(cfg, x, y, width, height) {
       // Card background for one signal row.
-      plotCtx.fillStyle = COLORS.white;
-      plotCtx.strokeStyle = COLORS.panelLine;
+      plotCtx.fillStyle = withAlpha(COLORS.canvasSurfaceAlt, 0.96);
+      plotCtx.strokeStyle = withAlpha(cfg.color, 0.4);
       roundRect(plotCtx, x, y, width, height, 14);
       plotCtx.fill();
       plotCtx.stroke();
@@ -1241,22 +1376,40 @@
       roundRect(plotCtx, x + 2, y + 2, width - 4, height - 4, 12);
       plotCtx.fill();
 
+      // Small color header so each row is identifiable at a glance.
+      roundRect(plotCtx, x + 12, y + 10, 132, 28, 14);
+      plotCtx.fillStyle = withAlpha(cfg.color, 0.16);
+      plotCtx.fill();
+      plotCtx.strokeStyle = withAlpha(cfg.color, 0.45);
+      plotCtx.lineWidth = 1;
+      plotCtx.stroke();
+
+      plotCtx.fillStyle = cfg.color;
+      plotCtx.font = "700 13px Segoe UI";
+      plotCtx.textAlign = "left";
+      plotCtx.textBaseline = "middle";
+      plotCtx.fillText(cfg.title, x + 26, y + 24);
+
+      plotCtx.beginPath();
+      plotCtx.arc(x + 20, y + 24, 5, 0, Math.PI * 2);
+      plotCtx.fill();
+
       // Rotate the signal name so it fits the narrow left gutter more cleanly.
       plotCtx.save();
       plotCtx.translate(x + 18, y + height / 2);
       plotCtx.rotate(-Math.PI / 2);
-      plotCtx.fillStyle = cfg.color;
-      plotCtx.font = "700 15px Segoe UI";
+      plotCtx.fillStyle = withAlpha(cfg.color, 0.85);
+      plotCtx.font = "700 13px Segoe UI";
       plotCtx.textAlign = "center";
       plotCtx.textBaseline = "middle";
       plotCtx.fillText(cfg.title, 0, 0);
       plotCtx.restore();
 
       plotCtx.fillStyle = cfg.color;
-      plotCtx.font = "700 15px Segoe UI";
-      plotCtx.textAlign = "left";
-      plotCtx.textBaseline = "alphabetic";
-      plotCtx.fillText(cfg.unit, x + 12, y + height - 10);
+      plotCtx.font = "700 12px Segoe UI";
+      plotCtx.textAlign = "right";
+      plotCtx.textBaseline = "middle";
+      plotCtx.fillText(cfg.unit, x + width - 14, y + 24);
 
       // Inner chart area where axes, grid and line are drawn.
       const left = x + 74;
@@ -1265,8 +1418,8 @@
       const bottom = y + height - 24;
 
       // Horizontal and vertical grid lines to make time/value reading easier.
-      plotCtx.strokeStyle = COLORS.panelLine;
-      plotCtx.lineWidth = 1;
+      plotCtx.strokeStyle = withAlpha(COLORS.subtle, 0.35);
+      plotCtx.lineWidth = 0.8;
       for (let i = 0; i < 5; i++) {
         const gy = top + (bottom - top) * i / 4;
         plotCtx.beginPath();
@@ -1281,13 +1434,13 @@
         plotCtx.moveTo(gx, top);
         plotCtx.lineTo(gx, bottom);
         plotCtx.stroke();
-        plotCtx.fillStyle = COLORS.subtle;
+        plotCtx.fillStyle = withAlpha(COLORS.subtle, 0.8);
         plotCtx.fillText(`-${i}s`, gx - 12, bottom + 16);
       }
 
       // Left axis, bottom axis, and time stamps.
-      plotCtx.strokeStyle = COLORS.subtle;
-      plotCtx.lineWidth = 2;
+      plotCtx.strokeStyle = withAlpha(cfg.color, 0.45);
+      plotCtx.lineWidth = 1;
       plotCtx.beginPath();
       plotCtx.moveTo(left, top);
       plotCtx.lineTo(left, bottom);
@@ -1296,9 +1449,9 @@
 
       // Dashed vertical hover guide following the mouse.
       if (state.hoverX !== null && state.hoverX >= left && state.hoverX <= right) {
-        plotCtx.strokeStyle = COLORS.subtle;
+        plotCtx.strokeStyle = withAlpha(COLORS.white, 0.55);
         plotCtx.setLineDash([7, 5]);
-        plotCtx.lineWidth = 2;
+        plotCtx.lineWidth = 1;
         plotCtx.beginPath();
         plotCtx.moveTo(state.hoverX, top);
         plotCtx.lineTo(state.hoverX, bottom);
@@ -1319,14 +1472,14 @@
 
       if (points.length > 1) {
         plotCtx.strokeStyle = withAlpha(cfg.color, 0.22);
-        plotCtx.lineWidth = 7;
+        plotCtx.lineWidth = 3;
         plotCtx.beginPath();
         plotCtx.moveTo(points[0][0], points[0][1]);
         for (let i = 1; i < points.length; i++) plotCtx.lineTo(points[i][0], points[i][1]);
         plotCtx.stroke();
 
         plotCtx.strokeStyle = cfg.color;
-        plotCtx.lineWidth = 3.5;
+        plotCtx.lineWidth = 1.8;
         plotCtx.beginPath();
         plotCtx.moveTo(points[0][0], points[0][1]);
         for (let i = 1; i < points.length; i++) plotCtx.lineTo(points[i][0], points[i][1]);
@@ -1335,7 +1488,7 @@
 
       // Current numeric readout plus the min/max scale markers.
       const last = state.sim.history[state.sim.history.length - 1];
-      plotCtx.fillStyle = COLORS.subtle;
+      plotCtx.fillStyle = withAlpha(COLORS.subtle, 0.9);
       plotCtx.fillText(String(cfg.vmax), left - 38, top + 4);
       plotCtx.fillText(String(cfg.vmin), left - 38, bottom - 2);
       plotCtx.fillStyle = cfg.color;
@@ -1368,6 +1521,25 @@
       syncUi();
       drawPlant();
       drawPlots();
+    }
+
+    function filterMenuCards(query) {
+      const normalized = (query || "").trim().toLowerCase();
+      let anyVisible = false;
+
+      menuCards.forEach(card => {
+        const haystack = card.textContent.toLowerCase();
+        const isVisible = !normalized || haystack.includes(normalized);
+        card.classList.toggle("hidden", !isVisible);
+        if (isVisible) anyVisible = true;
+      });
+
+      menuColumns.forEach(column => {
+        const hasVisibleCards = Array.from(column.querySelectorAll(".menu-card")).some(card => !card.classList.contains("hidden"));
+        column.classList.toggle("hidden", !hasVisibleCards);
+      });
+
+      menuEmptyState.classList.toggle("visible", !anyVisible);
     }
 
     // UI controls for the simulation screen.
@@ -1406,6 +1578,10 @@
     // Menu navigation.
     openGasWaterBtn.addEventListener("click", showSimulation);
     backToMenuBtn.addEventListener("click", showMenu);
+    menuSearchInput.addEventListener("input", e => {
+      filterMenuCards(e.target.value);
+    });
+    filterMenuCards("");
 
     // Mouse hover on the plot canvas drives the dashed vertical guide line.
     plotCanvas.addEventListener("mousemove", e => {

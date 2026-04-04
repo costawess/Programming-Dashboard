@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Embedded Programming - Intersection Controller</title>
   <script>document.documentElement.classList.add("theme-dark");</script>
+  <script src="../shared/mouse_glow.js"></script>
+  <script src="../shared/page_header.js"></script>
   <style>
     :root {
       --bg:#161b18; --panel:rgba(25,32,28,.95); --line:#546560; --text:#edf4ef; --subtle:#bed0c4;
@@ -37,7 +39,7 @@
     .car::before{left:3px}.car::after{right:3px}
     .ped{position:absolute;width:18px;height:28px;transform-origin:center center}
     .ped-head{position:absolute;left:4px;top:0;width:10px;height:10px;border-radius:50%;background:#f7d7bd;border:1px solid rgba(26,20,18,.38)}
-    .ped-body{position:absolute;left:3px;top:9px;width:12px;height:11px;border-radius:6px 6px 5px 5px}
+    .ped-body{position:absolute;left:3px;top:9px;width:12px;height:11px;border-radius:6px 6px 5px 5px;background:#4b5560}
     .ped-arm-left,.ped-arm-right,.ped-leg-left,.ped-leg-right{position:absolute;background:rgba(19,24,26,.72);border-radius:999px}
     .ped-arm-left,.ped-arm-right{top:12px;width:3px;height:9px}
     .ped-arm-left{left:1px;transform:rotate(22deg)}
@@ -57,8 +59,6 @@
     .label{position:absolute;z-index:2;color:#132017;font-weight:800;background:rgba(156,187,141,.72);padding:4px 8px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
     .lm{top:246px;left:288px}
     .ls{top:72px;left:256px;transform:rotate(-90deg);transform-origin:top left}
-    .lbtn{top:138px;left:18px}
-    .lsen{top:50px;left:42px}
     .lwalk{top:132px;left:348px}
     .states{display:grid;gap:12px}.state{border:2px solid var(--line);border-radius:18px;background:rgba(18,26,22,.72);padding:14px 12px;display:grid;gap:8px;cursor:pointer;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease}.state:hover{transform:translateY(-1px);border-color:var(--accent);background:rgba(27,38,32,.86)}.state:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(154,211,159,.22)}.state.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(154,211,159,.14)}
     .state-head{display:flex;align-items:center;gap:10px}.dot{width:18px;height:18px;border-radius:50%;border:3px solid #08100a;background:#223029}.dot.green{background:var(--green)} .dot.yellow{background:var(--yellow)} .dot.white{background:var(--white)}
@@ -98,7 +98,7 @@
           <div class="sensor" id="sensorBox">SENSOR OFF</div>
           <div class="button-box" id="buttonBox">BUTTON</div>
           <div class="walk" id="walkBox">DON'T WALK</div>
-          <div class="label lm">Main Street</div><div class="label ls">Side Street</div><div class="label lbtn">Walk Button</div><div class="label lsen">Sensor</div><div class="label lwalk">Walk Lamp</div>
+          <div class="label lm">Main Street</div><div class="label ls">Side Street</div><div class="label lwalk">Walk Lamp</div>
         </div>
       </section>
 
@@ -196,34 +196,40 @@
     function buildRoute(approach, turn) {
       let points;
       let stopPoint;
+      const lane = {
+        eastboundY: 320,
+        westboundY: 260,
+        southboundX: 182,
+        northboundX: 242
+      };
       if (approach === "W") {
-        stopPoint = { x: 126, y: 320 };
+        stopPoint = { x: 126, y: lane.eastboundY };
         points = turn === "left"
-          ? [{ x: -80, y: 320 }, stopPoint, { x: 212, y: 320 }, { x: 212, y: 190 }, { x: 212, y: -90 }]
+          ? [{ x: -80, y: lane.eastboundY }, stopPoint, { x: lane.northboundX, y: lane.eastboundY }, { x: lane.northboundX, y: -90 }]
           : turn === "right"
-            ? [{ x: -80, y: 320 }, stopPoint, { x: 186, y: 320 }, { x: 244, y: 376 }, { x: 244, y: 670 }]
-            : [{ x: -80, y: 320 }, stopPoint, { x: 212, y: 320 }, { x: 600, y: 320 }];
+            ? [{ x: -80, y: lane.eastboundY }, stopPoint, { x: lane.southboundX, y: lane.eastboundY }, { x: lane.southboundX, y: 670 }]
+            : [{ x: -80, y: lane.eastboundY }, stopPoint, { x: 600, y: lane.eastboundY }];
       } else if (approach === "E") {
-        stopPoint = { x: 298, y: 260 };
+        stopPoint = { x: 298, y: lane.westboundY };
         points = turn === "left"
-          ? [{ x: 600, y: 260 }, stopPoint, { x: 212, y: 260 }, { x: 212, y: 390 }, { x: 212, y: 670 }]
+          ? [{ x: 600, y: lane.westboundY }, stopPoint, { x: lane.southboundX, y: lane.westboundY }, { x: lane.southboundX, y: 670 }]
           : turn === "right"
-            ? [{ x: 600, y: 260 }, stopPoint, { x: 270, y: 260 }, { x: 244, y: 202 }, { x: 244, y: -90 }]
-            : [{ x: 600, y: 260 }, stopPoint, { x: 212, y: 260 }, { x: -90, y: 260 }];
+            ? [{ x: 600, y: lane.westboundY }, stopPoint, { x: lane.northboundX, y: lane.westboundY }, { x: lane.northboundX, y: -90 }]
+            : [{ x: 600, y: lane.westboundY }, stopPoint, { x: -90, y: lane.westboundY }];
       } else if (approach === "N") {
-        stopPoint = { x: 182, y: 156 };
+        stopPoint = { x: lane.southboundX, y: 156 };
         points = turn === "left"
-          ? [{ x: 182, y: -90 }, stopPoint, { x: 182, y: 292 }, { x: 314, y: 292 }, { x: 620, y: 292 }]
+          ? [{ x: lane.southboundX, y: -90 }, stopPoint, { x: lane.southboundX, y: lane.eastboundY }, { x: 620, y: lane.eastboundY }]
           : turn === "right"
-            ? [{ x: 182, y: -90 }, stopPoint, { x: 182, y: 230 }, { x: 126, y: 260 }, { x: -90, y: 260 }]
-            : [{ x: 182, y: -90 }, stopPoint, { x: 182, y: 292 }, { x: 182, y: 670 }];
+            ? [{ x: lane.southboundX, y: -90 }, stopPoint, { x: lane.southboundX, y: lane.westboundY }, { x: -90, y: lane.westboundY }]
+            : [{ x: lane.southboundX, y: -90 }, stopPoint, { x: lane.southboundX, y: 670 }];
       } else {
-        stopPoint = { x: 242, y: 422 };
+        stopPoint = { x: lane.northboundX, y: 422 };
         points = turn === "left"
-          ? [{ x: 242, y: 670 }, stopPoint, { x: 242, y: 292 }, { x: 110, y: 292 }, { x: -90, y: 292 }]
+          ? [{ x: lane.northboundX, y: 670 }, stopPoint, { x: lane.northboundX, y: lane.westboundY }, { x: -90, y: lane.westboundY }]
           : turn === "right"
-            ? [{ x: 242, y: 670 }, stopPoint, { x: 242, y: 352 }, { x: 300, y: 320 }, { x: 620, y: 320 }]
-            : [{ x: 242, y: 670 }, stopPoint, { x: 242, y: 292 }, { x: 242, y: -90 }];
+            ? [{ x: lane.northboundX, y: 670 }, stopPoint, { x: lane.northboundX, y: lane.eastboundY }, { x: 620, y: lane.eastboundY }]
+            : [{ x: lane.northboundX, y: 670 }, stopPoint, { x: lane.northboundX, y: -90 }];
       }
       const metrics = distanceAlong(points);
       return { points, totalLength: metrics.total, stopDistance: metrics.lengths[0] };
@@ -235,6 +241,16 @@
     function randomColor() {
       const colors = ["#66c2ff", "#f49f5a", "#d46cff", "#5ddf8b", "#ff6e8d", "#ffd86b"];
       return colors[Math.floor(Math.random() * colors.length)];
+    }
+    function randomPedestrianPalette() {
+      const palettes = [
+        { skin: "#f5d7bc", body: "#4b5560", limbs: "rgba(19,24,26,.72)" },
+        { skin: "#d6a07a", body: "#6b4428", limbs: "rgba(60,34,20,.78)" },
+        { skin: "#8f5e3b", body: "#2f2017", limbs: "rgba(27,17,12,.82)" },
+        { skin: "#5b3a29", body: "#161616", limbs: "rgba(10,10,10,.9)" },
+        { skin: "#3c2418", body: "#4a2d1d", limbs: "rgba(22,14,9,.88)" }
+      ];
+      return palettes[Math.floor(Math.random() * palettes.length)];
     }
     function sampleRoute(route, distance) {
       const d = Math.max(0, Math.min(distance, route.totalLength));
@@ -307,7 +323,7 @@
         endX,
         direction,
         speed: 34 + Math.random() * 18,
-        color: randomColor()
+        palette: randomPedestrianPalette()
       });
     }
     function renderPedestrians() {
@@ -324,7 +340,13 @@
         el.style.left = `${ped.x - 9}px`;
         el.style.top = `${ped.y - 14}px`;
         el.style.transform = `scaleX(${ped.direction > 0 ? 1 : -1})`;
-        el.querySelector(".ped-body").style.background = ped.color;
+        el.querySelector(".ped-head").style.background = ped.palette.skin;
+        el.querySelector(".ped-head").style.borderColor = "rgba(26,20,18,.45)";
+        el.querySelector(".ped-body").style.background = ped.palette.body;
+        el.querySelector(".ped-arm-left").style.background = ped.palette.limbs;
+        el.querySelector(".ped-arm-right").style.background = ped.palette.limbs;
+        el.querySelector(".ped-leg-left").style.background = ped.palette.limbs;
+        el.querySelector(".ped-leg-right").style.background = ped.palette.limbs;
         existing.delete(ped.id);
       }
       for (const leftover of existing.values()) leftover.remove();

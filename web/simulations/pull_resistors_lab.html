@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Embedded Programming - Pull-Up / Pull-Down Lab</title>
   <script>document.documentElement.classList.add("theme-dark");</script>
+  <script src="../shared/mouse_glow.js"></script>
+  <script src="../shared/page_header.js"></script>
   <style>
     :root {
       --bg: #0f2230;
@@ -50,40 +52,41 @@
     .copy-btn.copied { border-color: var(--green); background: rgba(47, 199, 107, 0.14); }
     .visual-stage { min-height: 360px; border-radius: 20px; border: 1px solid var(--line); background: var(--stage-bg); padding: 18px; display: grid; place-items: center; overflow: hidden; }
     .visual-wrap { width: 100%; max-width: 500px; display: grid; gap: 18px; justify-items: center; }
-    .circuit-board { width: 100%; min-height: 300px; border-radius: 20px; border: 1px solid var(--line); background: rgba(9, 20, 28, 0.36); padding: 20px; display: grid; gap: 16px; }
+    .wiring-note, #wiringNote { display: none !important; }
+    .circuit-board { width: 100%; min-height: 236px; border-radius: 20px; border: 1px solid var(--line); background: rgba(9, 20, 28, 0.36); padding: 20px; display: grid; }
     .logic-row { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .logic-box { border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); padding: 12px 10px; display: grid; gap: 8px; text-align: center; }
     .logic-box strong { color: var(--subtle); font-size: 13px; }
     .logic-box span { color: var(--white); font-size: 22px; font-weight: 900; }
-    .circuit-area { position: relative; height: 220px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.02); overflow: hidden; }
+    .circuit-area { position: relative; height: 280px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.02); overflow: hidden; }
     .rail { position: absolute; left: 32px; right: 138px; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.38); }
     .rail.top { top: 28px; }
     .rail.bottom { bottom: 28px; }
     .rail-label { position: absolute; left: 8px; color: var(--subtle); font-size: 13px; font-weight: 800; letter-spacing: 0.04em; }
     .rail-label.top { top: 18px; }
     .rail-label.bottom { bottom: 18px; }
-    .node { position: absolute; left: 102px; top: 103px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(99, 196, 255, 0.16); }
-    .pin-wire { position: absolute; left: 124px; top: 113px; width: 150px; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.38); }
-    .pin-label { position: absolute; left: 176px; top: 84px; color: var(--subtle); font-size: 13px; font-weight: 800; }
-    .mcu-pin { position: absolute; left: 272px; top: 90px; width: 84px; height: 50px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); display: grid; place-items: center; text-align: center; }
+    .node { position: absolute; left: 102px; top: 126px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(99, 196, 255, 0.16); }
+    .pin-wire { position: absolute; left: 124px; top: 136px; width: 150px; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.38); }
+    .pin-label { position: absolute; left: 176px; top: 107px; color: var(--subtle); font-size: 13px; font-weight: 800; }
+    .mcu-pin { position: absolute; left: 272px; top: 113px; width: 84px; height: 50px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); display: grid; place-items: center; text-align: center; }
     .mcu-pin strong { color: var(--white); font-size: 15px; }
-    .branch-device { position: absolute; left: 85px; width: 58px; height: 62px; }
-    .branch-device.top { top: 44px; }
-    .branch-device.bottom { bottom: 44px; }
+    .branch-device { position: absolute; left: 85px; width: 58px; height: 92px; }
+    .branch-device::before, .branch-device::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); width: 4px; height: 15px; border-radius: 999px; background: rgba(255,255,255,0.38); }
+    .branch-device::before { top: 0; }
+    .branch-device::after { bottom: 0; }
+    .branch-device.top { top: 18px; }
+    .branch-device.bottom { bottom: 18px; }
     .device-label { position: absolute; left: 50%; top: -28px; width: 96px; transform: translateX(-50%); color: var(--subtle); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; }
-    .branch-device > .resistor, .branch-device > .switch { position: absolute; left: 50%; top: 0; transform: translateX(-50%); }
+    .branch-device > .resistor, .branch-device > .switch { position: absolute; left: 50%; top: 15px; transform: translateX(-50%); }
     .resistor { position: relative; width: 16px; height: 62px; }
-    .resistor::before { content: ""; position: absolute; left: 6px; top: -12px; width: 4px; height: 12px; background: rgba(255,255,255,0.38); }
-    .resistor::after { content: ""; position: absolute; left: 6px; bottom: -12px; width: 4px; height: 12px; background: rgba(255,255,255,0.38); }
+    .resistor::before, .resistor::after { display: none; }
     .resistor-body { position: absolute; inset: 0; border-radius: 10px; background: linear-gradient(180deg, #f0e0b0 0%, #d1ba78 100%); border: 2px solid #9d7f3b; }
     .resistor-band { position: absolute; left: 3px; right: 3px; height: 5px; border-radius: 999px; background: #8a5c3c; }
     .resistor-band.band-a { top: 16px; }
     .resistor-band.band-b { top: 28px; }
     .resistor-band.band-c { top: 40px; }
     .switch { position: relative; width: 54px; height: 62px; }
-    .switch::before, .switch::after { content: ""; position: absolute; left: 25px; width: 4px; height: 14px; background: rgba(255,255,255,0.38); }
-    .switch::before { top: -12px; }
-    .switch::after { bottom: -12px; }
+    .switch::before, .switch::after { display: none; }
     .switch-base { position: absolute; left: 15px; top: 7px; width: 24px; height: 48px; border-radius: 999px; border: 2px solid var(--line); background: rgba(255,255,255,0.04); }
     .switch-contact { position: absolute; top: 12px; width: 4px; height: 24px; border-radius: 999px; background: var(--white); transform-origin: top center; transition: left 0.15s ease, height 0.15s ease, transform 0.15s ease; }
     .switch-contact::after { content: ""; position: absolute; left: -5px; bottom: -8px; width: 14px; height: 14px; border-radius: 50%; background: var(--white); box-shadow: 0 0 0 2px rgba(8, 17, 24, 0.6); }
@@ -93,7 +96,6 @@
     .led-label { color: var(--subtle); font-size: 12px; font-weight: 800; }
     .led { width: 74px; height: 74px; border-radius: 50%; border: 6px solid #081118; background: radial-gradient(circle at 35% 30%, #29343a 0%, #11191f 70%, #060b0f 100%); box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.4); }
     .led.on { background: radial-gradient(circle at 35% 30%, #97f7bb 0%, var(--green) 52%, #0d7e38 100%); }
-    .wiring-note { width: 100%; border-radius: 18px; border: 2px dashed var(--line); padding: 14px; text-align: center; color: var(--subtle); line-height: 1.45; }
     .timeline-canvas { width: 100%; height: 460px; display: block; border-radius: 18px; background: rgba(7, 15, 21, 0.86); border: 1px solid var(--line); }
     .timeline-note, .code-note { color: var(--subtle); font-size: 14px; line-height: 1.45; }
     pre.code-block { margin: 0; min-height: 460px; padding: 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--code-bg); color: #d8f2ff; font-family: Consolas, "Courier New", monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; user-select: text; -webkit-user-select: text; cursor: text; }
@@ -173,7 +175,6 @@
                     <div class="led" id="ledLamp"></div>
                   </div>
                 </div>
-                <div class="wiring-note" id="wiringNote">Pull-up: resistor keeps the input HIGH when the button is released. Pressing the button connects the node to GND.</div>
               </div>
             </div>
           </div>
@@ -230,7 +231,6 @@
     const ledLamp = document.getElementById("ledLamp");
     const topBranch = document.getElementById("topBranch");
     const bottomBranch = document.getElementById("bottomBranch");
-    const wiringNote = document.getElementById("wiringNote");
     const timelineCanvas = document.getElementById("timelineCanvas");
     const timelineCtx = timelineCanvas.getContext("2d");
     const toggleTimelineBtn = document.getElementById("toggleTimelineBtn");
@@ -305,9 +305,6 @@
       ledLamp.classList.toggle("on", state.ledOn);
 
       statusPill.textContent = isPullUp ? `Mode: Pull-up | Released = HIGH` : `Mode: Pull-down | Released = LOW`;
-      wiringNote.textContent = isPullUp
-        ? "Pull-up: resistor keeps the input HIGH when the button is released. Pressing the button connects the node to GND."
-        : "Pull-down: resistor keeps the input LOW when the button is released. Pressing the button connects the node to VCC.";
     }
 
     function renderCode() {

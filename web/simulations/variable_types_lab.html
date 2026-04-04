@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Embedded Programming - Variable Types and Memory Lab</title>
   <script>document.documentElement.classList.add("theme-dark");</script>
+  <script src="../shared/mouse_glow.js"></script>
+  <script src="../shared/page_header.js"></script>
   <style>
     :root {
       --bg: #0f2230;
@@ -164,9 +166,22 @@
 
   <script>
     const TYPE_CONFIGS = {
+      boolean: {
+        label: "boolean",
+        kind: "bool",
+        bytes: 1,
+        min: 0,
+        max: 1,
+        step: 1,
+        defaultValue: 0,
+        meaning: "Arduino boolean alias",
+        rangeLabel: "0 or 1",
+        hint: "In Arduino, boolean is an older alias for a logical true or false value.",
+        explain: "It behaves like bool in classroom code, but many examples still use the boolean name."
+      },
       bool: {
         label: "bool",
-        kind: "logic",
+        kind: "bool",
         bytes: 1,
         min: 0,
         max: 1,
@@ -176,6 +191,45 @@
         rangeLabel: "0 or 1",
         hint: "A bool reserves one byte, but it only uses logical false (0) or true (1).",
         explain: "Useful for flags such as buttonPressed, alarmEnabled, or systemReady."
+      },
+      byte: {
+        label: "byte",
+        kind: "uint8",
+        bytes: 1,
+        min: 0,
+        max: 255,
+        step: 1,
+        defaultValue: 120,
+        meaning: "Arduino byte alias",
+        rangeLabel: "0..255",
+        hint: "In Arduino, byte is an alias for an 8-bit unsigned value.",
+        explain: "Very common for raw serial bytes, PWM duty values, and compact counters."
+      },
+      uchar: {
+        label: "unsigned char",
+        kind: "uint8",
+        bytes: 1,
+        min: 0,
+        max: 255,
+        step: 1,
+        defaultValue: 90,
+        meaning: "Unsigned character-sized integer",
+        rangeLabel: "0..255",
+        hint: "unsigned char uses one byte, just like byte and uint8_t.",
+        explain: "Useful when you want to emphasize raw bytes or unsigned character data."
+      },
+      char: {
+        label: "char",
+        kind: "char",
+        bytes: 1,
+        min: -128,
+        max: 127,
+        step: 1,
+        defaultValue: 65,
+        meaning: "Character / signed byte",
+        rangeLabel: "-128..127",
+        hint: "A char is one byte wide and is often used to store ASCII characters.",
+        explain: "Great for letters, symbols, and raw character buffers received over serial."
       },
       uint8: {
         label: "uint8_t",
@@ -203,6 +257,45 @@
         hint: "Signed integers use two's complement, so the most significant bit acts as the sign.",
         explain: "Great when you need small positive and negative values such as offsets or corrections."
       },
+      word: {
+        label: "word",
+        kind: "uint16",
+        bytes: 2,
+        min: 0,
+        max: 65535,
+        step: 1,
+        defaultValue: 1024,
+        meaning: "Arduino word alias",
+        rangeLabel: "0..65535",
+        hint: "In Arduino, word is commonly used as a 16-bit unsigned container.",
+        explain: "Useful when packing two bytes or storing timer and ADC-style words."
+      },
+      ushort: {
+        label: "unsigned short",
+        kind: "uint16",
+        bytes: 2,
+        min: 0,
+        max: 65535,
+        step: 1,
+        defaultValue: 2048,
+        meaning: "Unsigned short integer",
+        rangeLabel: "0..65535",
+        hint: "unsigned short is another common name for a 16-bit unsigned quantity.",
+        explain: "Good for counters, timer values, and peripheral registers that never go below zero."
+      },
+      short: {
+        label: "short",
+        kind: "int16",
+        bytes: 2,
+        min: -32768,
+        max: 32767,
+        step: 1,
+        defaultValue: -1500,
+        meaning: "Signed short integer",
+        rangeLabel: "-32768..32767",
+        hint: "short keeps the value in 16 bits but allows positive and negative numbers.",
+        explain: "A classic option for signed ADC offsets, PID errors, and compact intermediate math."
+      },
       uint16: {
         label: "uint16_t",
         kind: "uint16",
@@ -228,6 +321,84 @@
         rangeLabel: "-32768..32767",
         hint: "The same two bytes can be interpreted as a signed value, which changes how the upper bits are read.",
         explain: "Very common for signed sensor offsets, PID errors, and intermediate math in embedded code."
+      },
+      uint: {
+        label: "unsigned int",
+        kind: "uint32",
+        bytes: 4,
+        min: 0,
+        max: 4294967295,
+        step: 1,
+        defaultValue: 50000,
+        meaning: "Arduino unsigned int",
+        rangeLabel: "0..4294967295",
+        hint: "On ESP32-class boards, unsigned int is stored in 4 bytes.",
+        explain: "Useful for general counters and positive values when you want the plain C++ type name."
+      },
+      int: {
+        label: "int",
+        kind: "int32",
+        bytes: 4,
+        min: -2147483648,
+        max: 2147483647,
+        step: 1,
+        defaultValue: -32000,
+        meaning: "Arduino int",
+        rangeLabel: "-2147483648..2147483647",
+        hint: "On ESP32-class boards, int is a signed 32-bit value.",
+        explain: "It is one of the most common classroom types for whole-number calculations and conditions."
+      },
+      uint32: {
+        label: "uint32_t",
+        kind: "uint32",
+        bytes: 4,
+        min: 0,
+        max: 4294967295,
+        step: 1,
+        defaultValue: 100000,
+        meaning: "Unsigned 32-bit integer",
+        rangeLabel: "0..4294967295",
+        hint: "Four bytes are ideal for millis counters, timestamps, and packed 32-bit values.",
+        explain: "This is a very common type for timekeeping and large positive counters in embedded systems."
+      },
+      int32: {
+        label: "int32_t",
+        kind: "int32",
+        bytes: 4,
+        min: -2147483648,
+        max: 2147483647,
+        step: 1,
+        defaultValue: -250000,
+        meaning: "Signed 32-bit integer",
+        rangeLabel: "-2147483648..2147483647",
+        hint: "Signed 32-bit storage supports large positive and negative values in the same 4 bytes.",
+        explain: "Useful for encoder positions, accumulated counts, and signed math that can grow large."
+      },
+      ulong: {
+        label: "unsigned long",
+        kind: "uint32",
+        bytes: 4,
+        min: 0,
+        max: 4294967295,
+        step: 1,
+        defaultValue: 250000,
+        meaning: "Arduino unsigned long",
+        rangeLabel: "0..4294967295",
+        hint: "unsigned long is heavily used in Arduino timing code such as millis() comparisons.",
+        explain: "A classic choice for non-blocking timers and long-running counters."
+      },
+      long: {
+        label: "long",
+        kind: "int32",
+        bytes: 4,
+        min: -2147483648,
+        max: 2147483647,
+        step: 1,
+        defaultValue: -123456,
+        meaning: "Arduino long",
+        rangeLabel: "-2147483648..2147483647",
+        hint: "long is the signed counterpart used when values may go below zero.",
+        explain: "Useful for positions, signed accumulators, and calculations larger than 16-bit."
       },
       float32: {
         label: "float",
@@ -302,6 +473,25 @@
       return byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : ".";
     }
 
+    function getDisplayValue(value, config) {
+      if (config.kind === "bool") return value ? "true (1)" : "false (0)";
+      if (config.kind === "char") {
+        const printable = getPrintableAscii(value & 0xFF);
+        return printable === "." ? `${value} (non-printable)` : `${value} ('${printable}')`;
+      }
+      return formatDecimal(value, config);
+    }
+
+    function getCodeLiteral(value, config) {
+      if (config.kind === "bool") return value ? "true" : "false";
+      if (config.kind === "float32") return `${Number(value).toFixed(2)}f`;
+      if (config.kind === "char") {
+        const printable = getPrintableAscii(value & 0xFF);
+        if (printable !== "." && printable !== "'" && printable !== "\\") return `'${printable}'`;
+      }
+      return String(value);
+    }
+
     function normalizeValue(typeId, rawValue) {
       const config = TYPE_CONFIGS[typeId];
       if (config.kind === "bool") return rawValue ? 1 : 0;
@@ -314,9 +504,11 @@
       const buffer = new ArrayBuffer(config.bytes);
       const view = new DataView(buffer);
       if (config.kind === "bool" || config.kind === "uint8") view.setUint8(0, value);
-      else if (config.kind === "int8") view.setInt8(0, value);
+      else if (config.kind === "int8" || config.kind === "char") view.setInt8(0, value);
       else if (config.kind === "uint16") view.setUint16(0, value, true);
       else if (config.kind === "int16") view.setInt16(0, value, true);
+      else if (config.kind === "uint32") view.setUint32(0, value, true);
+      else if (config.kind === "int32") view.setInt32(0, value, true);
       else if (config.kind === "float32") view.setFloat32(0, value, true);
       return Array.from(new Uint8Array(buffer));
     }
@@ -334,6 +526,14 @@
         return [
           { label: "False", value: 0 },
           { label: "True", value: 1 }
+        ];
+      }
+      if (config.kind === "char") {
+        return [
+          { label: "NUL", value: 0 },
+          { label: "Space", value: 32 },
+          { label: "A", value: 65 },
+          { label: "a", value: 97 }
         ];
       }
       if (config.kind === "float32") {
@@ -373,7 +573,9 @@
 
     function renderControls() {
       const config = getCurrentConfig();
-      valueLabel.textContent = config.kind === "bool" ? "Stored value" : "Stored value (← →)";
+      if (config.kind === "bool") valueLabel.textContent = "Stored value";
+      else if (config.kind === "char") valueLabel.textContent = "Stored value / ASCII (← →)";
+      else valueLabel.textContent = "Stored value (← →)";
       valueSlider.min = String(config.min);
       valueSlider.max = String(config.max);
       valueSlider.step = String(config.step);
@@ -382,7 +584,7 @@
       valueInput.max = String(config.max);
       valueInput.step = String(config.step);
       valueInput.value = String(state.value);
-      valueReadout.textContent = formatDecimal(state.value, config);
+      valueReadout.textContent = getDisplayValue(state.value, config);
       renderPresets(config);
     }
 
@@ -399,8 +601,8 @@
       binaryValue.textContent = getFullBinary(bytes);
       bytesUsed.textContent = String(config.bytes);
       memoryNote.innerHTML = config.kind === "float32"
-        ? `These 4 bytes are the IEEE-754 encoding of <code class="inline-chip">${formatDecimal(state.value, config)}</code>. The byte at <code class="inline-chip">0x${BASE_ADDRESS.toString(16).toUpperCase()}</code> is the least significant byte in memory.`
-        : `The value <code class="inline-chip">${formatDecimal(state.value, config)}</code> occupies ${config.bytes} byte${config.bytes > 1 ? "s" : ""}. In little-endian order, the least significant byte is written to the lowest address first.`;
+        ? `These 4 bytes are the IEEE-754 encoding of <code class="inline-chip">${getDisplayValue(state.value, config)}</code>. The byte at <code class="inline-chip">0x${BASE_ADDRESS.toString(16).toUpperCase()}</code> is the least significant byte in memory.`
+        : `The value <code class="inline-chip">${getDisplayValue(state.value, config)}</code> occupies ${config.bytes} byte${config.bytes > 1 ? "s" : ""}. In little-endian order, the least significant byte is written to the lowest address first.`;
     }
 
     function renderMemory(bytes) {
@@ -448,13 +650,16 @@
 
     function renderCode(bytes) {
       const config = getCurrentConfig();
-      const declaration = config.kind === "float32"
-        ? `${config.label} sample = ${Number(state.value).toFixed(2)}f;`
-        : `${config.label} sample = ${state.value};`;
+      const declaration = `${config.label} sample = ${getCodeLiteral(state.value, config)};`;
       const printValueLine = config.kind === "float32"
         ? `  Serial.println(sample, 2);`
-        : `  Serial.println(sample);`;
-      const codeText = `#include <Arduino.h>\n\n${declaration}\n\nvoid setup() {\n  Serial.begin(115200);\n\n  Serial.print("sizeof(sample) = ");\n  Serial.println(sizeof(sample));\n\n  Serial.print("value = ");\n${printValueLine}\n\n  const uint8_t* raw = reinterpret_cast<const uint8_t*>(&sample);\n  for (size_t i = 0; i < sizeof(sample); i++) {\n    Serial.print("byte[");\n    Serial.print(i);\n    Serial.print("] = 0x");\n    if (raw[i] < 16) Serial.print("0");\n    Serial.println(raw[i], HEX);\n  }\n}\n\nvoid loop() {\n}\n\n// Current bytes in memory: ${bytes.map(byte => `0x${byte.toString(16).toUpperCase().padStart(2, "0")}`).join(", ")}`;
+        : config.kind === "char"
+          ? `  Serial.println((int)sample);`
+          : `  Serial.println(sample);`;
+      const charExtra = config.kind === "char"
+        ? `\n  Serial.print("char = ");\n  Serial.println(sample);\n`
+        : "";
+      const codeText = `#include <Arduino.h>\n\n${declaration}\n\nvoid setup() {\n  Serial.begin(115200);\n\n  Serial.print("sizeof(sample) = ");\n  Serial.println(sizeof(sample));\n\n  Serial.print("value = ");\n${printValueLine}${charExtra}\n  const uint8_t* raw = reinterpret_cast<const uint8_t*>(&sample);\n  for (size_t i = 0; i < sizeof(sample); i++) {\n    Serial.print("byte[");\n    Serial.print(i);\n    Serial.print("] = 0x");\n    if (raw[i] < 16) Serial.print("0");\n    Serial.println(raw[i], HEX);\n  }\n}\n\nvoid loop() {\n}\n\n// Current bytes in memory: ${bytes.map(byte => `0x${byte.toString(16).toUpperCase().padStart(2, "0")}`).join(", ")}`;
       renderHighlightedCode(codeText, [3, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 27]);
     }
 

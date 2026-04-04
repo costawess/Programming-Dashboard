@@ -8,6 +8,8 @@ Current filenames:
 - `pull_resistors_lab.svg`
 - `variables_lab.svg`
 - `variable_types_lab.svg`
+- `memory_layout_lab.svg`
+- `ascii_char_lab.svg`
 - `number_representation_lab.svg`
 - `conditionals_lab.svg`
 - `loops_lab.svg`
