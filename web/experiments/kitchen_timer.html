@@ -524,6 +524,10 @@
       if (shouldAlarm) {
         addLog(`(SYSTEM): Limit reached at ${Math.round(state.currentSeconds)} s.`);
         setStatus("Limit reached", "danger");
+        if (window.uiSound && typeof window.uiSound.play === "function") {
+          window.uiSound.play("warning");
+          window.setTimeout(() => window.uiSound.play("error"), 140);
+        }
         if (navigator.vibrate) {
           navigator.vibrate([140, 70, 140, 70, 220]);
           state.lastVibrateTs = performance.now();

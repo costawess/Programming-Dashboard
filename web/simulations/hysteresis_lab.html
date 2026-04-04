@@ -328,7 +328,6 @@
                 <h2>2. One threshold only</h2>
                 <p>The noisy signal crosses the same threshold repeatedly, so the digital output flips on and off around the boundary.</p>
               </div>
-              <button class="action-btn timelineToggleBtn" type="button">Pause timeline</button>
             </div>
             <canvas class="plot-canvas decision" id="singleCanvas" width="900" height="260"></canvas>
           </div>
@@ -339,7 +338,6 @@
                 <h2>3. Two thresholds with hysteresis</h2>
                 <p>The output only turns on above the upper threshold and only turns off below the lower threshold, so the middle band keeps the previous state.</p>
               </div>
-              <button class="action-btn timelineToggleBtn" type="button">Pause timeline</button>
             </div>
             <canvas class="plot-canvas decision" id="hysteresisCanvas" width="900" height="260"></canvas>
           </div>
@@ -409,6 +407,7 @@
     };
     let timelinePaused = false;
     let timelineFrozenTime = 0;
+    let hoverRatio = null;
 
     function getTimelineReferenceTime() {
       return timelinePaused ? timelineFrozenTime : state.time;
@@ -436,6 +435,19 @@
         timelinePaused = false;
       }
       updateTimelinePauseButtons();
+      renderAll();
+    }
+
+    function setHoverFromCanvas(event) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const localX = event.clientX - rect.left;
+      hoverRatio = clamp(localX / Math.max(rect.width, 1), 0, 1);
+      renderAll();
+    }
+
+    function clearHoverGuide() {
+      if (hoverRatio === null) return;
+      hoverRatio = null;
       renderAll();
     }
 
@@ -656,6 +668,22 @@
       ctx.stroke();
     }
 
+    function drawHoverGuide(ctx, plots) {
+      if (hoverRatio === null || !plots.length) return;
+      const x = plots[0].left + hoverRatio * plots[0].width;
+      const top = Math.min(...plots.map(plot => plot.top));
+      const bottom = Math.max(...plots.map(plot => plot.bottom));
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.42)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(x, top);
+      ctx.lineTo(x, bottom);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     function drawNoisePlot() {
       const ctx = contexts.noise;
       const { width, height } = fitCanvas(canvases.noise, ctx);
@@ -677,6 +705,7 @@
       ctx.textAlign = "center";
       ctx.fillText("Signal %", 0, 0);
       ctx.restore();
+      drawHoverGuide(ctx, [plot]);
     }
 
     function drawDecisionPlot(kind) {
@@ -730,13 +759,14 @@
       ctx.textAlign = "left";
       ctx.fillText("ON", statePlot.left - 34, statePlot.top + 12);
       ctx.fillText("OFF", statePlot.left - 38, statePlot.bottom - 2);
+      drawHoverGuide(ctx, [analogPlot, statePlot]);
     }
 
     function renderHysteresisDiagram(lastSample) {
       const recent = getTimelineReferenceTime() - state.lastHystChangeTime < 0.6;
       const turnOnActive = recent && state.lastHystChangeType === "on";
       const turnOffActive = recent && state.lastHystChangeType === "off";
-      ui.hysteresisDiagram.innerHTML = `<svg class="state-diagram-svg" viewBox="0 0 460 220" aria-label="Hysteresis state diagram"><defs><marker id="hystArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path class="diagram-arrow" d="M0 0 L10 5 L0 10 z"></path></marker><marker id="hystArrowActive" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path class="diagram-arrow active" d="M0 0 L10 5 L0 10 z"></path></marker></defs><path class="diagram-path loop" d="M84 85 C42 36 42 136 84 136" marker-end="url(#hystArrow)"></path><text class="diagram-label" x="44" y="86">hold OFF</text><path class="diagram-path loop" d="M376 85 C418 36 418 136 376 136" marker-end="url(#hystArrow)"></path><text class="diagram-label" x="416" y="86">hold ON</text><path class="diagram-path ${turnOnActive ? "active" : ""}" d="M124 78 C182 22 278 22 336 78" marker-end="url(#${turnOnActive ? "hystArrowActive" : "hystArrow"})"></path><text class="diagram-label" x="230" y="24">signal &gt;= ${settings.upperThreshold.toFixed(0)}%</text><path class="diagram-path ${turnOffActive ? "active" : ""}" d="M336 142 C278 198 182 198 124 142" marker-end="url(#${turnOffActive ? "hystArrowActive" : "hystArrow"})"></path><text class="diagram-label" x="230" y="208">signal &lt;= ${settings.lowerThreshold.toFixed(0)}%</text><g class="diagram-node off ${lastSample.hysteresisState === 0 ? "active" : ""}" transform="translate(90 110)"><circle class="outer-ring" r="41"></circle><circle r="34"></circle><text y="1">OFF</text></g><g class="diagram-node on ${lastSample.hysteresisState === 1 ? "active" : ""}" transform="translate(370 110)"><circle class="outer-ring" r="41"></circle><circle r="34"></circle><text y="1">ON</text></g></svg>`;
+      ui.hysteresisDiagram.innerHTML = `<svg class="state-diagram-svg" viewBox="0 0 460 220" aria-label="Hysteresis state diagram"><defs><marker id="hystArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path class="diagram-arrow" d="M0 0 L8 4 L0 8 z"></path></marker><marker id="hystArrowActive" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path class="diagram-arrow active" d="M0 0 L8 4 L0 8 z"></path></marker></defs><path class="diagram-path loop" d="M48 78 C16 44 16 176 48 142" marker-end="url(#hystArrow)"></path><text class="diagram-label" x="42" y="34">hold OFF</text><path class="diagram-path loop" d="M412 78 C444 44 444 176 412 142" marker-end="url(#hystArrow)"></path><text class="diagram-label" x="418" y="34">hold ON</text><path class="diagram-path ${turnOnActive ? "active" : ""}" d="M128 80 C182 32 278 32 332 80" marker-end="url(#${turnOnActive ? "hystArrowActive" : "hystArrow"})"></path><text class="diagram-label" x="230" y="28">signal &gt;= ${settings.upperThreshold.toFixed(0)}%</text><path class="diagram-path ${turnOffActive ? "active" : ""}" d="M332 140 C278 188 182 188 128 140" marker-end="url(#${turnOffActive ? "hystArrowActive" : "hystArrow"})"></path><text class="diagram-label" x="230" y="204">signal &lt;= ${settings.lowerThreshold.toFixed(0)}%</text><g class="diagram-node off ${lastSample.hysteresisState === 0 ? "active" : ""}" transform="translate(90 110)"><circle class="outer-ring" r="41"></circle><circle r="34"></circle><text y="1">OFF</text></g><g class="diagram-node on ${lastSample.hysteresisState === 1 ? "active" : ""}" transform="translate(370 110)"><circle class="outer-ring" r="41"></circle><circle r="34"></circle><text y="1">ON</text></g></svg>`;
     }
 
     function updateDiagram(lastSample) {
@@ -777,6 +807,10 @@
     window.addEventListener("resize", renderAll);
     timelineToggleButtons.forEach(button => {
       button.addEventListener("click", () => setTimelinePaused(!timelinePaused));
+    });
+    Object.values(canvases).forEach(canvas => {
+      canvas.addEventListener("mousemove", setHoverFromCanvas);
+      canvas.addEventListener("mouseleave", clearHoverGuide);
     });
 
     resetSimulation();

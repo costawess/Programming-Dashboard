@@ -38,7 +38,8 @@
     .car::before,.car::after{content:"";position:absolute;top:5px;width:4px;height:4px;border-radius:50%;background:rgba(255,244,182,.9)}
     .car::before{left:3px}.car::after{right:3px}
     .ped{position:absolute;width:18px;height:28px;transform-origin:center center}
-    .ped-head{position:absolute;left:4px;top:0;width:10px;height:10px;border-radius:50%;background:#f7d7bd;border:1px solid rgba(26,20,18,.38)}
+    .ped-head{position:absolute;left:4px;top:0;width:10px;height:10px;border-radius:50%;background:#f7d7bd;border:1px solid rgba(26,20,18,.38);z-index:2}
+    .ped-hair{position:absolute;left:3px;top:-1px;width:12px;height:8px;border-radius:8px 8px 4px 4px;background:#2a1d18;z-index:1;opacity:.92}
     .ped-body{position:absolute;left:3px;top:9px;width:12px;height:11px;border-radius:6px 6px 5px 5px;background:#4b5560}
     .ped-arm-left,.ped-arm-right,.ped-leg-left,.ped-leg-right{position:absolute;background:rgba(19,24,26,.72);border-radius:999px}
     .ped-arm-left,.ped-arm-right{top:12px;width:3px;height:9px}
@@ -47,6 +48,11 @@
     .ped-leg-left,.ped-leg-right{top:19px;width:3px;height:9px}
     .ped-leg-left{left:5px;transform:rotate(10deg)}
     .ped-leg-right{right:5px;transform:rotate(-10deg)}
+    .ped.male .ped-body{left:3px;width:12px;height:11px;border-radius:5px}
+    .ped.female .ped-body{left:2px;top:8px;width:14px;height:13px;border-radius:7px 7px 9px 9px}
+    .ped.female .ped-hair{height:11px;border-radius:8px 8px 7px 7px}
+    .ped.female .ped-arm-left,.ped.female .ped-arm-right{top:11px;height:10px}
+    .ped.female .ped-leg-left,.ped.female .ped-leg-right{top:20px;height:8px}
     .head{position:absolute;z-index:2;width:48px;height:102px;border-radius:14px;background:linear-gradient(180deg,#324652 0%,#23323a 100%);border:3px solid #091015;display:grid;justify-items:center;align-content:center;gap:8px;box-shadow:0 10px 16px rgba(0,0,0,.18)}
     .head.main{left:86px;top:226px}
     .head.side{left:258px;top:112px}
@@ -242,15 +248,29 @@
       const colors = ["#66c2ff", "#f49f5a", "#d46cff", "#5ddf8b", "#ff6e8d", "#ffd86b"];
       return colors[Math.floor(Math.random() * colors.length)];
     }
-    function randomPedestrianPalette() {
-      const palettes = [
-        { skin: "#f5d7bc", body: "#4b5560", limbs: "rgba(19,24,26,.72)" },
-        { skin: "#d6a07a", body: "#6b4428", limbs: "rgba(60,34,20,.78)" },
-        { skin: "#8f5e3b", body: "#2f2017", limbs: "rgba(27,17,12,.82)" },
-        { skin: "#5b3a29", body: "#161616", limbs: "rgba(10,10,10,.9)" },
-        { skin: "#3c2418", body: "#4a2d1d", limbs: "rgba(22,14,9,.88)" }
+    function randomPedestrianStyle() {
+      const lightSkins = ["#f5d7bc", "#efd0b3", "#e8c4a0", "#ddb188"];
+      const otherSkins = ["#d6a07a", "#b67d57", "#8f5e3b", "#6b432c", "#4f2f22", "#3c2418"];
+      const hairColors = ["#241814", "#3a2619", "#5a3a1d", "#0f0f10", "#6d4b30"];
+      const outfitSets = [
+        { body: "#ff6e8d", limbs: "#6a2740" },
+        { body: "#5ddf8b", limbs: "#1b6c44" },
+        { body: "#66c2ff", limbs: "#255f87" },
+        { body: "#ffd86b", limbs: "#7f6118" },
+        { body: "#d46cff", limbs: "#5d2b7f" },
+        { body: "#f49f5a", limbs: "#774220" },
+        { body: "#ff7f7f", limbs: "#7a2e2e" },
+        { body: "#59d0c9", limbs: "#1f6661" }
       ];
-      return palettes[Math.floor(Math.random() * palettes.length)];
+      const lightGroup = Math.random() < 0.5;
+      const skinPool = lightGroup ? lightSkins : otherSkins;
+      const gender = Math.random() < 0.5 ? "female" : "male";
+      return {
+        skin: skinPool[Math.floor(Math.random() * skinPool.length)],
+        hair: hairColors[Math.floor(Math.random() * hairColors.length)],
+        ...outfitSets[Math.floor(Math.random() * outfitSets.length)],
+        gender
+      };
     }
     function sampleRoute(route, distance) {
       const d = Math.max(0, Math.min(distance, route.totalLength));
@@ -323,7 +343,7 @@
         endX,
         direction,
         speed: 34 + Math.random() * 18,
-        palette: randomPedestrianPalette()
+        style: randomPedestrianStyle()
       });
     }
     function renderPedestrians() {
@@ -334,19 +354,21 @@
           el = document.createElement("div");
           el.className = "ped";
           el.dataset.pedId = String(ped.id);
-          el.innerHTML = '<div class="ped-head"></div><div class="ped-body"></div><div class="ped-arm-left"></div><div class="ped-arm-right"></div><div class="ped-leg-left"></div><div class="ped-leg-right"></div>';
+          el.innerHTML = '<div class="ped-hair"></div><div class="ped-head"></div><div class="ped-body"></div><div class="ped-arm-left"></div><div class="ped-arm-right"></div><div class="ped-leg-left"></div><div class="ped-leg-right"></div>';
           pedLayer.appendChild(el);
         }
+        el.className = `ped ${ped.style.gender}`;
         el.style.left = `${ped.x - 9}px`;
         el.style.top = `${ped.y - 14}px`;
         el.style.transform = `scaleX(${ped.direction > 0 ? 1 : -1})`;
-        el.querySelector(".ped-head").style.background = ped.palette.skin;
+        el.querySelector(".ped-head").style.background = ped.style.skin;
         el.querySelector(".ped-head").style.borderColor = "rgba(26,20,18,.45)";
-        el.querySelector(".ped-body").style.background = ped.palette.body;
-        el.querySelector(".ped-arm-left").style.background = ped.palette.limbs;
-        el.querySelector(".ped-arm-right").style.background = ped.palette.limbs;
-        el.querySelector(".ped-leg-left").style.background = ped.palette.limbs;
-        el.querySelector(".ped-leg-right").style.background = ped.palette.limbs;
+        el.querySelector(".ped-hair").style.background = ped.style.hair;
+        el.querySelector(".ped-body").style.background = ped.style.body;
+        el.querySelector(".ped-arm-left").style.background = ped.style.limbs;
+        el.querySelector(".ped-arm-right").style.background = ped.style.limbs;
+        el.querySelector(".ped-leg-left").style.background = ped.style.limbs;
+        el.querySelector(".ped-leg-right").style.background = ped.style.limbs;
         existing.delete(ped.id);
       }
       for (const leftover of existing.values()) leftover.remove();

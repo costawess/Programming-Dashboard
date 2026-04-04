@@ -223,7 +223,7 @@
       if (topicId === "i2c") return { time: 0, address: "0x3C", dataByte: "0xA5", sclPulse: 0, sdaPulse: 0, ackPulse: 0, queue: [], lastWrite: "No write yet", lastAck: "No ACK yet", buffer: 0 };
       if (topicId === "functions") return { time: 0, pendingBlinks: 0, led: false, ledTimer: 0, callPulse: 0, lastCall: "idle" };
       if (topicId === "interrupts") return { time: 0, cpuBusy: false, eventPulse: 0, interruptPulse: 0, pollingPulse: 0, queue: 0, pollTimer: 0, irqCount: 0, pollCount: 0 };
-      if (topicId === "timers") return { time: 0, mode: "delay", running: true, paused: false, led: false, blinkTimer: 0, busyTimer: 0, buttonPulse: 0, servicePulse: 0, timerPulse: 0, handled: 0, missed: 0, isrCount: 0 };
+      if (topicId === "timers") return { time: 0, mode: "delay", running: true, led: false, blinkTimer: 0, busyTimer: 0, buttonPulse: 0, servicePulse: 0, timerPulse: 0, handled: 0, missed: 0, isrCount: 0 };
       return { time: 0, machineExample: "traffic", auto: true, phase: "RED", phaseTimer: 0, pedestrian: false, red: true, yellow: false, green: false, elevatorPhase: "IDLE", elevatorFloor: 0, elevatorTargetFloor: 0, targetFloorSignal: 0, doorSignal: 1, motorUp: 0, motorDown: 0 };
     }
     const topicTitle = document.getElementById("topicTitle");
@@ -413,7 +413,6 @@
       button.addEventListener("blur", () => setPressed(false));
     }
     function isSimulationPaused() {
-      if (currentTopicId === "timers") return Boolean(sim.paused);
       if (currentTopicId === "loops") return !sim.running;
       return false;
     }
@@ -595,10 +594,10 @@
     }
     function getStateDiagramMarkup() {
       if (sim.machineExample === "elevator") {
-        return `<div class="state-machine-wrap"><div class="state-machine-status"><div class="state-chip"><strong>Current state</strong><span>${sim.elevatorPhase}</span></div><div class="state-chip"><strong>Target floor</strong><span>F${sim.elevatorTargetFloor}</span></div></div><svg class="state-diagram-svg" viewBox="0 0 460 330" aria-label="Elevator state diagram"><defs><marker id="elevatorArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="rgba(157, 185, 200, 0.72)"></path></marker></defs><path class="diagram-path" d="M122 92 C170 32 290 32 338 92" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="28">target above</text><path class="diagram-path" d="M368 124 C414 156 414 198 368 232" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="420" y="176">arrive</text><path class="diagram-path" d="M338 262 C290 318 170 318 122 262" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="322">doors close</text><path class="diagram-path" d="M92 232 C46 198 46 156 92 124" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="40" y="176">target below</text><path class="diagram-path dashed" d="M138 248 C186 224 274 224 322 248" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="224">same floor request</text><text class="diagram-note" x="230" y="304">Floors: F0, F1, F2, F3</text>${getElevatorStateCircleMarkup("IDLE", 100, 100, "cyan", sim.elevatorPhase === "IDLE")}${getElevatorStateCircleMarkup("UP", 360, 100, "green", sim.elevatorPhase === "MOVING_UP")}${getElevatorStateCircleMarkup("OPEN", 360, 250, "yellow", sim.elevatorPhase === "DOOR_OPEN")}${getElevatorStateCircleMarkup("DOWN", 100, 250, "orange", sim.elevatorPhase === "MOVING_DOWN")}</svg></div>`;
+        return `<div class="state-machine-wrap"><div class="state-machine-status"><div class="state-chip"><strong>Current state</strong><span>${sim.elevatorPhase}</span></div><div class="state-chip"><strong>Target floor</strong><span>F${sim.elevatorTargetFloor}</span></div></div><svg class="state-diagram-svg" viewBox="0 0 460 330" aria-label="Elevator state diagram"><defs><marker id="elevatorArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="rgba(157, 185, 200, 0.72)"></path></marker></defs><path class="diagram-path" d="M134 98 C182 42 278 42 326 98" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="38">target above</text><path class="diagram-path" d="M360 138 C396 156 396 194 360 212" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="408" y="178">arrive</text><path class="diagram-path" d="M326 252 C278 302 182 302 134 252" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="314">doors close</text><path class="diagram-path" d="M100 212 C64 194 64 156 100 138" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="52" y="178">target below</text><path class="diagram-path dashed" d="M134 238 C188 216 272 216 326 238" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="214">same floor request</text><text class="diagram-note" x="230" y="292">Floors: F0, F1, F2, F3</text>${getElevatorStateCircleMarkup("IDLE", 100, 100, "cyan", sim.elevatorPhase === "IDLE")}${getElevatorStateCircleMarkup("UP", 360, 100, "green", sim.elevatorPhase === "MOVING_UP")}${getElevatorStateCircleMarkup("OPEN", 360, 250, "yellow", sim.elevatorPhase === "DOOR_OPEN")}${getElevatorStateCircleMarkup("DOWN", 100, 250, "orange", sim.elevatorPhase === "MOVING_DOWN")}</svg></div>`;
       }
       const activeTone = getStateTone(sim.phase);
-      return `<div class="state-machine-wrap"><div class="state-machine-status"><div class="state-chip"><strong>Current state</strong><span>${sim.phase}</span></div><div class="state-chip"><strong>Pedestrian request</strong><span>${sim.pedestrian ? "QUEUED" : "IDLE"}</span></div></div><svg class="state-diagram-svg" viewBox="0 0 460 330" aria-label="Traffic light state diagram"><defs><marker id="trafficArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="rgba(157, 185, 200, 0.72)"></path></marker></defs><path class="diagram-path" d="M112 76 C165 18 295 18 348 76" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="230" y="24">after 2.4 s</text><path class="diagram-path" d="M384 112 C420 150 420 200 384 238" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="422" y="176">after 3.4 s</text><text class="diagram-note" x="422" y="192">or pedestrian</text><path class="diagram-path" d="M348 274 C286 326 174 326 112 274" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="230" y="322">if no request</text><path class="diagram-path dashed" d="M312 238 C258 212 202 212 148 238" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="230" y="212">if pedestrian</text><path class="diagram-path" d="M76 238 C40 200 40 150 76 112" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="38" y="176">after 1.8 s</text>${getStateCircleMarkup("RED", 90, 90, "red", sim.phase === "RED")}${getStateCircleMarkup("GREEN", 370, 90, "green", sim.phase === "GREEN")}${getStateCircleMarkup("YELLOW", 370, 250, "yellow", sim.phase === "YELLOW")}${getStateCircleMarkup("WALK", 90, 250, "purple", sim.phase === "WALK")}<text class="diagram-note" x="230" y="300" style="fill: var(--${activeTone});">${sim.phase} is active and highlighted.</text></svg></div>`;
+      return `<div class="state-machine-wrap"><div class="state-machine-status"><div class="state-chip"><strong>Current state</strong><span>${sim.phase}</span></div><div class="state-chip"><strong>Pedestrian request</strong><span>${sim.pedestrian ? "QUEUED" : "IDLE"}</span></div></div><svg class="state-diagram-svg" viewBox="0 0 460 330" aria-label="Traffic light state diagram"><defs><marker id="trafficArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="rgba(157, 185, 200, 0.72)"></path></marker></defs><path class="diagram-path" d="M126 86 C176 34 284 34 334 86" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="230" y="34">after 2.4 s</text><path class="diagram-path" d="M370 126 C404 146 404 194 370 214" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="414" y="168">after 3.4 s</text><text class="diagram-note" x="414" y="184">or pedestrian</text><path class="diagram-path" d="M334 254 C282 304 178 304 126 254" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="230" y="314">if no request</text><path class="diagram-path dashed" d="M326 238 C268 214 192 214 134 238" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="230" y="212">if pedestrian</text><path class="diagram-path" d="M90 214 C56 194 56 146 90 126" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="46" y="168">after 1.8 s</text>${getStateCircleMarkup("RED", 90, 90, "red", sim.phase === "RED")}${getStateCircleMarkup("GREEN", 370, 90, "green", sim.phase === "GREEN")}${getStateCircleMarkup("YELLOW", 370, 250, "yellow", sim.phase === "YELLOW")}${getStateCircleMarkup("WALK", 90, 250, "purple", sim.phase === "WALK")}<text class="diagram-note" x="230" y="292" style="fill: var(--${activeTone});">${sim.phase} is active and highlighted.</text></svg></div>`;
     }
     function renderTimelineExtra() {
       if (currentTopicId !== "state_machines") {
@@ -803,11 +802,10 @@
         return;
       }
       if (currentTopicId === "timers") {
-        controlsPane.innerHTML = `<div class="control-row"><div class="field-label">Timing strategy</div><select id="timerMode"><option value="delay" ${sim.mode === "delay" ? "selected" : ""}>delay()</option><option value="millis" ${sim.mode === "millis" ? "selected" : ""}>millis()</option><option value="esp32_timer" ${sim.mode === "esp32_timer" ? "selected" : ""}>ESP32 timer ISR</option></select></div><div class="control-inline"><button class="action-btn ${sim.running ? "active" : ""}" id="timerRunBtn">${sim.running ? "Pause blinker" : "Start blinker"}</button><button class="action-btn ${sim.paused ? "active" : ""}" id="timerPauseBtn">${sim.paused ? "Resume simulation" : "Pause simulation"}</button><button class="action-btn" id="timerEventBtn">Press button event</button></div>`;
+        controlsPane.innerHTML = `<div class="control-row"><div class="field-label">Timing strategy</div><select id="timerMode"><option value="delay" ${sim.mode === "delay" ? "selected" : ""}>delay()</option><option value="millis" ${sim.mode === "millis" ? "selected" : ""}>millis()</option><option value="esp32_timer" ${sim.mode === "esp32_timer" ? "selected" : ""}>ESP32 timer ISR</option></select></div><div class="control-inline"><button class="action-btn ${sim.running ? "active" : ""}" id="timerRunBtn">${sim.running ? "Pause blinker" : "Start blinker"}</button><button class="action-btn" id="timerEventBtn">Press button event</button></div>`;
         document.getElementById("timerMode").addEventListener("change", event => {
           sim.mode = event.target.value;
           sim.led = false;
-          sim.paused = false;
           sim.blinkTimer = 0;
           sim.busyTimer = 0;
           sim.buttonPulse = 0;
@@ -822,7 +820,6 @@
           renderCode();
         });
         document.getElementById("timerRunBtn").addEventListener("click", () => { sim.running = !sim.running; renderControls(); renderCode(); });
-        document.getElementById("timerPauseBtn").addEventListener("click", () => { sim.paused = !sim.paused; renderControls(); renderCode(); updateStatusFromTopic(); });
         document.getElementById("timerEventBtn").addEventListener("click", triggerTimerEvent);
         return;
       }
@@ -1144,7 +1141,7 @@
       else if (currentTopicId === "i2c") setStatus(sim.queue.length ? "I2C write in progress" : "I2C bus idle", sim.queue.length ? "purple" : "green");
       else if (currentTopicId === "functions") setStatus(sim.lastCall === "idle" ? "Choose a function call" : `${sim.lastCall} active`, "purple");
       else if (currentTopicId === "interrupts") setStatus(`IRQ: ${sim.irqCount} | Poll: ${sim.pollCount}`, sim.cpuBusy ? "yellow" : "accent");
-      else if (currentTopicId === "timers") setStatus(sim.paused ? "Simulation paused" : sim.mode === "delay" ? "Blocking timing" : sim.mode === "millis" ? "Non-blocking timing" : "ESP32 timer ISR", sim.paused ? "red" : sim.mode === "delay" ? "yellow" : sim.mode === "millis" ? "green" : "purple");
+      else if (currentTopicId === "timers") setStatus(sim.mode === "delay" ? "Blocking timing" : sim.mode === "millis" ? "Non-blocking timing" : "ESP32 timer ISR", sim.mode === "delay" ? "yellow" : sim.mode === "millis" ? "green" : "purple");
       else setStatus(sim.machineExample === "elevator" ? `Elevator = ${sim.elevatorPhase} | F${sim.elevatorFloor} -> F${sim.elevatorTargetFloor}` : `State = ${sim.phase}${sim.pedestrian ? " | Pedestrian request queued" : ""}`, sim.machineExample === "elevator" ? (sim.elevatorPhase === "DOOR_OPEN" ? "yellow" : sim.elevatorPhase === "MOVING_DOWN" ? "red" : sim.elevatorPhase === "MOVING_UP" ? "green" : "accent") : sim.phase === "YELLOW" ? "yellow" : sim.phase === "RED" ? "red" : "green");
     }
     function renderVisual() {
@@ -1541,6 +1538,73 @@
       for (let line = start; line <= end; line++) values.push(line);
       return values;
     }
+    function getLoopPhaseProgress() {
+      return sim.speed > 0 ? clamp(sim.accum / sim.speed, 0, 0.999) : 0;
+    }
+    function getLoopSequenceActiveLines() {
+      if (!sim.running) return [9];
+      const progress = getLoopPhaseProgress();
+      if (sim.mode === "for") {
+        if (progress < 0.2) return [9, 10, 11];
+        if (progress < 0.82) return [9, 10, 12];
+        return [9, 10, 13];
+      }
+      if (sim.mode === "while") {
+        if (progress < 0.2) return [9, 12, 13];
+        if (progress < 0.82) return [9, 12, 14];
+        return [9, 12, 15, 16];
+      }
+      if (progress < 0.2) return [9, 12, 13];
+      if (progress < 0.82) return [9, 12, 14];
+      return [9, 12, 15, 16, 17];
+    }
+    function getLoopBlinkActiveLines() {
+      if (!sim.running) return [9];
+      const progress = getLoopPhaseProgress();
+      const onPhase = sim.blinkState === 1;
+      if (sim.mode === "for") {
+        if (onPhase) return progress < 0.2 ? [9, 10, 11] : [9, 13];
+        return progress < 0.2 ? [9, 15, 16] : [9, 18];
+      }
+      if (sim.mode === "while") {
+        if (onPhase) return progress < 0.2 ? [9, 10, 11, 12, 13] : [9, 15];
+        return progress < 0.2 ? [9, 17, 18, 19, 20] : [9, 22];
+      }
+      if (onPhase) return progress < 0.2 ? [9, 10, 11, 12, 13, 14] : [9, 15];
+      return progress < 0.2 ? [9, 17, 18, 19, 20, 21] : [9, 22];
+    }
+    function getFunctionActiveLines() {
+      const activeLines = [];
+      if (sim.lastCall === "blinkLed(1)") activeLines.push(13);
+      else if (sim.lastCall === "blinkLed(3)") activeLines.push(14);
+      else if (sim.lastCall === "blinkLed(5)") activeLines.push(15);
+      if (sim.pendingBlinks <= 0) return activeLines.length ? activeLines : [12];
+      const progress = clamp(sim.ledTimer / 0.28, 0, 0.999);
+      activeLines.push(3);
+      if (sim.led) {
+        activeLines.push(progress < 0.22 ? 4 : 5);
+      } else {
+        activeLines.push(progress < 0.22 ? 6 : 7);
+      }
+      return activeLines;
+    }
+    function getTimerActiveLines() {
+      if (sim.mode === "delay") {
+        if (!sim.running) return [4];
+        if (sim.buttonPulse > 0 && sim.busyTimer <= 0.01) return [10];
+        if (sim.busyTimer > 0.01) return sim.led ? [5, 6] : [7, 8];
+        return sim.led ? [5] : [7];
+      }
+      if (sim.mode === "millis") {
+        if (!sim.running) return [7];
+        if (sim.buttonPulse > 0) return [13];
+        return sim.led ? [7, 8, 9, 10] : [7];
+      }
+      if (sim.buttonPulse > 0) return [31];
+      if (sim.timerPulse > 0) return [8, 9, 10, 11];
+      if (sim.servicePulse > 0 || sim.led) return [24, 25, 26, 27, 28];
+      return [24];
+    }
     function renderCode() {
       let codeText = "";
       let activeLines = [];
@@ -1576,10 +1640,10 @@
       if (currentTopicId === "loops") {
         if (sim.pattern === "blink") {
           codeText = sim.mode === "for" ? `const int leds[] = {4, 21, 22, 23}; // yellow, red, green, blue\n\nvoid setup() {\n  for (int i = 0; i < 4; i++) {\n    pinMode(leds[i], OUTPUT);\n  }\n}\n\nvoid loop() {\n  for (int i = 0; i < 4; i++) {\n    digitalWrite(leds[i], HIGH);\n  }\n  delay(${Math.round(sim.speed * 1000)});\n\n  for (int i = 0; i < 4; i++) {\n    digitalWrite(leds[i], LOW);\n  }\n  delay(${Math.round(sim.speed * 1000)});\n}` : sim.mode === "while" ? `const int leds[] = {4, 21, 22, 23}; // yellow, red, green, blue\n\nvoid setup() {\n  for (int i = 0; i < 4; i++) {\n    pinMode(leds[i], OUTPUT);\n  }\n}\n\nvoid loop() {\n  int index = 0;\n  while (index < 4) {\n    digitalWrite(leds[index], HIGH);\n    index++;\n  }\n  delay(${Math.round(sim.speed * 1000)});\n\n  index = 0;\n  while (index < 4) {\n    digitalWrite(leds[index], LOW);\n    index++;\n  }\n  delay(${Math.round(sim.speed * 1000)});\n}` : `const int leds[] = {4, 21, 22, 23}; // yellow, red, green, blue\n\nvoid setup() {\n  for (int i = 0; i < 4; i++) {\n    pinMode(leds[i], OUTPUT);\n  }\n}\n\nvoid loop() {\n  int index = 0;\n  do {\n    digitalWrite(leds[index], HIGH);\n    index++;\n  } while (index < 4);\n  delay(${Math.round(sim.speed * 1000)});\n\n  index = 0;\n  do {\n    digitalWrite(leds[index], LOW);\n    index++;\n  } while (index < 4);\n  delay(${Math.round(sim.speed * 1000)});\n}`;
-          activeLines = sim.mode === "for" ? (sim.running ? [9, 10, 11, 13, 15, 16, 18] : [9]) : sim.mode === "while" ? (sim.running ? [9, 11, 12, 13, 15, 18, 19, 20, 22] : [9]) : (sim.running ? [9, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22] : [9]);
+          activeLines = getLoopBlinkActiveLines();
         } else {
           codeText = sim.mode === "for" ? `const int leds[] = {4, 21, 22, 23}; // yellow, red, green, blue\n\nvoid setup() {\n  for (int i = 0; i < 4; i++) {\n    pinMode(leds[i], OUTPUT);\n  }\n}\n\nvoid loop() {\n  for (int i = 0; i < 4; i++) {\n    digitalWrite(leds[i], HIGH);\n    delay(${Math.round(sim.speed * 1000)});\n    digitalWrite(leds[i], LOW);\n  }\n}` : sim.mode === "while" ? `const int leds[] = {4, 21, 22, 23}; // yellow, red, green, blue\n\nvoid setup() {\n  for (int i = 0; i < 4; i++) {\n    pinMode(leds[i], OUTPUT);\n  }\n}\n\nvoid loop() {\n  int index = 0;\n\n  while (index < 4) {\n    digitalWrite(leds[index], HIGH);\n    delay(${Math.round(sim.speed * 1000)});\n    digitalWrite(leds[index], LOW);\n    index++;\n  }\n}` : `const int leds[] = {4, 21, 22, 23}; // yellow, red, green, blue\n\nvoid setup() {\n  for (int i = 0; i < 4; i++) {\n    pinMode(leds[i], OUTPUT);\n  }\n}\n\nvoid loop() {\n  int index = 0;\n\n  do {\n    digitalWrite(leds[index], HIGH);\n    delay(${Math.round(sim.speed * 1000)});\n    digitalWrite(leds[index], LOW);\n    index++;\n  } while (index < 4);\n}`;
-          activeLines = sim.mode === "for" ? (sim.running ? [9, 10, 11, 12] : [9]) : sim.mode === "while" ? (sim.running ? [9, 12, 13, 14, 15, 16] : [9]) : (sim.running ? [9, 12, 13, 14, 15, 16, 17] : [9]);
+          activeLines = getLoopSequenceActiveLines();
         }
         renderHighlightedCode(codeText, activeLines);
         return;
@@ -1612,10 +1676,7 @@
       }
       if (currentTopicId === "functions") {
         codeText = `const int ledPin = 13;\n\nvoid blinkLed(int times, int delayMs) {\n  for (int i = 0; i < times; i++) {\n    digitalWrite(ledPin, HIGH);\n    delay(delayMs);\n    digitalWrite(ledPin, LOW);\n    delay(delayMs);\n  }\n}\n\nvoid loop() {\n  blinkLed(1, 150);\n  blinkLed(3, 150);\n  blinkLed(5, 150);\n}`;
-        activeLines = [3, 4, 5, 6, 7, 8];
-        if (sim.lastCall === "blinkLed(1)") activeLines.push(13);
-        else if (sim.lastCall === "blinkLed(3)") activeLines.push(14);
-        else if (sim.lastCall === "blinkLed(5)") activeLines.push(15);
+        activeLines = getFunctionActiveLines();
         renderHighlightedCode(codeText, activeLines);
         return;
       }
@@ -1637,9 +1698,8 @@
           if (sim.buttonPulse > 0) activeLines.push(13);
         } else {
           codeText = `const int ledPin = 13;\nconst int buttonPin = 2;\nhw_timer_t *blinkTimer = NULL;\nportMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;\nvolatile bool ledState = false;\nvolatile bool blinkFlag = false;\n\nvoid ARDUINO_ISR_ATTR onTimer() {\n  portENTER_CRITICAL_ISR(&timerMux);\n  ledState = !ledState;\n  blinkFlag = true;\n  portEXIT_CRITICAL_ISR(&timerMux);\n}\n\nvoid setup() {\n  pinMode(ledPin, OUTPUT);\n  pinMode(buttonPin, INPUT_PULLUP);\n\n  blinkTimer = timerBegin(1000000);\n  timerAttachInterrupt(blinkTimer, &onTimer);\n  timerAlarm(blinkTimer, 400000, true, 0);\n}\n\nvoid loop() {\n  if (blinkFlag) {\n    portENTER_CRITICAL(&timerMux);\n    bool copyLedState = ledState;\n    blinkFlag = false;\n    portEXIT_CRITICAL(&timerMux);\n    digitalWrite(ledPin, copyLedState);\n  }\n\n  if (digitalRead(buttonPin) == LOW) {\n    // Loop work can still run while the timer ISR keeps the blink schedule.\n  }\n}`;
-          activeLines = sim.timerPulse > 0 ? [8, 9, 10, 11] : [24, 25, 26, 27, 28];
-          if (sim.buttonPulse > 0) activeLines.push(31);
         }
+        activeLines = getTimerActiveLines();
         renderHighlightedCode(codeText, activeLines);
         return;
       }

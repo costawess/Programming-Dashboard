@@ -276,87 +276,93 @@
     }
 
     .state-diagram {
+      width: 100%;
       display: grid;
       justify-items: center;
-      gap: 14px;
       margin-top: 6px;
     }
 
-    .state-node {
-      width: min(100%, 220px);
-      display: grid;
-      justify-items: center;
-      gap: 8px;
-      text-align: center;
-      padding: 14px 12px;
-      border-radius: 22px;
-      border: 2px solid var(--line);
-      background: rgba(19, 29, 20, 0.58);
-      transition: 0.2s ease;
+    .state-diagram-svg {
+      width: 100%;
+      max-width: 520px;
+      height: auto;
+      display: block;
+      overflow: visible;
     }
 
-    .state-dot {
-      width: 76px;
-      height: 76px;
-      border-radius: 50%;
-      border: 6px solid #09100a;
-      background: #253328;
-      box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.42);
+    .state-diagram-svg text {
+      font-family: "Segoe UI", Arial, sans-serif;
     }
 
-    .state-node strong { font-size: 18px; }
-    .state-node span { color: var(--subtle); font-size: 13px; line-height: 1.4; }
-
-    .state-node.red.active {
-      border-color: var(--red);
-      box-shadow: 0 0 0 3px rgba(255, 74, 67, 0.12);
-    }
-    .state-node.yellow.active {
-      border-color: var(--yellow);
-      box-shadow: 0 0 0 3px rgba(255, 217, 58, 0.12);
-    }
-    .state-node.green.active {
-      border-color: var(--green);
-      box-shadow: 0 0 0 3px rgba(47, 208, 96, 0.12);
+    .state-diagram-svg .diagram-path {
+      fill: none;
+      stroke: rgba(191, 211, 193, 0.42);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
-    .state-node.red.active .state-dot {
-      background: radial-gradient(circle at 38% 34%, #ff765e 0%, var(--red) 42%, #8e100e 100%);
-      box-shadow: 0 0 20px rgba(255, 74, 67, 0.34);
-    }
-    .state-node.yellow.active .state-dot {
-      background: radial-gradient(circle at 38% 34%, #fff58d 0%, var(--yellow) 42%, #a77d00 100%);
-      box-shadow: 0 0 20px rgba(255, 217, 58, 0.34);
-    }
-    .state-node.green.active .state-dot {
-      background: radial-gradient(circle at 38% 34%, #78ef99 0%, var(--green) 42%, #0d7c32 100%);
-      box-shadow: 0 0 20px rgba(47, 208, 96, 0.34);
-    }
-
-    .state-link {
-      color: var(--subtle);
-      font-weight: 800;
-      font-size: 22px;
-      line-height: 1;
-    }
-
-    .state-return {
-      display: grid;
-      justify-items: center;
-      gap: 6px;
-      color: var(--subtle);
-      margin-top: 2px;
-    }
-
-    .state-return .arrow {
-      font-size: 28px;
-      line-height: 1;
-      font-weight: 800;
-    }
-
-    .state-return small {
+    .state-diagram-svg .diagram-label {
+      fill: var(--subtle);
       font-size: 12px;
-      letter-spacing: 0.03em;
+      font-weight: 700;
+      text-anchor: middle;
+    }
+
+    .state-diagram-svg .diagram-note {
+      fill: var(--subtle);
+      font-size: 11px;
+      font-weight: 700;
+      text-anchor: middle;
+    }
+
+    .state-diagram-svg .diagram-arrow {
+      fill: rgba(191, 211, 193, 0.72);
+    }
+
+    .state-diagram-svg .diagram-node circle {
+      fill: rgba(19, 29, 20, 0.58);
+      stroke: var(--line);
+      stroke-width: 3;
+    }
+
+    .state-diagram-svg .diagram-node .outer-ring {
+      fill: none;
+      stroke: rgba(255,255,255,0.08);
+      stroke-width: 1.5;
+    }
+
+    .state-diagram-svg .diagram-node text {
+      fill: var(--subtle);
+      font-size: 17px;
+      font-weight: 900;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .state-diagram-svg .diagram-node .subtitle {
+      font-size: 11px;
+      font-weight: 700;
+      dominant-baseline: auto;
+    }
+
+    .state-diagram-svg .diagram-node.active text {
+      fill: var(--text);
+    }
+
+    .state-diagram-svg .diagram-node.red.active circle {
+      stroke: var(--red);
+      fill: rgba(255, 74, 67, 0.16);
+    }
+
+    .state-diagram-svg .diagram-node.yellow.active circle {
+      stroke: var(--yellow);
+      fill: rgba(255, 217, 58, 0.16);
+    }
+
+    .state-diagram-svg .diagram-node.green.active circle {
+      stroke: var(--green);
+      fill: rgba(47, 208, 96, 0.16);
     }
 
     .serial-card,
@@ -526,29 +532,7 @@
         <h2>State diagram</h2>
         <div class="state-stack">
           <p class="muted">Each circle represents a valid UART state. The highlighted one is the current active color.</p>
-          <div class="state-diagram">
-            <div class="state-node red" id="nodeRed">
-              <div class="state-dot"></div>
-              <strong>RED</strong>
-              <span>Stop traffic</span>
-            </div>
-            <div class="state-link">↓</div>
-            <div class="state-node yellow" id="nodeYellow">
-              <div class="state-dot"></div>
-              <strong>YELLOW</strong>
-              <span>Transition / caution</span>
-            </div>
-            <div class="state-link">↓</div>
-            <div class="state-node green" id="nodeGreen">
-              <div class="state-dot"></div>
-              <strong>GREEN</strong>
-              <span>Go traffic</span>
-            </div>
-            <div class="state-return">
-              <div class="arrow">↺</div>
-              <small>back to RED</small>
-            </div>
-          </div>
+          <div class="state-diagram" id="stateDiagram"></div>
         </div>
       </section>
 
@@ -595,12 +579,7 @@
       GREEN: document.getElementById("lampGreen")
     };
 
-    const nodeEls = {
-      RED: document.getElementById("nodeRed"),
-      YELLOW: document.getElementById("nodeYellow"),
-      GREEN: document.getElementById("nodeGreen")
-    };
-
+    const stateDiagram = document.getElementById("stateDiagram");
     const stateBadge = document.getElementById("stateBadge");
     const activeTimer = document.getElementById("activeTimer");
     const activeSince = document.getElementById("activeSince");
@@ -731,11 +710,21 @@
         : "Accepted UART lines: RED, YELLOW, GREEN, and AMBER.";
     }
 
+    function getTrafficStateCircleMarkup(label, subtitle, x, y, tone, active) {
+      return `<g class="diagram-node ${tone} ${active ? "active" : ""}" transform="translate(${x} ${y})"><circle class="outer-ring" r="46"></circle><circle r="38"></circle><text y="-4">${label}</text><text class="subtitle" y="24">${subtitle}</text></g>`;
+    }
+
+    function renderStateDiagram() {
+      const activeColor = state.currentColor;
+      stateDiagram.innerHTML = `<svg class="state-diagram-svg" viewBox="0 0 460 330" aria-label="Traffic light state diagram"><defs><marker id="trafficDiagramArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path class="diagram-arrow" d="M0 0 L8 4 L0 8 z"></path></marker></defs><path class="diagram-path" d="M140 104 C188 44 272 44 318 104" marker-end="url(#trafficDiagramArrow)"></path><text class="diagram-label" x="230" y="42">set GREEN</text><path class="diagram-path" d="M356 166 C392 178 392 192 356 204" marker-end="url(#trafficDiagramArrow)"></path><text class="diagram-label" x="408" y="188">set YELLOW</text><path class="diagram-path" d="M318 258 C246 312 144 308 104 166" marker-end="url(#trafficDiagramArrow)"></path><text class="diagram-label" x="210" y="306">set RED</text><text class="diagram-note" x="230" y="286">${activeColor ? `${activeColor} is currently active.` : "Waiting for a valid UART color."}</text>${getTrafficStateCircleMarkup("RED", "Stop traffic", 100, 120, "red", activeColor === "RED")}${getTrafficStateCircleMarkup("GREEN", "Go traffic", 360, 120, "green", activeColor === "GREEN")}${getTrafficStateCircleMarkup("YELLOW", "Caution", 360, 250, "yellow", activeColor === "YELLOW")}</svg>`;
+    }
+
     function renderActiveState() {
       for (const [key, lamp] of Object.entries(lampEls)) {
         lamp.className = "lamp";
-        nodeEls[key].classList.remove("active");
       }
+
+      renderStateDiagram();
 
       if (!state.currentColor) {
         updateBadge(state.serialConnected ? "Waiting for UART color" : "Waiting for UART connection", "normal");
@@ -744,7 +733,6 @@
       }
 
       lampEls[state.currentColor].classList.add(`active-${state.currentColor.toLowerCase()}`);
-      nodeEls[state.currentColor].classList.add("active");
       updateBadge(`Current state: ${state.currentColor}`, state.currentColor.toLowerCase());
       activeSince.textContent = `Active since ${state.activeSinceLabel}`;
     }
@@ -889,3 +877,4 @@
   </script>
 </body>
 </html>
+

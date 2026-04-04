@@ -3,6 +3,7 @@ Card images for the start menu live in this folder.
 Replace any file with another image using the same filename to update the card preview automatically.
 
 Current filenames:
+- `robot_sorting_lab.svg`
 - `gas_water_heater.svg`
 - `foundations_lab.svg`
 - `pull_resistors_lab.svg`

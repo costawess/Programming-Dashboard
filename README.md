@@ -44,6 +44,14 @@ This repository contains the browser-based simulations, UART/Web Serial experime
 - UART:
   Not used on this page.
 
+### Robot Sorting Logic Lab
+
+- File: `web/simulations/robot_sorting_lab.html`
+- Use it to:
+  Practice algorithmic thinking with a robotic arm that must inspect a geometric shape, compare it with the target product, and either let it pass or reject it.
+- Main interaction:
+  Reorder the logic blocks, choose the target shape and the incoming part, then run the robot one step at a time or as a full cycle.
+
 ### Foundations Lab
 
 - File: `web/simulations/course_topics_lab.html?topic=foundations`
