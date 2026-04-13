@@ -6,6 +6,7 @@
   <title>Embedded Programming</title>
   <script src="./shared/sound_fx.js"></script>
   <script src="./dashboard_flags.js"></script>
+  <script src="../js/site_contact.js"></script>
   <script>
     // Keep the application permanently in dark mode.
     document.documentElement.classList.add("theme-dark");
@@ -233,6 +234,24 @@
 
     .menu-empty.visible {
       display: block;
+    }
+
+    .menu-footer {
+      background: var(--panel);
+      border: 2px solid var(--panel-line);
+      border-radius: 24px;
+      padding: 16px 20px;
+      display: grid;
+      gap: 6px;
+      color: var(--subtle);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .menu-footer strong,
+    .menu-footer a {
+      color: var(--title);
+      text-decoration: none;
     }
 
     .menu-columns {
@@ -874,6 +893,10 @@
         </section>
       </div>
       <div class="menu-empty" id="menuEmptyState">No simulation or experiment matched this search. Try a broader word such as <code>memory</code>, <code>timer</code>, <code>UART</code>, or <code>traffic</code>.</div>
+      <footer class="menu-footer">
+        <div>Contact: <strong id="siteContactName">Your Name</strong> | <a id="siteContactEmailLink" href="mailto:your.email@example.com">your.email@example.com</a></div>
+        <div>Last edition: <span id="siteContactLastEdition">April 13, 2026</span></div>
+      </footer>
     </section>
   </div>
 
@@ -1127,6 +1150,10 @@
     const runningPill = document.getElementById("runningPill");
     const tapPill = document.getElementById("tapPill");
     const featureFlags = window.DASHBOARD_FLAGS ?? {};
+    const siteContact = window.SITE_CONTACT ?? {};
+    const siteContactName = document.getElementById("siteContactName");
+    const siteContactEmailLink = document.getElementById("siteContactEmailLink");
+    const siteContactLastEdition = document.getElementById("siteContactLastEdition");
 
     const controls = {
       // Buttons / sliders.
@@ -1153,6 +1180,16 @@
       hoverX: null,
       currentScreen: "menu"
     };
+
+    function applySiteContact() {
+      const name = siteContact.name || "Your Name";
+      const email = siteContact.email || "your.email@example.com";
+      const lastEdition = siteContact.lastEdition || "April 13, 2026";
+      siteContactName.textContent = name;
+      siteContactEmailLink.textContent = email;
+      siteContactEmailLink.href = `mailto:${email}`;
+      siteContactLastEdition.textContent = lastEdition;
+    }
 
     // Resize canvases to match CSS size while preserving crisp drawing on high-DPI displays.
     function setCanvasScale(canvas, ctx) {
@@ -1724,6 +1761,7 @@
     }
 
     // Initial application boot sequence.
+    applySiteContact();
     syncCanvasColors();
     showMenu();
     syncUi();

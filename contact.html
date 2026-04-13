@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./css/style.css" />
+  <script src="./js/site_contact.js"></script>
 </head>
 <body data-page="contact">
   <div class="page-shell">
@@ -46,16 +47,17 @@
 
         <article class="info-card">
           <h2>Course contact</h2>
-          <p>
-            Replace this text with your course email, office hours, or LMS contact details before publishing.
-          </p>
-          <p class="muted-line">Example: add your official course support channel here.</p>
+          <p>Contact: <strong data-contact-name>Your Name</strong></p>
+          <p>Email: <a class="muted-line" data-contact-email-link href="mailto:your.email@example.com">your.email@example.com</a></p>
+          <p class="muted-line">Last edition: <span data-last-edition>April 13, 2026</span></p>
         </article>
       </section>
     </main>
 
     <footer class="site-footer">
       <p>Embedded Programming Workspace</p>
+      <p>Contact: <span data-contact-name>Your Name</span> | <a data-contact-email-link href="mailto:your.email@example.com">your.email@example.com</a></p>
+      <p>Last edition: <span data-last-edition>April 13, 2026</span></p>
       <p>&copy; <span data-current-year></span></p>
     </footer>
   </div>
