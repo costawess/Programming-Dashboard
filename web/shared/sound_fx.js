@@ -56,7 +56,7 @@
 
     installHeaderToggles() {
       const pageName = window.location.pathname.split("/").pop() || "";
-      if (pageName !== "heater_sim.html") return;
+      if (pageName !== "index.html") return;
 
       document.querySelectorAll(".brand-logo").forEach((logo, index) => {
         if (logo.parentElement && logo.parentElement.classList.contains("header-tools")) return;

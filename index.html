@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Interactive embedded programming simulations and browser-based experiments." />
+  <title>Embedded Programming Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body data-page="home">
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="./index.html">
+        <img src="./images/logo.png" alt="Project logo" />
+        <span>Embedded Programming Hub</span>
+      </a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="./index.html">Home</a>
+        <a href="./about.html">About</a>
+        <a href="./contact.html">Contact</a>
+        <a class="nav-cta" href="./web/index.html">Open dashboard</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Browser-based learning environment</p>
+          <h1>Interactive simulations for embedded programming.</h1>
+          <p class="hero-text">
+            Publish this repository as a static site and give students one clean entry point for
+            simulations, experiments, and course demos.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="./web/index.html">Launch simulations</a>
+            <a class="button button-secondary" href="./about.html">See how it is organized</a>
+          </div>
+        </div>
+        <div class="hero-panel">
+          <div class="stat-card">
+            <span class="stat-label">Main entry</span>
+            <strong>`index.html`</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Publishing target</span>
+            <strong>GitHub Pages ready</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">App dashboard</span>
+            <strong><a href="./web/index.html">`/web/index.html`</a></strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <article class="info-card">
+          <h2>What students can access</h2>
+          <p>
+            The dashboard groups topic simulations, UART/Web Serial experiments, and visual teaching
+            pages in one place.
+          </p>
+          <ul class="clean-list">
+            <li>Digital input/output and control concepts</li>
+            <li>State machines, loops, UART, timers, and interrupts</li>
+            <li>Interactive experiment pages for ESP32 activities</li>
+          </ul>
+        </article>
+
+        <article class="info-card">
+          <h2>Publish structure</h2>
+          <p>
+            The root now contains the pages and folders expected by a simple static website layout.
+          </p>
+          <pre class="tree-block">/
+|- index.html
+|- about.html
+|- contact.html
+|- css/style.css
+|- js/script.js
+|- images/logo.png
+\- web/...</pre>
+        </article>
+
+        <article class="info-card spotlight-card">
+          <h2>Quick access</h2>
+          <p>Use the dashboard page as the full classroom menu, with the root pages acting as the public website shell.</p>
+          <a class="button button-primary button-full" href="./web/index.html">Open full dashboard</a>
+        </article>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Embedded Programming Workspace</p>
+      <p>Built for classroom publishing and browser access.</p>
+      <p>&copy; <span data-current-year></span></p>
+    </footer>
+  </div>
+
+  <script src="./js/script.js"></script>
+</body>
+</html>

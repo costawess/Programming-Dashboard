@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Embedded Programming</title>
   <script src="./shared/sound_fx.js"></script>
-  <script src="./heater_sim_flags.js"></script>
+  <script src="./dashboard_flags.js"></script>
   <script>
     // Keep the application permanently in dark mode.
     document.documentElement.classList.add("theme-dark");
@@ -1126,7 +1126,7 @@
     const plotCtx = plotCanvas.getContext("2d");
     const runningPill = document.getElementById("runningPill");
     const tapPill = document.getElementById("tapPill");
-    const featureFlags = window.HEATER_SIM_FLAGS ?? {};
+    const featureFlags = window.DASHBOARD_FLAGS ?? {};
 
     const controls = {
       // Buttons / sliders.
