@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Embedded Programming - EP Simulations</title>
+  <title>Embedded Programming - Digital Input & Output</title>
   <script>document.documentElement.classList.add("theme-dark");</script>
   <script src="../shared/mouse_glow.js"></script>
   <script src="../shared/page_header.js"></script>
@@ -41,6 +41,7 @@
     .layout { display: grid; grid-template-columns: minmax(300px, 0.9fr) minmax(320px, 0.95fr) minmax(420px, 1.2fr); gap: 18px; align-items: start; }
     .panel { padding: 14px; display: grid; gap: 12px; }
     .topic-head { display: grid; gap: 8px; }
+    .topic-head.compact { gap: 0; }
     .topic-head h2, .panel h2, .panel h3, .panel p { margin: 0; }
     .topic-head p { color: var(--subtle); line-height: 1.45; }
     .status-pill { justify-self: start; border: 2px solid var(--accent); border-radius: 999px; padding: 8px 14px; background: var(--accent-soft); color: var(--accent); font-weight: 800; }
@@ -186,15 +187,15 @@
     <header class="header">
       <a class="back" href="../heater_sim.html">Back to menu</a>
       <div class="title">
-        <h1>EP Simulations</h1>
-        <p>Each topic combines a live visual model, a timeline column, and an Arduino C++ example that matches the current logic.</p>
+        <h1>Digital Input & Output</h1>
+        <p>Compare two beginner-friendly patterns: a blinking LED output driven by delay(), and a press-and-hold digital input that directly controls the LED.</p>
       </div>
       <img class="brand-logo" src="../../assets/branding/hanze_logo.png" alt="Hanze logo" />
     </header>
     <section class="layout">
       <section class="panel">
         <div class="topic-head">
-          <h2 id="topicTitle">Foundations</h2>
+          <h2 id="topicTitle">Digital Input & Output</h2>
           <p id="topicDescription"></p>
           <div class="status-pill" id="topicStatus">Ready</div>
         </div>
@@ -208,20 +209,20 @@
   <script src="../shared/sound_fx.js"></script>
   <script>
     const TOPIC_INFO = {
-      foundations: { title: "Embedded System Foundations", short: "Foundations", description: "Read one digital input and drive one digital output. This is the smallest complete embedded loop: input, decision, output.", codeNote: "A simple button-to-LED sketch is enough to introduce setup, loop, pin modes, and digital I/O." },
-      variables: { title: "Algorithmic Thinking and Variables", short: "Variables", description: "Track sensor values inside variables, transform them, and map them into another range before sending them to an output.", codeNote: "This sketch highlights assignment, map(), and the idea that variables store values that change over time." },
-      conditionals: { title: "Decision Systems - Conditionals", short: "Conditionals", description: "Compare a basic condition, a nested condition, and a threshold comparison. The output LED changes according to the active rule.", codeNote: "The code switches between a basic if, a nested if, and a comparison against a threshold." },
-      loops: { title: "Loops and Repetition", short: "Loops", description: "Automate repeated actions with a blinking LED sequence. This is useful to explain for-loops, while-loops, do-while loops, and index variables.", codeNote: "The Arduino example shows a for-loop, a while-loop, or a do-while loop scanning a small LED array." },
-      adc: { title: "Analog Signals and ADC", short: "ADC", description: "Compare a linear ADC model with an ESP32-style nonlinear ADC response. Move the input voltage and watch how the digital word changes.", codeNote: "Use analogRead() to sample the sensor and map() to convert the result into brightness." },
-      uart: { title: "Communication - UART", short: "UART", description: "Simulate a UART serial exchange between two devices. A transmitted frame creates TX activity, then reaches RX after a short delay.", codeNote: "The code uses Serial.begin(), Serial.println(), and Serial.available() to explain UART communication." },
-      i2c: { title: "Communication - I2C", short: "I2C", description: "Simulate a master writing one byte to an I2C slave. Watch SDA, SCL, and ACK activity during the transaction.", codeNote: "The code uses Wire.beginTransmission(), Wire.write(), and Wire.endTransmission() to explain an I2C transfer." },
-      functions: { title: "Modular Code - Functions and Libraries", short: "Functions", description: "Trigger the same behavior with different parameters. Reusing a function makes the code shorter and easier to read.", codeNote: "The example shows a blinkLed(times, delayMs) function called from several input cases." },
-      interrupts: { title: "Time and Event-Based Systems - Interrupts", short: "Interrupts", description: "Compare an immediate interrupt-style reaction with a slower polling reaction. The same event is visible on two different response paths.", codeNote: "The code contrasts attachInterrupt() with a slower polling loop that only checks the input periodically." },
-      timers: { title: "Timers vs Delay", short: "Timers", description: "Compare a blocking delay() pattern, a non-blocking millis() pattern, and an ESP32 hardware timer ISR while button events need service in parallel.", codeNote: "Compare delay(), millis(), and an ESP32 hardware timer ISR for multitasking behavior." },
-      state_machines: { title: "System Modeling - State Machines", short: "State Machines", description: "Switch between a traffic-light controller and an elevator controller. The timeline and the state diagram show how each machine moves through its states.", codeNote: "The Arduino example uses an enum plus a switch statement to encode the state machine." }
+      foundations: { title: "Digital Input & Output", short: "Digital Input & Output", description: "Compare two beginner-friendly patterns: a blinking LED output driven by delay(), and a press-and-hold digital input that directly controls the LED.", codeNote: "Switch between a basic digital output example and a digital input example to show how setup() and loop() change with each case." },
+      variables: { title: "Variables", short: "Variables", description: "Track sensor values inside variables, transform them, and map them into another range before sending them to an output.", codeNote: "This sketch highlights assignment, map(), and the idea that variables store values that change over time." },
+      conditionals: { title: "Conditionals", short: "Conditionals", description: "Compare a basic condition, a nested condition, and a threshold comparison. The output LED changes according to the active rule.", codeNote: "The code switches between a basic if, a nested if, and a comparison against a threshold." },
+      loops: { title: "Loops", short: "Loops", description: "Automate repeated actions with a blinking LED sequence. This is useful to explain for-loops, while-loops, do-while loops, and index variables.", codeNote: "The Arduino example shows a for-loop, a while-loop, or a do-while loop scanning a small LED array." },
+      adc: { title: "ADC", short: "ADC", description: "Compare a linear ADC model with an ESP32-style nonlinear ADC response. Move the input voltage and watch how the digital word changes.", codeNote: "Use analogRead() to sample the sensor and map() to convert the result into brightness." },
+      uart: { title: "UART", short: "UART", description: "Simulate a UART serial exchange between two devices. A transmitted frame creates TX activity, then reaches RX after a short delay.", codeNote: "The code uses Serial.begin(), Serial.println(), and Serial.available() to explain UART communication." },
+      i2c: { title: "I2C", short: "I2C", description: "Simulate a master writing one byte to an I2C slave. Watch SDA, SCL, and ACK activity during the transaction.", codeNote: "The code uses Wire.beginTransmission(), Wire.write(), and Wire.endTransmission() to explain an I2C transfer." },
+      functions: { title: "Functions", short: "Functions", description: "Trigger the same behavior with different parameters. Reusing a function makes the code shorter and easier to read.", codeNote: "The example shows a blinkLed(times, delayMs) function called from several input cases." },
+      interrupts: { title: "Interrupts", short: "Interrupts", description: "Compare an immediate interrupt-style reaction with a slower polling reaction. The same event is visible on two different response paths.", codeNote: "The code contrasts attachInterrupt() with a slower polling loop that only checks the input periodically." },
+      timers: { title: "Timers", short: "Timers", description: "Compare a blocking delay() pattern, a non-blocking millis() pattern, and an ESP32 hardware timer ISR while button events need service in parallel.", codeNote: "Compare delay(), millis(), and an ESP32 hardware timer ISR for multitasking behavior." },
+      state_machines: { title: "State Machines", short: "State Machines", description: "Switch between a traffic-light controller and an elevator controller. The timeline and the state diagram show how each machine moves through its states.", codeNote: "The Arduino example uses an enum plus a switch statement to encode the state machine." }
     };
     function createTopicState(topicId) {
-      if (topicId === "foundations") return { time: 0, button: false, led: false };
+      if (topicId === "foundations") return { time: 0, example: "output", button: false, led: true, blinkDelayMs: 600, blinkTimer: 0 };
       if (topicId === "variables") return { time: 0, sensor: 510, pwm: 128, brightness: 50 };
       if (topicId === "conditionals") return { time: 0, mode: "basic", operation: "and", nestedPattern: "ab", compareOp: "gt", buttonA: false, buttonB: false, buttonC: false, buttonD: false, sensor: 480, threshold: 600, led: false };
       if (topicId === "loops") return { time: 0, running: true, mode: "for", pattern: "sequence", speed: 0.7, index: 0, blinkState: 0, leds: [true, false, false, false], ledYellow: 1, ledRed: 0, ledGreen: 0, ledBlue: 0, accum: 0, cyclePulse: 0 };
@@ -236,6 +237,7 @@
     const topicTitle = document.getElementById("topicTitle");
     const topicDescription = document.getElementById("topicDescription");
     const topicStatus = document.getElementById("topicStatus");
+    const topicHead = document.querySelector(".topic-head");
     const controlsPane = document.getElementById("controlsPane");
     const visualStage = document.getElementById("visualStage");
     const timelineCanvas = document.getElementById("timelineCanvas");
@@ -614,7 +616,7 @@
     }
     function getStateDiagramMarkup() {
       if (sim.machineExample === "elevator") {
-        return `<div class="state-machine-wrap"><div class="state-machine-status"><div class="state-chip"><strong>Current state</strong><span>${sim.elevatorPhase}</span></div><div class="state-chip"><strong>Target floor</strong><span>F${sim.elevatorTargetFloor}</span></div></div><svg class="state-diagram-svg" viewBox="0 0 460 330" aria-label="Elevator state diagram"><defs><marker id="elevatorArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="rgba(157, 185, 200, 0.72)"></path></marker></defs><path class="diagram-path" d="M134 98 C182 42 278 42 326 98" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="38">target above</text><path class="diagram-path" d="M360 138 C396 156 396 194 360 212" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="408" y="178">arrive</text><path class="diagram-path" d="M326 252 C278 302 182 302 134 252" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="314">doors close</text><path class="diagram-path" d="M100 212 C64 194 64 156 100 138" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="52" y="178">target below</text><path class="diagram-path dashed" d="M134 238 C188 216 272 216 326 238" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="214">same floor request</text><text class="diagram-note" x="230" y="292">Floors: F0, F1, F2, F3</text>${getElevatorStateCircleMarkup("IDLE", 100, 100, "cyan", sim.elevatorPhase === "IDLE")}${getElevatorStateCircleMarkup("UP", 360, 100, "green", sim.elevatorPhase === "MOVING_UP")}${getElevatorStateCircleMarkup("OPEN", 360, 250, "yellow", sim.elevatorPhase === "DOOR_OPEN")}${getElevatorStateCircleMarkup("DOWN", 100, 250, "orange", sim.elevatorPhase === "MOVING_DOWN")}</svg></div>`;
+        return `<div class="state-machine-wrap"><div class="state-machine-status"><div class="state-chip"><strong>Current state</strong><span>${sim.elevatorPhase}</span></div><div class="state-chip"><strong>Target floor</strong><span>F${sim.elevatorTargetFloor}</span></div></div><svg class="state-diagram-svg" viewBox="0 0 460 330" aria-label="Elevator state diagram"><defs><marker id="elevatorArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="rgba(157, 185, 200, 0.72)"></path></marker></defs><path class="diagram-path" d="M134 98 C182 42 278 42 326 98" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="38">target above</text><path class="diagram-path" d="M96 136 C62 154 62 194 96 212" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="48" y="178">target below</text><path class="diagram-path dashed" d="M132 116 C206 132 262 186 328 236" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="220" y="180">same floor request</text><path class="diagram-path" d="M360 138 C396 156 396 194 360 212" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="408" y="178">arrive</text><path class="diagram-path" d="M134 252 C182 302 278 302 326 252" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="230" y="290">arrive</text><path class="diagram-path" d="M330 220 C266 166 198 134 120 108" marker-end="url(#elevatorArrow)"></path><text class="diagram-label" x="228" y="244">doors close</text><text class="diagram-note" x="230" y="312">Floors: F0, F1, F2, F3</text>${getElevatorStateCircleMarkup("IDLE", 100, 100, "cyan", sim.elevatorPhase === "IDLE")}${getElevatorStateCircleMarkup("UP", 360, 100, "green", sim.elevatorPhase === "MOVING_UP")}${getElevatorStateCircleMarkup("OPEN", 360, 250, "yellow", sim.elevatorPhase === "DOOR_OPEN")}${getElevatorStateCircleMarkup("DOWN", 100, 250, "orange", sim.elevatorPhase === "MOVING_DOWN")}</svg></div>`;
       }
       const activeTone = sim.phase === "WALK" ? "purple" : getStateTone(sim.phase);
       return `<div class="state-machine-wrap"><div class="state-machine-status"><div class="state-chip"><strong>Car signal</strong><span>${getTrafficSignalLabel(sim.phase)}</span></div><div class="state-chip"><strong>Pedestrian signal</strong><span>${getPedestrianSignalLabel(sim.phase)}</span></div></div><svg class="state-diagram-svg" viewBox="0 0 460 330" aria-label="Traffic light state diagram"><defs><marker id="trafficArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="rgba(157, 185, 200, 0.72)"></path></marker></defs><path class="diagram-path" d="M126 86 C176 34 284 34 334 86" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="230" y="34">after 2.4 s</text><path class="diagram-path" d="M370 126 C404 146 404 194 370 214" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="414" y="164">after 3.4 s</text><text class="diagram-note" x="414" y="180">or pedestrian</text><path class="diagram-path dashed" d="M326 238 C268 214 192 214 134 238" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="230" y="212">if pedestrian</text><path class="diagram-path" d="M334 226 C268 164 190 132 124 112" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="232" y="148">if no request</text><path class="diagram-path" d="M90 214 C56 194 56 146 90 126" marker-end="url(#trafficArrow)"></path><text class="diagram-label" x="46" y="168">after 1.8 s</text>${getTrafficStateCircleMarkup("RED", 90, 90, sim.phase === "RED")}${getTrafficStateCircleMarkup("GREEN", 370, 90, sim.phase === "GREEN")}${getTrafficStateCircleMarkup("YELLOW", 370, 250, sim.phase === "YELLOW")}${getTrafficStateCircleMarkup("WALK", 90, 250, sim.phase === "WALK")}<text class="diagram-note" x="230" y="294" style="fill: var(--${activeTone});">Cars: ${getTrafficSignalLabel(sim.phase)} | Pedestrian: ${getPedestrianSignalLabel(sim.phase)}</text></svg></div>`;
@@ -647,8 +649,16 @@
     }
     function renderTopicShell() {
       const info = TOPIC_INFO[currentTopicId];
+      const headerTitle = document.querySelector(".header .title h1");
+      const headerDescription = document.querySelector(".header .title p");
       topicTitle.textContent = info.title;
       topicDescription.textContent = info.description;
+      document.title = `Embedded Programming - ${info.short}`;
+      headerTitle.textContent = info.short;
+      headerDescription.textContent = info.description;
+      topicTitle.style.display = "none";
+      topicDescription.style.display = "none";
+      topicHead.classList.add("compact");
       if (currentTopicId === "adc") {
         topicStatus.classList.add("has-select");
         topicStatus.classList.remove("has-toggle");
@@ -676,14 +686,38 @@
     }
     function renderControls() {
       if (currentTopicId === "foundations") {
-        controlsPane.innerHTML = `<div class="control-row"><div class="field-label">Digital input</div><div class="control-inline"><button class="action-btn ${sim.button ? "active" : ""}" id="momentaryButtonBtn">Press and hold</button></div></div>`;
-        bindMomentaryButton(document.getElementById("momentaryButtonBtn"), pressed => {
-          sim.button = pressed;
-          sim.led = sim.button;
+        controlsPane.innerHTML = `<div class="control-row"><div class="field-label">Example</div><select id="foundationsExample"><option value="output" ${sim.example === "output" ? "selected" : ""}>Digital Output</option><option value="input" ${sim.example === "input" ? "selected" : ""}>Digital Input</option></select></div>${sim.example === "output" ? `<div class="control-row"><div class="value-line"><span>Blink delay</span><span>${sim.blinkDelayMs} ms</span></div><input id="foundationsDelay" type="range" min="150" max="1500" step="50" value="${sim.blinkDelayMs}" /></div>` : `<div class="control-row"><div class="field-label">Digital input</div><div class="control-inline"><button class="action-btn ${sim.button ? "active" : ""}" id="momentaryButtonBtn">Press and hold</button></div></div>`}`;
+        document.getElementById("foundationsExample").addEventListener("change", event => {
+          sim.example = event.target.value;
+          sim.button = false;
+          sim.blinkTimer = 0;
+          sim.led = sim.example === "output";
+          samples = [];
+          sampleAccum = 0;
+          sampleSignals();
+          renderControls();
           renderVisual();
+          renderTimeline();
           renderCode();
           updateStatusFromTopic();
         });
+        if (sim.example === "output") {
+          document.getElementById("foundationsDelay").addEventListener("input", event => {
+            sim.blinkDelayMs = Number(event.target.value);
+            renderControls();
+            renderVisual();
+            renderCode();
+            updateStatusFromTopic();
+          });
+        } else {
+          bindMomentaryButton(document.getElementById("momentaryButtonBtn"), pressed => {
+            sim.button = pressed;
+            sim.led = sim.button;
+            renderVisual();
+            renderCode();
+            updateStatusFromTopic();
+          });
+        }
         return;
       }
       if (currentTopicId === "variables") {
@@ -948,7 +982,18 @@
     }
     function updateTopicModel(dt) {
       sim.time += dt;
-      if (currentTopicId === "foundations") { sim.led = sim.button; return; }
+      if (currentTopicId === "foundations") {
+        if (sim.example === "input") {
+          sim.led = sim.button;
+        } else {
+          sim.blinkTimer += dt;
+          if (sim.blinkTimer >= sim.blinkDelayMs / 1000) {
+            sim.blinkTimer = 0;
+            sim.led = !sim.led;
+          }
+        }
+        return;
+      }
       if (currentTopicId === "variables") { sim.pwm = Math.round(sim.sensor / 1023 * 255); sim.brightness = Math.round(sim.pwm / 255 * 100); return; }
       if (currentTopicId === "conditionals") {
         if (sim.mode === "basic") sim.led = evaluateLogicOperation(sim.operation, sim.buttonA, sim.buttonB);
@@ -1096,10 +1141,10 @@
       sim.green = sim.phase === "GREEN";
     }
     function getSignals() {
-      if (currentTopicId === "foundations") return [{ key: "button", label: "Button", color: "#63c4ff", min: 0, max: 1, unit: "0-1" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }];
+      if (currentTopicId === "foundations") return sim.example === "input" ? [{ key: "button", label: "Button", color: "#63c4ff", min: 0, max: 1, unit: "0-1" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }] : [{ key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }];
       if (currentTopicId === "variables") return [{ key: "sensor", label: "Sensor", color: "#63c4ff", min: 0, max: 1023, unit: "raw" }, { key: "pwm", label: "PWM", color: "#ffcc45", min: 0, max: 255, unit: "8-bit" }, { key: "brightness", label: "Brightness", color: "#2fc76b", min: 0, max: 100, unit: "%" }];
       if (currentTopicId === "conditionals") return sim.mode === "comparison" ? [{ key: "sensor", label: "Sensor", color: "#63c4ff", min: 0, max: 1023, unit: "raw" }, { key: "threshold", label: "Threshold", color: "#ff9f43", min: 0, max: 1023, unit: "raw" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }] : sim.mode === "nested" ? [{ key: "buttonA", label: "Input A", color: "#63c4ff", min: 0, max: 1, unit: "0-1" }, { key: "buttonB", label: "Input B", color: "#b98cff", min: 0, max: 1, unit: "0-1" }, { key: "buttonC", label: "Input C", color: "#ff9f43", min: 0, max: 1, unit: "0-1" }, { key: "buttonD", label: "Input D", color: "#ff6b65", min: 0, max: 1, unit: "0-1" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }] : [{ key: "buttonA", label: "Input A", color: "#63c4ff", min: 0, max: 1, unit: "0-1" }, { key: "buttonB", label: "Input B", color: "#b98cff", min: 0, max: 1, unit: "0-1" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }];
-      if (currentTopicId === "loops") return [{ key: sim.pattern === "blink" ? "blinkState" : "index", label: sim.pattern === "blink" ? "Blink" : "Index", color: "#ffcc45", min: sim.pattern === "blink" ? 0 : 0, max: sim.pattern === "blink" ? 1 : 3, unit: sim.pattern === "blink" ? "0-1" : "id" }, { key: "cyclePulse", label: "Cycle", color: "#2fc76b", min: 0, max: 1, unit: "pulse" }, { key: "loopLeds", label: "LEDs", color: "#63c4ff", min: 0, max: 1, unit: "0-1", series: [{ key: "ledYellow", label: "Y", color: "#ffcc45" }, { key: "ledRed", label: "R", color: "#ff6b65" }, { key: "ledGreen", label: "G", color: "#2fc76b" }, { key: "ledBlue", label: "B", color: "#63c4ff" }] }];
+      if (currentTopicId === "loops") return [{ key: sim.pattern === "blink" ? "blinkState" : "index", label: sim.pattern === "blink" ? "Blink" : "i", color: "#ffcc45", min: sim.pattern === "blink" ? 0 : 0, max: sim.pattern === "blink" ? 1 : 3, unit: sim.pattern === "blink" ? "0-1" : "id" }, { key: "loopLeds", label: "LEDs", color: "#63c4ff", min: 0, max: 1, unit: "0-1", series: [{ key: "ledYellow", label: "Y", color: "#ffcc45" }, { key: "ledRed", label: "R", color: "#ff6b65" }, { key: "ledGreen", label: "G", color: "#2fc76b" }, { key: "ledBlue", label: "B", color: "#63c4ff" }] }];
       if (currentTopicId === "adc") return sim.adcScenario === "esp32_nonlinear"
         ? [{ key: "voltage", label: "Voltage", color: "#2fc76b", min: 0, max: getAdcReferenceVoltage(), unit: "V" }, { key: "esp32Word", label: "Digital word", color: "#ff9f43", min: 0, max: getAdcMax(12), unit: "raw" }]
         : sim.adcScenario === "calibration"
@@ -1129,7 +1174,7 @@
       samples = samples.filter(item => getTimelineReferenceTime() - item.t <= 12);
     }
     function updateStatusFromTopic() {
-      if (currentTopicId === "foundations") setStatus(sim.led ? "LED follows the button" : "Press the input button", sim.led ? "green" : "accent");
+      if (currentTopicId === "foundations") setStatus(sim.example === "input" ? (sim.led ? "Input pressed: LED is ON" : "Press and hold the input button") : (sim.led ? `Digital output HIGH | delay ${sim.blinkDelayMs} ms` : `Digital output LOW | delay ${sim.blinkDelayMs} ms`), sim.led ? "green" : "accent");
       else if (currentTopicId === "variables") setStatus(`PWM = ${sim.pwm}`, "accent");
       else if (currentTopicId === "conditionals") setStatus(sim.mode === "comparison" ? `Comparison: sensor ${getComparisonLabel(sim.compareOp)} threshold` : sim.mode === "nested" ? `Nested if | ${getNestedPatternLabel(sim.nestedPattern)}` : `Basic if | ${getLogicOperatorLabel(sim.operation)}`, "accent");
       else if (currentTopicId === "loops") {
@@ -1148,7 +1193,7 @@
       else setStatus(sim.machineExample === "elevator" ? `Elevator = ${sim.elevatorPhase} | F${sim.elevatorFloor} -> F${sim.elevatorTargetFloor}` : `State = ${sim.phase}${sim.pedestrian ? " | Pedestrian request queued" : ""}`, sim.machineExample === "elevator" ? (sim.elevatorPhase === "DOOR_OPEN" ? "yellow" : sim.elevatorPhase === "MOVING_DOWN" ? "red" : sim.elevatorPhase === "MOVING_UP" ? "green" : "accent") : sim.phase === "YELLOW" ? "yellow" : sim.phase === "RED" ? "red" : "green");
     }
     function renderVisual() {
-      if (currentTopicId === "foundations") visualStage.innerHTML = `<div class="visual-wrap"><div class="compare-box">digitalRead(buttonPin) = ${sim.button ? "HIGH" : "LOW"}</div><div class="foundations-io-row"><div class="push-button"><strong>Button</strong><div class="io-button ${sim.button ? "on" : ""}"></div></div><div class="push-button"><strong>LED</strong><div class="led green ${sim.led ? "on" : ""}"></div></div></div></div>`;
+      if (currentTopicId === "foundations") visualStage.innerHTML = sim.example === "input" ? `<div class="visual-wrap"><div class="compare-box">digitalRead(buttonPin) = ${sim.button ? "HIGH" : "LOW"}</div><div class="foundations-io-row"><div class="push-button"><strong>Button</strong><div class="io-button ${sim.button ? "on" : ""}"></div></div><div class="push-button"><strong>LED</strong><div class="led green ${sim.led ? "on" : ""}"></div></div></div></div>` : `<div class="visual-wrap"><div class="compare-box">digitalWrite(ledPin, ${sim.led ? "HIGH" : "LOW"})<br />delay(${sim.blinkDelayMs});</div><div class="rig-row"><div class="push-button"><strong>LED output</strong><div class="led green ${sim.led ? "on" : ""}"></div></div><div class="counter-box"><strong>Delay</strong><div>${sim.blinkDelayMs} ms</div></div></div></div>`;
       else if (currentTopicId === "variables") visualStage.innerHTML = `<div class="visual-wrap"><div class="variable-grid"><div class="counter-box"><strong>sensorValue</strong><div>${sim.sensor}</div></div><div class="counter-box"><strong>pwmValue</strong><div>${sim.pwm}</div></div></div><div class="bar-shell"><div class="bar-fill" style="width:${sim.brightness}%"></div></div><div class="rig-row"><div class="sensor-box"><strong>Brightness</strong><div>${sim.brightness}%</div></div><div class="led blue ${sim.brightness > 3 ? "on" : ""}" style="opacity:${0.25 + sim.brightness / 100 * 0.75};"></div></div></div>`;
       else if (currentTopicId === "conditionals") {
         if (sim.mode === "comparison") {
@@ -1614,8 +1659,15 @@
       let activeLines = [];
       codeNote.textContent = TOPIC_INFO[currentTopicId].codeNote;
       if (currentTopicId === "foundations") {
-        codeText = `const int buttonPin = 2;\nconst int ledPin = 13;\n\nvoid setup() {\n  pinMode(buttonPin, INPUT_PULLUP);\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  bool buttonPressed = digitalRead(buttonPin) == LOW;\n  digitalWrite(ledPin, buttonPressed ? HIGH : LOW);\n}`;
-        activeLines = [10, 11];
+        if (sim.example === "output") {
+          codeNote.textContent = "Digital output example: the MCU drives one LED and waits with delay(), so the code and the LED state repeat together.";
+          codeText = `const int ledPin = 13;\n\nvoid setup() {\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(ledPin, HIGH);\n  delay(${sim.blinkDelayMs});\n  digitalWrite(ledPin, LOW);\n  delay(${sim.blinkDelayMs});\n}`;
+          activeLines = sim.led ? [7, 8] : [9, 10];
+        } else {
+          codeNote.textContent = "Digital input example: press and hold the button to change digitalRead(), and the LED follows that input immediately.";
+          codeText = `const int buttonPin = 2;\nconst int ledPin = 13;\n\nvoid setup() {\n  pinMode(buttonPin, INPUT_PULLUP);\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  bool buttonPressed = digitalRead(buttonPin) == LOW;\n  digitalWrite(ledPin, buttonPressed ? HIGH : LOW);\n}`;
+          activeLines = [10, 11];
+        }
         renderHighlightedCode(codeText, activeLines);
         return;
       }

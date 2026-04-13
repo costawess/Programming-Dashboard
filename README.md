@@ -293,7 +293,7 @@ These pages are more application-like and many of them support Web Serial with a
   `BUTTON:OFF`
   `BUTTON:PRESSED`
   `BUTTON:RELEASED`
-  `SENSOR:ON`
+  `SENSOR:ON
   `SENSOR:OFF`
   `SENSOR:ACTIVE`
   `SENSOR:IDLE`

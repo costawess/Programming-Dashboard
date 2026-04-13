@@ -1,8 +1,7 @@
 (function () {
   const pageMeta = {
     "course_topics_lab.html": {
-      icon: "../assets/cards/ep_simulations.svg",
-      title: "Interactive Topic Labs"
+      icon: "../assets/cards/ep_simulations.svg"
     },
     "arduino_flowchart_converter.html": {
       icon: "../assets/cards/arduino_flowchart.svg"
