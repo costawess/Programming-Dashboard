@@ -27,5 +27,6 @@ window.DASHBOARD_FLAGS = Object.freeze({
   trafficLights: true,
   intersectionController: false,
   dualSevenSegment: true,
-  coffeeMachine: false
+  coffeeMachine: false,
+  heatingCoolingLab: true
 });
