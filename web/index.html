@@ -8,17 +8,17 @@
   <script src="./dashboard_flags.js"></script>
   <script src="../js/site_contact.js"></script>
   <script>
-    // Default to the bright theme and only restore dark mode when the user turned lights off.
+    // Default to the dark theme and only restore light mode when the user turned lights on.
     (() => {
       try {
         const storedLights = localStorage.getItem("embedded-dashboard-lights-on");
         const legacyStoredLights = localStorage.getItem("embedded-lights-on");
         const resolvedLights = storedLights ?? legacyStoredLights;
-        if (resolvedLights === "false") {
+        if (resolvedLights !== "true") {
           document.documentElement.classList.add("theme-dark");
         }
       } catch (error) {
-        // Ignore storage failures and keep the light theme.
+        // Ignore storage failures and keep the dark theme.
       }
     })();
   </script>

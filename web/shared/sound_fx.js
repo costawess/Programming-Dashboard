@@ -13,18 +13,18 @@
       this.showsLightsToggle = this.pageName === "index.html";
       this.syncsLightsTheme = this.showsLightsToggle || document.documentElement.hasAttribute("data-sync-dashboard-lights");
       this.muted = false;
-      this.lightsOn = true;
+      this.lightsOn = false;
       try {
         this.muted = localStorage.getItem(STORAGE_KEY) === "true";
         if (this.syncsLightsTheme) {
           const storedLights = localStorage.getItem(LIGHTS_STORAGE_KEY);
           const legacyStoredLights = localStorage.getItem(LEGACY_LIGHTS_STORAGE_KEY);
           const resolvedLights = storedLights ?? legacyStoredLights;
-          this.lightsOn = resolvedLights !== "false";
+          this.lightsOn = resolvedLights === "true";
         }
       } catch (error) {
         this.muted = false;
-        this.lightsOn = true;
+        this.lightsOn = false;
       }
       this.audioContext = null;
       this.masterGain = null;
