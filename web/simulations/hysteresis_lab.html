@@ -93,7 +93,7 @@
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(320px, 0.95fr) minmax(520px, 1.35fr);
+      grid-template-columns: minmax(280px, 0.85fr) minmax(380px, 1.1fr) minmax(300px, 0.95fr);
       gap: 18px;
       align-items: start;
     }
@@ -259,7 +259,10 @@
       display: inline-block;
     }
 
-    @media (max-width: 1220px) {
+    @media (max-width: 1400px) {
+      .layout { grid-template-columns: minmax(280px, 0.85fr) minmax(380px, 1.1fr); }
+    }
+    @media (max-width: 1000px) {
       .layout { grid-template-columns: 1fr; }
     }
 
@@ -280,7 +283,12 @@
       <img class="brand-logo" src="../../assets/branding/hanze_logo.png" alt="Hanze logo" />
     </header>
 
+    <!-- noiseCanvas kept hidden so the JS drawing logic does not break -->
+    <canvas id="noiseCanvas" width="900" height="220" style="display:none;"></canvas>
+
     <section class="layout">
+
+      <!-- Column 1: Controls + Comparator logic -->
       <section class="panel">
         <div class="card">
           <h2>Interactive controls</h2>
@@ -317,7 +325,58 @@
           </div>
         </div>
 
-        <div class="status-row">
+        <div class="card">
+          <h3>Comparator logic</h3>
+          <div class="helper-grid">
+            <div class="helper-box">
+              <strong>One threshold</strong>
+              <code>if (signal >= threshold) {
+  output = ON;
+} else {
+  output = OFF;
+}</code>
+            </div>
+            <div class="helper-box">
+              <strong>With hysteresis</strong>
+              <code>if (signal >= upper) {
+  output = ON;
+} else if (signal <= lower) {
+  output = OFF;
+}</code>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Column 2: Plots 2 and 3 -->
+      <section class="panel">
+        <div class="plots-column">
+          <div class="plot-card">
+            <div class="plot-head">
+              <div>
+                <h2>One threshold only</h2>
+                <p>The noisy signal crosses the same threshold repeatedly, so the digital output flips on and off around the boundary.</p>
+              </div>
+              <button class="action-btn timelineToggleBtn" type="button">Pause timeline</button>
+            </div>
+            <canvas class="plot-canvas decision" id="singleCanvas" width="900" height="260"></canvas>
+          </div>
+
+          <div class="plot-card">
+            <div class="plot-head">
+              <div>
+                <h2>Two thresholds with hysteresis</h2>
+                <p>The output only turns on above the upper threshold and only turns off below the lower threshold, so the middle band keeps the previous state.</p>
+              </div>
+            </div>
+            <canvas class="plot-canvas decision" id="hysteresisCanvas" width="900" height="260"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Column 3: Status pills + State diagram + Transfer graph -->
+      <section class="panel">
+        <div class="status-row" style="grid-template-columns: 1fr;">
           <div class="status-pill">
             <strong>Current noisy signal</strong>
             <span id="signalNow">0.0%</span>
@@ -344,71 +403,8 @@
             <div class="hysteresis-diagram" id="hysteresisTransferGraph"></div>
           </div>
         </div>
-
-        <div class="card">
-          <h3>Comparator logic</h3>
-          <div class="helper-grid">
-            <div class="helper-box">
-              <strong>One threshold</strong>
-              <code>if (signal >= threshold) {
-  output = ON;
-} else {
-  output = OFF;
-}</code>
-            </div>
-            <div class="helper-box">
-              <strong>With hysteresis</strong>
-              <code>if (signal >= upper) {
-  output = ON;
-} else if (signal <= lower) {
-  output = OFF;
-}</code>
-            </div>
-          </div>
-        </div>
       </section>
 
-      <section class="panel">
-        <div class="plots-column">
-          <div class="plot-card">
-            <div class="plot-head">
-              <div>
-                <h2>1. Noisy analog signal</h2>
-                <p>Start by showing the sensor itself. The fast wiggles around the slow trend are what cause comparator chatter.</p>
-              </div>
-              <button class="action-btn timelineToggleBtn" type="button">Pause timeline</button>
-            </div>
-            <canvas class="plot-canvas" id="noiseCanvas" width="900" height="220"></canvas>
-            <div class="legend-row">
-              <span class="legend-item"><span class="legend-swatch" style="background:#63c4ff;"></span>Noisy signal</span>
-              <span class="legend-item"><span class="legend-swatch" style="background:#6c7f8b;"></span>Slow trend</span>
-              <span class="legend-item"><span class="legend-swatch" style="background:#ffcc45;"></span>Single threshold</span>
-              <span class="legend-item"><span class="legend-swatch" style="background:#2fc76b;"></span>Upper threshold</span>
-              <span class="legend-item"><span class="legend-swatch" style="background:#ff6b65;"></span>Lower threshold</span>
-            </div>
-          </div>
-
-          <div class="plot-card">
-            <div class="plot-head">
-              <div>
-                <h2>2. One threshold only</h2>
-                <p>The noisy signal crosses the same threshold repeatedly, so the digital output flips on and off around the boundary.</p>
-              </div>
-            </div>
-            <canvas class="plot-canvas decision" id="singleCanvas" width="900" height="260"></canvas>
-          </div>
-
-          <div class="plot-card">
-            <div class="plot-head">
-              <div>
-                <h2>3. Two thresholds with hysteresis</h2>
-                <p>The output only turns on above the upper threshold and only turns off below the lower threshold, so the middle band keeps the previous state.</p>
-              </div>
-            </div>
-            <canvas class="plot-canvas decision" id="hysteresisCanvas" width="900" height="260"></canvas>
-          </div>
-        </div>
-      </section>
     </section>
   </div>
 
