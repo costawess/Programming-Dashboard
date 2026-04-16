@@ -1720,6 +1720,11 @@
       let anyVisible = false;
 
       menuCards.forEach(card => {
+        const featureKey = card.dataset.featureKey;
+        if (featureKey && !isFeatureEnabled(featureKey)) {
+          card.classList.add("hidden");
+          return;
+        }
         const haystack = card.textContent.toLowerCase();
         const isVisible = !normalized || haystack.includes(normalized);
         card.classList.toggle("hidden", !isVisible);
@@ -1745,26 +1750,7 @@
       featureCards.forEach(card => {
         const featureKey = card.dataset.featureKey;
         const isEnabled = isFeatureEnabled(featureKey);
-        const launchControl = card.querySelector(".launch-button");
-
-        card.classList.toggle("disabled-feature", !isEnabled);
-        if (!launchControl) return;
-
-        launchControl.dataset.enabledLabel ||= launchControl.textContent.trim();
-        launchControl.classList.toggle("is-disabled-feature", !isEnabled);
-        launchControl.textContent = isEnabled ? launchControl.dataset.enabledLabel : "Under development";
-
-        if (launchControl.tagName === "A") {
-          if (isEnabled) {
-            launchControl.removeAttribute("aria-disabled");
-            launchControl.removeAttribute("tabindex");
-          } else {
-            launchControl.setAttribute("aria-disabled", "true");
-            launchControl.setAttribute("tabindex", "-1");
-          }
-        } else {
-          launchControl.disabled = !isEnabled;
-        }
+        card.classList.toggle("hidden", !isEnabled);
       });
 
       if (!isFeatureEnabled("gasWaterHeater")) {
