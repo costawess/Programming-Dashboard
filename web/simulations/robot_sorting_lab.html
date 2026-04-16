@@ -1,10 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="en" data-sync-dashboard-lights="true">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Embedded Programming - Robot Sorting Logic</title>
-  <script>document.documentElement.classList.add("theme-dark");</script>
+    <script>
+    (() => {
+      try {
+        const storedLights = localStorage.getItem("embedded-dashboard-lights-on");
+        const legacyStoredLights = localStorage.getItem("embedded-lights-on");
+        const resolvedLights = storedLights ?? legacyStoredLights;
+        if (resolvedLights === "false") {
+          document.documentElement.classList.add("theme-dark");
+        }
+      } catch (error) {
+        // Ignore storage failures and keep the light theme.
+      }
+    })();
+  </script>
   <script src="../shared/mouse_glow.js"></script>
   <script src="../shared/page_header.js"></script>
   <script src="../shared/sound_fx.js"></script>
@@ -118,7 +131,7 @@
     function setIdleSceneMessage(){const match=state.currentShape===state.targetShape;state.phaseMessage=`${formatShapeLabel(state.currentShape)} detected on the belt. ${match?"This one should pass.":"This one should be rejected."}`}
     function refreshSceneText(){ui.acceptedCount.textContent=String(state.acceptedCount);ui.rejectedCount.textContent=String(state.rejectedCount);ui.statusText.textContent=state.phaseMessage;updateHeaderPills()}
 
-    function renderBuilder(){ui.builderList.innerHTML="";state.programOrder.forEach((stepId,index)=>{const step=STEP_LIBRARY[stepId],card=document.createElement("div"),active=state.currentProgramStepIndex===index,bad=state.mismatchIndex===index,ok=state.mismatchIndex===-1&&!active;card.className=`logic-card${active?" active":""}${bad?" bad":""}${ok?" ok":""}`;card.innerHTML=`<div class="logic-card-header"><div><strong>${index+1}. ${step.title}</strong><p>${step.detail}</p></div><div class="logic-actions"><button type="button" data-move="up" data-index="${index}" aria-label="Move step up">↑</button><button type="button" data-move="down" data-index="${index}" aria-label="Move step down">↓</button></div></div>`;ui.builderList.appendChild(card)});ui.builderList.querySelectorAll("button[data-move]").forEach(button=>button.addEventListener("click",()=>{if(state.executing)return;const index=Number(button.dataset.index),swapIndex=index+(button.dataset.move==="up"?-1:1);if(swapIndex<0||swapIndex>=state.programOrder.length)return;[state.programOrder[index],state.programOrder[swapIndex]]=[state.programOrder[swapIndex],state.programOrder[index]];state.mismatchIndex=null;state.currentProgramStepIndex=-1;updateMissionText("Program edited - validate again","warn");renderBuilder()}))}
+    function renderBuilder(){ui.builderList.innerHTML="";state.programOrder.forEach((stepId,index)=>{const step=STEP_LIBRARY[stepId],card=document.createElement("div"),active=state.currentProgramStepIndex===index,bad=state.mismatchIndex===index,ok=state.mismatchIndex===-1&&!active;card.className=`logic-card${active?" active":""}${bad?" bad":""}${ok?" ok":""}`;card.innerHTML=`<div class="logic-card-header"><div><strong>${index+1}. ${step.title}</strong><p>${step.detail}</p></div><div class="logic-actions"><button type="button" data-move="up" data-index="${index}" aria-label="Move step up">â†‘</button><button type="button" data-move="down" data-index="${index}" aria-label="Move step down">â†“</button></div></div>`;ui.builderList.appendChild(card)});ui.builderList.querySelectorAll("button[data-move]").forEach(button=>button.addEventListener("click",()=>{if(state.executing)return;const index=Number(button.dataset.index),swapIndex=index+(button.dataset.move==="up"?-1:1);if(swapIndex<0||swapIndex>=state.programOrder.length)return;[state.programOrder[index],state.programOrder[swapIndex]]=[state.programOrder[swapIndex],state.programOrder[index]];state.mismatchIndex=null;state.currentProgramStepIndex=-1;updateMissionText("Program edited - validate again","warn");renderBuilder()}))}
     function renderStepTrace(){const plan=getExpectedPlanForCurrentItem();ui.stepTrace.innerHTML="";EXPECTED_ORDER.forEach((stepId,index)=>{const step=STEP_LIBRARY[stepId],card=document.createElement("div");let cls="pending";if(!plan.includes(stepId))cls="skip";if(plan.includes(stepId)&&state.currentProgramStepIndex>plan.indexOf(stepId))cls="done";if(stepId===state.currentStepId)cls="current";card.className=`trace-step ${cls}`;card.innerHTML=`<strong>${index+1}. ${step.short}</strong><span>${step.detail}</span>`;ui.stepTrace.appendChild(card)})}
     function buildShapeMarkup(shapeId,x,y,scale=1,rotation=0){const shape=SHAPES[shapeId],s=scale,shadow=`<ellipse cx="${x}" cy="${y+24*s}" rx="${24*s}" ry="${10*s}" fill="rgba(0,0,0,0.28)"></ellipse>`,gloss=`<ellipse cx="${x-6*s}" cy="${y-8*s}" rx="${8*s}" ry="${5*s}" fill="rgba(255,255,255,0.22)" transform="rotate(-20 ${x-6*s} ${y-8*s})"></ellipse>`;if(shapeId==="circle")return`${shadow}<g transform="rotate(${rotation} ${x} ${y})"><circle cx="${x}" cy="${y}" r="${18*s}" fill="${shape.color}" stroke="${shape.dark}" stroke-width="${4*s}"></circle>${gloss}</g>`;if(shapeId==="square")return`${shadow}<g transform="rotate(${rotation} ${x} ${y})"><rect x="${x-18*s}" y="${y-18*s}" width="${36*s}" height="${36*s}" rx="${6*s}" fill="${shape.color}" stroke="${shape.dark}" stroke-width="${4*s}"></rect>${gloss}</g>`;if(shapeId==="triangle")return`${shadow}<g transform="rotate(${rotation} ${x} ${y})"><polygon points="${x},${y-22*s} ${x+20*s},${y+18*s} ${x-20*s},${y+18*s}" fill="${shape.color}" stroke="${shape.dark}" stroke-width="${4*s}" stroke-linejoin="round"></polygon>${gloss}</g>`;return`${shadow}<g transform="rotate(${rotation} ${x} ${y})"><polygon points="${x-12*s},${y-20*s} ${x+12*s},${y-20*s} ${x+24*s},${y} ${x+12*s},${y+20*s} ${x-12*s},${y+20*s} ${x-24*s},${y}" fill="${shape.color}" stroke="${shape.dark}" stroke-width="${4*s}" stroke-linejoin="round"></polygon>${gloss}</g>`}
     function renderUpcomingShapes(){ui.upcomingItems.innerHTML=""}
@@ -187,3 +200,5 @@
   </script>
 </body>
 </html>
+
+

@@ -1,10 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="en" data-sync-dashboard-lights="true">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Embedded Programming - Variable Types</title>
-  <script>document.documentElement.classList.add("theme-dark");</script>
+    <script>
+    (() => {
+      try {
+        const storedLights = localStorage.getItem("embedded-dashboard-lights-on");
+        const legacyStoredLights = localStorage.getItem("embedded-lights-on");
+        const resolvedLights = storedLights ?? legacyStoredLights;
+        if (resolvedLights === "false") {
+          document.documentElement.classList.add("theme-dark");
+        }
+      } catch (error) {
+        // Ignore storage failures and keep the light theme.
+      }
+    })();
+  </script>
   <script src="../shared/mouse_glow.js"></script>
   <script src="../shared/page_header.js"></script>
   <style>
@@ -26,8 +39,24 @@
       --stage-bg: linear-gradient(180deg, #162c3b 0%, #11202a 100%);
       --shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
     }
+    html:not(.theme-dark) {
+      --bg: #eef5ff;
+      --panel: rgba(255, 255, 255, 0.88);
+      --card: rgba(248, 251, 255, 0.96);
+      --line: #d4e3f4;
+      --text: #244765;
+      --subtle: #6f88a3;
+      --accent: #2d86e6;
+      --accent-soft: rgba(45, 134, 230, 0.14);
+      --white: #244765;
+      --button-bg: #f5f9ff;
+      --code-bg: #f4f8fd;
+      --stage-bg: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+      --shadow: 0 18px 42px rgba(48, 92, 145, 0.12);
+    }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; font-family: "Segoe UI", Arial, sans-serif; color: var(--text); background: radial-gradient(circle at top, #193549 0%, var(--bg) 58%, #081118 100%); }
+    html:not(.theme-dark) body { background: radial-gradient(circle at top left, rgba(120, 180, 255, 0.18) 0%, transparent 28%), linear-gradient(180deg, #f8fbff 0%, var(--bg) 58%, #e8f1ff 100%); }
     .app { padding: 22px; display: grid; gap: 18px; }
     .header, .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 28px; box-shadow: var(--shadow); }
     .header { padding: 18px 20px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: center; }
@@ -74,7 +103,23 @@
     .code-line { display: block; margin: 0 -6px; padding: 1px 6px; border-radius: 8px; transition: background 0.16s ease, box-shadow 0.16s ease; }
     .code-line.active { background: rgba(99, 196, 255, 0.16); box-shadow: inset 3px 0 0 rgba(99, 196, 255, 0.9); color: var(--white); }
     code.inline-chip { display: inline-block; padding: 3px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); color: var(--white); }
-    @media (max-width: 1320px) { .layout { grid-template-columns: 1fr; } }
+    html:not(.theme-dark) select,
+    html:not(.theme-dark) input[type="number"],
+    html:not(.theme-dark) input[type="text"] { background: rgba(255, 255, 255, 0.96); }
+    html:not(.theme-dark) .summary-box,
+    html:not(.theme-dark) .interpret-box,
+    html:not(.theme-dark) .memory-byte,
+    html:not(.theme-dark) .bit-chip,
+    html:not(.theme-dark) code.inline-chip { background: rgba(255, 255, 255, 0.72); }
+    html:not(.theme-dark) .summary-box span,
+    html:not(.theme-dark) .interpret-box span,
+    html:not(.theme-dark) .memory-byte .hex,
+    html:not(.theme-dark) .bit-chip.one,
+    html:not(.theme-dark) .code-line.active,
+    html:not(.theme-dark) code.inline-chip { color: #244765; }
+    html:not(.theme-dark) .bit-chip.one { background: rgba(45, 134, 230, 0.14); border-color: rgba(45, 134, 230, 0.28); }
+    html:not(.theme-dark) pre.code-block { color: #355775; }
+  @media (max-width: 1320px) { .layout { grid-template-columns: 1fr; } }
     @media (max-width: 760px) {
       .header { grid-template-columns: 1fr; }
       .summary-grid, .value-grid, .interpret-grid, .memory-strip { grid-template-columns: 1fr; }
@@ -109,7 +154,7 @@
             </div>
             <div class="control-row">
               <div class="value-line">
-                <span id="valueLabel">Stored value (← →)</span>
+                <span id="valueLabel">Stored value (â† â†’)</span>
                 <span id="valueReadout">1024</span>
               </div>
               <div class="value-grid">
@@ -574,8 +619,8 @@
     function renderControls() {
       const config = getCurrentConfig();
       if (config.kind === "bool") valueLabel.textContent = "Stored value";
-      else if (config.kind === "char") valueLabel.textContent = "Stored value / ASCII (← →)";
-      else valueLabel.textContent = "Stored value (← →)";
+      else if (config.kind === "char") valueLabel.textContent = "Stored value / ASCII (â† â†’)";
+      else valueLabel.textContent = "Stored value (â† â†’)";
       valueSlider.min = String(config.min);
       valueSlider.max = String(config.max);
       valueSlider.step = String(config.step);
@@ -716,5 +761,8 @@
     renderTypeOptions();
     renderAll();
   </script>
+  <script src="../shared/sound_fx.js"></script>
 </body>
 </html>
+
+

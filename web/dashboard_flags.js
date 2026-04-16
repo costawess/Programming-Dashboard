@@ -3,7 +3,7 @@ window.DASHBOARD_FLAGS = Object.freeze({
   foundationsLab: true,
   pullResistorsLab: true,
   buttonDebouncingLab: false,
-  variablesLab: false,
+  variablesLab: true,
   variableTypesLab: true,
   memoryLayoutLab: true,
   asciiCharLab: true,

@@ -1,10 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="en" data-sync-dashboard-lights="true">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Embedded Programming - Button Debouncing</title>
-  <script>document.documentElement.classList.add("theme-dark");</script>
+    <script>
+    (() => {
+      try {
+        const storedLights = localStorage.getItem("embedded-dashboard-lights-on");
+        const legacyStoredLights = localStorage.getItem("embedded-lights-on");
+        const resolvedLights = storedLights ?? legacyStoredLights;
+        if (resolvedLights === "false") {
+          document.documentElement.classList.add("theme-dark");
+        }
+      } catch (error) {
+        // Ignore storage failures and keep the light theme.
+      }
+    })();
+  </script>
   <script src="../shared/mouse_glow.js"></script>
   <script src="../shared/page_header.js"></script>
   <style>
@@ -25,7 +38,20 @@
       --button-bg: #173245;
       --code-bg: #0d1720;
       --stage-bg: linear-gradient(180deg, #162c3b 0%, #11202a 100%);
+      --plot-axis: rgba(255,255,255,0.68);
+      --plot-grid: rgba(255,255,255,0.10);
+      --plot-tick: rgba(255,255,255,0.55);
+      --plot-hover: rgba(255,255,255,0.44);
       --shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+    }
+    html:not(.theme-dark) {
+      --white: #244765;
+      --code-bg: #f4f8fd;
+      --stage-bg: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+      --plot-axis: rgba(92, 119, 148, 0.78);
+      --plot-grid: rgba(111, 136, 163, 0.18);
+      --plot-tick: rgba(92, 119, 148, 0.74);
+      --plot-hover: rgba(111, 136, 163, 0.44);
     }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; font-family: "Segoe UI", Arial, sans-serif; color: var(--text); background: radial-gradient(circle at top, #193549 0%, var(--bg) 58%, #081118 100%); }
@@ -373,6 +399,11 @@
       return timelinePaused ? timelineFrozenTime : state.time;
     }
 
+    function themeColor(name, fallback) {
+      const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      return value || fallback;
+    }
+
     function captureSample() {
       if (timelinePaused) return;
       samples.push({
@@ -387,7 +418,7 @@
     }
 
     function drawBinarySignal(signal, x, y, width, height, timeRef) {
-      timelineCtx.fillStyle = "rgba(255,255,255,0.68)";
+      timelineCtx.fillStyle = themeColor("--plot-axis", "rgba(255,255,255,0.68)");
       timelineCtx.font = "bold 14px Segoe UI";
       timelineCtx.fillText("1", x - 26, y + 6);
       timelineCtx.fillText("0", x - 26, y + height - 2);
@@ -400,7 +431,7 @@
       timelineCtx.fillText(signal.label, 0, 0);
       timelineCtx.restore();
 
-      timelineCtx.strokeStyle = "rgba(255,255,255,0.10)";
+      timelineCtx.strokeStyle = themeColor("--plot-grid", "rgba(255,255,255,0.10)");
       timelineCtx.lineWidth = 1;
       for (let i = 0; i <= 4; i++) {
         const gy = y + (height / 4) * i;
@@ -443,7 +474,7 @@
       timelineCtx.textAlign = "right";
       timelineCtx.fillText(currentValue.toFixed(1), x + width + 2, y + 14);
       timelineCtx.textAlign = "center";
-      timelineCtx.fillStyle = "rgba(255,255,255,0.55)";
+      timelineCtx.fillStyle = themeColor("--plot-tick", "rgba(255,255,255,0.55)");
       ["-12s", "-9s", "-6s", "-3s", "-0s"].forEach((label, index) => {
         timelineCtx.fillText(label, x + (width / 4) * index, y + height + 18);
       });
@@ -469,7 +500,7 @@
         const hoverX = padding.left + hoverRatio * plotWidth;
         ctx.save();
         ctx.setLineDash([7, 6]);
-        ctx.strokeStyle = "rgba(255,255,255,0.44)";
+        ctx.strokeStyle = themeColor("--plot-hover", "rgba(255,255,255,0.44)");
         ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.moveTo(hoverX, padding.top);
@@ -613,5 +644,8 @@
     renderAll();
     requestAnimationFrame(frame);
   </script>
+  <script src="../shared/sound_fx.js"></script>
 </body>
 </html>
+
+

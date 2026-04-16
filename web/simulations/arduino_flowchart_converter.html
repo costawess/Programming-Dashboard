@@ -1,10 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="en" data-sync-dashboard-lights="true">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Embedded Programming - Arduino to Flowchart</title>
-  <script>document.documentElement.classList.add("theme-dark");</script>
+    <script>
+    (() => {
+      try {
+        const storedLights = localStorage.getItem("embedded-dashboard-lights-on");
+        const legacyStoredLights = localStorage.getItem("embedded-lights-on");
+        const resolvedLights = storedLights ?? legacyStoredLights;
+        if (resolvedLights === "false") {
+          document.documentElement.classList.add("theme-dark");
+        }
+      } catch (error) {
+        // Ignore storage failures and keep the light theme.
+      }
+    })();
+  </script>
   <script src="../shared/mouse_glow.js"></script>
   <script src="../shared/page_header.js"></script>
   <style>
@@ -13,6 +26,7 @@
       --accent:#63c4ff; --green:#2fc76b; --yellow:#ffcc45; --orange:#ff9f43; --purple:#b98cff;
       --button-bg:#173245; --card:rgba(27,47,60,.96); --code:#0d1720; --shadow:0 14px 34px rgba(0,0,0,.28);
     }
+    html:not(.theme-dark){--code:#f4f8fd}
     *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:"Segoe UI",Arial,sans-serif;color:var(--text);background:radial-gradient(circle at top,#193549 0%,var(--bg) 58%,#081118 100%)}
     .app{padding:22px;display:grid;gap:18px}
     .header,.panel{background:var(--panel);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow)}
@@ -25,8 +39,10 @@
     .toolbar{display:flex;gap:10px;flex-wrap:wrap}
     button,.sample-btn{appearance:none;border:2px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--button-bg);color:var(--text);font-weight:800;cursor:pointer;text-decoration:none}
     textarea{width:100%;min-height:540px;resize:vertical;border-radius:20px;border:1px solid var(--line);background:var(--code);color:#d8f2ff;padding:16px;font:13px/1.5 Consolas,"Courier New",monospace}
+    html:not(.theme-dark) textarea{color:#355775}
     .note,.legend{color:var(--subtle);font-size:14px;line-height:1.45}
     .flow-wrap{border-radius:22px;border:1px solid var(--line);background:rgba(8,16,22,.82);padding:12px;overflow:auto;min-height:620px}
+    html:not(.theme-dark) .flow-wrap{background:rgba(255,255,255,.76)}
     .flow-svg{width:100%;min-height:600px;display:block}
     .info-card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px;display:grid;gap:10px}
     .pill{justify-self:start;border:2px solid var(--accent);border-radius:999px;padding:10px 14px;background:rgba(99,196,255,.14);color:var(--accent);font-weight:800}
@@ -294,3 +310,5 @@ void loop() {
   </script>
 </body>
 </html>
+
+

@@ -1,10 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="en" data-sync-dashboard-lights="true">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Embedded Programming - Hysteresis</title>
-  <script>document.documentElement.classList.add("theme-dark");</script>
+    <script>
+    (() => {
+      try {
+        const storedLights = localStorage.getItem("embedded-dashboard-lights-on");
+        const legacyStoredLights = localStorage.getItem("embedded-lights-on");
+        const resolvedLights = storedLights ?? legacyStoredLights;
+        if (resolvedLights === "false") {
+          document.documentElement.classList.add("theme-dark");
+        }
+      } catch (error) {
+        // Ignore storage failures and keep the light theme.
+      }
+    })();
+  </script>
   <script src="../shared/mouse_glow.js"></script>
   <script src="../shared/page_header.js"></script>
   <style>
@@ -29,7 +42,34 @@
       --button-bg: #173245;
       --code-bg: #0d1720;
       --stage-bg: linear-gradient(180deg, #162c3b 0%, #11202a 100%);
+      --plot-fill: rgba(255,255,255,0.03);
+      --plot-grid: rgba(255,255,255,0.08);
+      --plot-axis: rgba(255,255,255,0.55);
+      --plot-hover: rgba(255,255,255,0.42);
+      --plot-band: rgba(185, 140, 255, 0.08);
+      --transfer-bg: rgba(255, 255, 255, 0.03);
+      --transfer-grid: rgba(255, 255, 255, 0.08);
+      --transfer-axis: rgba(255, 255, 255, 0.55);
+      --transfer-guide: rgba(255, 255, 255, 0.34);
+      --transfer-off: rgba(157, 185, 200, 0.72);
+      --transfer-on: #2fc76b;
       --shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+    }
+    html:not(.theme-dark) {
+      --white: #244765;
+      --code-bg: #f4f8fd;
+      --stage-bg: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+      --plot-fill: #ffffff;
+      --plot-grid: rgba(111,136,163,0.18);
+      --plot-axis: rgba(92,119,148,0.74);
+      --plot-hover: rgba(111,136,163,0.44);
+      --plot-band: rgba(143, 108, 228, 0.10);
+      --transfer-bg: #ffffff;
+      --transfer-grid: rgba(111, 136, 163, 0.14);
+      --transfer-axis: rgba(92, 119, 148, 0.74);
+      --transfer-guide: rgba(111, 136, 163, 0.34);
+      --transfer-off: rgba(111, 136, 163, 0.88);
+      --transfer-on: #21b85f;
     }
 
     * { box-sizing: border-box; }
@@ -129,6 +169,36 @@
       justify-items: center;
     }
 
+    .transfer-graph-card {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--transfer-bg);
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .transfer-graph-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      flex-wrap: wrap;
+      color: var(--subtle);
+      font-size: 13px;
+    }
+
+    .transfer-graph-head strong {
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .transfer-graph {
+      width: 100%;
+      display: block;
+      height: auto;
+    }
+
     .state-diagram-svg {
       width: 100%;
       max-width: 500px;
@@ -151,17 +221,6 @@
     .state-diagram-svg .diagram-node.on.active circle { stroke: var(--green); fill: var(--green-soft); }
     .state-diagram-svg .diagram-node.active text { fill: var(--white); }
 
-    .band-pill {
-      justify-self: start;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.03);
-      padding: 8px 12px;
-      color: var(--subtle);
-      font-size: 13px;
-      font-weight: 700;
-    }
-
     .plots-column { display: grid; gap: 14px; }
     .plot-card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 14px; display: grid; gap: 10px; }
     .plot-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
@@ -174,6 +233,7 @@
       background: rgba(7, 15, 21, 0.86);
       border: 1px solid var(--line);
     }
+    html:not(.theme-dark) .plot-canvas { background: #ffffff; }
 
     .plot-canvas.decision { height: 260px; }
 
@@ -275,8 +335,14 @@
         <div class="card diagram-card">
           <h3>Hysteresis state diagram</h3>
           <p>The hysteresis comparator has memory. Inside the band between the two thresholds, the output does not change state.</p>
-          <div class="band-pill" id="bandStatus">Waiting for signal samples...</div>
           <div class="hysteresis-diagram" id="hysteresisDiagram"></div>
+          <div class="transfer-graph-card">
+            <div class="transfer-graph-head">
+              <strong>Transfer graph</strong>
+              <span>The vertical marker follows the current signal value.</span>
+            </div>
+            <div class="hysteresis-diagram" id="hysteresisTransferGraph"></div>
+          </div>
         </div>
 
         <div class="card">
@@ -380,7 +446,7 @@
       singleToggles: document.getElementById("singleToggles"),
       hysteresisToggles: document.getElementById("hysteresisToggles"),
       hysteresisDiagram: document.getElementById("hysteresisDiagram"),
-      bandStatus: document.getElementById("bandStatus")
+      hysteresisTransferGraph: document.getElementById("hysteresisTransferGraph")
     };
 
     const canvases = {
@@ -577,12 +643,12 @@
 
     function drawFrameBase(ctx, width, height) {
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = "rgba(255,255,255,0.03)";
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--plot-fill").trim() || "rgba(255,255,255,0.03)";
       ctx.fillRect(0, 0, width, height);
     }
 
     function drawGrid(ctx, x, y, width, height, yMin, yMax) {
-      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--plot-grid").trim() || "rgba(255,255,255,0.08)";
       ctx.lineWidth = 1;
       for (let i = 0; i < 5; i++) {
         const gy = y + (height * i) / 4;
@@ -597,12 +663,12 @@
         ctx.moveTo(gx, y);
         ctx.lineTo(gx, y + height);
         ctx.stroke();
-        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--plot-axis").trim() || "rgba(255,255,255,0.5)";
         ctx.font = "12px Segoe UI";
         ctx.textAlign = "center";
         ctx.fillText(`-${i}s`, gx, y + height + 14);
       }
-      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--plot-axis").trim() || "rgba(255,255,255,0.55)";
       ctx.textAlign = "left";
       ctx.fillText(`${yMax}`, x - 36, y + 12);
       ctx.fillText(`${yMin}`, x - 30, y + height - 2);
@@ -674,7 +740,7 @@
       const top = Math.min(...plots.map(plot => plot.top));
       const bottom = Math.max(...plots.map(plot => plot.bottom));
       ctx.save();
-      ctx.strokeStyle = "rgba(255,255,255,0.42)";
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--plot-hover").trim() || "rgba(255,255,255,0.42)";
       ctx.lineWidth = 1.5;
       ctx.setLineDash([6, 6]);
       ctx.beginPath();
@@ -732,7 +798,7 @@
         drawThresholdLine(ctx, analogPlot, settings.lowerThreshold, "#ff6b65", `LOW ${settings.lowerThreshold.toFixed(0)}%`);
         const bandTop = getY(settings.upperThreshold, analogPlot, 0, 100);
         const bandBottom = getY(settings.lowerThreshold, analogPlot, 0, 100);
-        ctx.fillStyle = "rgba(185, 140, 255, 0.08)";
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--plot-band").trim() || "rgba(185, 140, 255, 0.08)";
         ctx.fillRect(analogPlot.left, bandTop, analogPlot.width, bandBottom - bandTop);
       }
 
@@ -754,7 +820,7 @@
       ctx.fillText("State", 0, 0);
       ctx.restore();
 
-      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--plot-axis").trim() || "rgba(255,255,255,0.55)";
       ctx.font = "12px Segoe UI";
       ctx.textAlign = "left";
       ctx.fillText("ON", statePlot.left - 34, statePlot.top + 12);
@@ -769,16 +835,63 @@
       ui.hysteresisDiagram.innerHTML = `<svg class="state-diagram-svg" viewBox="0 0 460 220" aria-label="Hysteresis state diagram"><defs><marker id="hystArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path class="diagram-arrow" d="M0 0 L8 4 L0 8 z"></path></marker><marker id="hystArrowActive" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path class="diagram-arrow active" d="M0 0 L8 4 L0 8 z"></path></marker></defs><path class="diagram-path loop" d="M48 78 C16 44 16 176 48 142" marker-end="url(#hystArrow)"></path><text class="diagram-label" x="42" y="34">hold OFF</text><path class="diagram-path loop" d="M412 78 C444 44 444 176 412 142" marker-end="url(#hystArrow)"></path><text class="diagram-label" x="418" y="34">hold ON</text><path class="diagram-path ${turnOnActive ? "active" : ""}" d="M128 80 C182 32 278 32 332 80" marker-end="url(#${turnOnActive ? "hystArrowActive" : "hystArrow"})"></path><text class="diagram-label" x="230" y="28">signal &gt;= ${settings.upperThreshold.toFixed(0)}%</text><path class="diagram-path ${turnOffActive ? "active" : ""}" d="M332 140 C278 188 182 188 128 140" marker-end="url(#${turnOffActive ? "hystArrowActive" : "hystArrow"})"></path><text class="diagram-label" x="230" y="204">signal &lt;= ${settings.lowerThreshold.toFixed(0)}%</text><g class="diagram-node off ${lastSample.hysteresisState === 0 ? "active" : ""}" transform="translate(90 110)"><circle class="outer-ring" r="41"></circle><circle r="34"></circle><text y="1">OFF</text></g><g class="diagram-node on ${lastSample.hysteresisState === 1 ? "active" : ""}" transform="translate(370 110)"><circle class="outer-ring" r="41"></circle><circle r="34"></circle><text y="1">ON</text></g></svg>`;
     }
 
+    function renderHysteresisTransferGraph(lastSample) {
+      const currentSignal = clamp(lastSample.noisy, 0, 100);
+      const currentState = lastSample.hysteresisState;
+      const lower = settings.lowerThreshold;
+      const upper = settings.upperThreshold;
+      const left = 56;
+      const right = 474;
+      const top = 22;
+      const bottom = 178;
+      const onY = 60;
+      const offY = 140;
+      const mapX = value => left + (clamp(value, 0, 100) / 100) * (right - left);
+      const lowerX = mapX(lower);
+      const upperX = mapX(upper);
+      const currentX = mapX(currentSignal);
+      const activeY = currentState ? onY : offY;
+      const activeColor = currentState ? "var(--transfer-on)" : "var(--transfer-off)";
+      const onWidth = currentState ? 6 : 4;
+      const offWidth = currentState ? 4 : 6;
+
+      ui.hysteresisTransferGraph.innerHTML = `<svg class="transfer-graph" viewBox="0 0 520 210" aria-label="Hysteresis transfer graph">
+        <defs>
+          <marker id="transferArrowDown" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0 0 L6 3 L0 6 z" fill="var(--transfer-off)"></path>
+          </marker>
+          <marker id="transferArrowUp" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0 0 L6 3 L0 6 z" fill="var(--transfer-on)"></path>
+          </marker>
+        </defs>
+        <rect x="0.5" y="0.5" width="519" height="209" rx="18" fill="var(--transfer-bg)" stroke="var(--line)"></rect>
+        <line x1="${left}" y1="${top}" x2="${left}" y2="${bottom}" stroke="var(--transfer-axis)" stroke-width="2"></line>
+        <line x1="${left}" y1="${bottom}" x2="${right}" y2="${bottom}" stroke="var(--transfer-axis)" stroke-width="2"></line>
+        <line x1="${left}" y1="${onY}" x2="${right}" y2="${onY}" stroke="var(--transfer-grid)" stroke-width="1"></line>
+        <line x1="${left}" y1="${offY}" x2="${right}" y2="${offY}" stroke="var(--transfer-grid)" stroke-width="1"></line>
+        <line x1="${lowerX}" y1="${top}" x2="${lowerX}" y2="${bottom}" stroke="var(--transfer-grid)" stroke-width="1.4" stroke-dasharray="6 6"></line>
+        <line x1="${upperX}" y1="${top}" x2="${upperX}" y2="${bottom}" stroke="var(--transfer-grid)" stroke-width="1.4" stroke-dasharray="6 6"></line>
+        <line x1="${currentX}" y1="${top}" x2="${currentX}" y2="${bottom}" stroke="var(--transfer-guide)" stroke-width="2" stroke-dasharray="7 7"></line>
+        <path d="M ${left} ${offY} H ${upperX}" fill="none" stroke="var(--transfer-off)" stroke-width="${offWidth}" stroke-linecap="round"></path>
+        <path d="M ${upperX} ${offY} V ${onY}" fill="none" stroke="var(--transfer-on)" stroke-width="4" marker-end="url(#transferArrowUp)"></path>
+        <path d="M ${lowerX} ${onY} V ${offY}" fill="none" stroke="var(--transfer-off)" stroke-width="4" marker-end="url(#transferArrowDown)"></path>
+        <path d="M ${lowerX} ${onY} H ${right}" fill="none" stroke="var(--transfer-on)" stroke-width="${onWidth}" stroke-linecap="round"></path>
+        <circle cx="${lowerX}" cy="${offY}" r="5" fill="var(--transfer-off)"></circle>
+        <circle cx="${upperX}" cy="${onY}" r="5" fill="var(--transfer-on)"></circle>
+        <circle cx="${currentX}" cy="${activeY}" r="8" fill="${activeColor}" opacity="0.18"></circle>
+        <circle cx="${currentX}" cy="${activeY}" r="5" fill="${activeColor}"></circle>
+        <text x="22" y="${onY + 5}" fill="var(--transfer-on)" font-size="16" font-weight="800">ON</text>
+        <text x="18" y="${offY + 5}" fill="var(--transfer-off)" font-size="16" font-weight="800">OFF</text>
+        <text x="${lowerX}" y="${bottom + 20}" text-anchor="middle" fill="var(--transfer-axis)" font-size="13" font-weight="700">${lower.toFixed(0)}%</text>
+        <text x="${upperX}" y="${bottom + 20}" text-anchor="middle" fill="var(--transfer-axis)" font-size="13" font-weight="700">${upper.toFixed(0)}%</text>
+        <text x="${right}" y="${top + 2}" text-anchor="end" fill="var(--transfer-axis)" font-size="13" font-weight="700">Current ${currentSignal.toFixed(1)}%</text>
+        <text x="${left}" y="${bottom + 20}" text-anchor="start" fill="var(--transfer-axis)" font-size="13" font-weight="700">Signal %</text>
+      </svg>`;
+    }
+
     function updateDiagram(lastSample) {
       renderHysteresisDiagram(lastSample);
-
-      if (lastSample.noisy >= settings.upperThreshold) {
-        ui.bandStatus.textContent = "Signal is above the upper threshold: hysteresis output goes ON.";
-      } else if (lastSample.noisy <= settings.lowerThreshold) {
-        ui.bandStatus.textContent = "Signal is below the lower threshold: hysteresis output goes OFF.";
-      } else {
-        ui.bandStatus.textContent = "Signal is inside the hysteresis band: keep the previous output state.";
-      }
+      renderHysteresisTransferGraph(lastSample);
     }
 
     function renderAll() {
@@ -818,5 +931,8 @@
     renderAll();
     requestAnimationFrame(animate);
   </script>
+  <script src="../shared/sound_fx.js"></script>
 </body>
 </html>
+
+

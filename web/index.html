@@ -8,27 +8,38 @@
   <script src="./dashboard_flags.js"></script>
   <script src="../js/site_contact.js"></script>
   <script>
-    // Keep the application permanently in dark mode.
-    document.documentElement.classList.add("theme-dark");
+    // Default to the bright theme and only restore dark mode when the user turned lights off.
+    (() => {
+      try {
+        const storedLights = localStorage.getItem("embedded-dashboard-lights-on");
+        const legacyStoredLights = localStorage.getItem("embedded-lights-on");
+        const resolvedLights = storedLights ?? legacyStoredLights;
+        if (resolvedLights === "false") {
+          document.documentElement.classList.add("theme-dark");
+        }
+      } catch (error) {
+        // Ignore storage failures and keep the light theme.
+      }
+    })();
   </script>
   <script src="./shared/mouse_glow.js"></script>
   <style>
     /* Base light theme tokens shared by the menu and simulation screen. */
     :root {
       /* Page/background and generic panels. */
-      --bg: #98d6ed;
-      --panel: rgba(246, 252, 255, 0.92);
-      --panel-line: #d7e8f0;
-      --title: #0a3c52;
-      --text: #1e485c;
-      --subtle: #5f7f8e;
+      --bg: #eef5ff;
+      --panel: rgba(255, 255, 255, 0.8);
+      --panel-line: #d8e6f6;
+      --title: #113d6b;
+      --text: #2a4d6f;
+      --subtle: #6b86a2;
 
       /* Semantic accent colors reused by badges, plots, and pipes. */
       --red: #ef3f46;
       --red-dark: #c92f37;
-      --blue: #1a53b3;
-      --blue-light: #4db8ff;
-      --cyan: #22bedc;
+      --blue: #1f6feb;
+      --blue-light: #77b6ff;
+      --cyan: #20b7ff;
       --green: #309c40;
       --purple: #8d5fd4;
       --pink: #e36ac8;
@@ -37,31 +48,31 @@
       --white: #ffffff;
 
       /* UI-only surfaces for buttons, pills, and wrapped canvases. */
-      --toggle-bg: rgba(255, 255, 255, 0.92);
-      --toggle-border: #c5dbe6;
-      --toggle-thumb: #1a53b3;
-      --toggle-text: #0a3c52;
-      --card-soft: rgba(255, 255, 255, 0.84);
-      --button-bg: rgba(255, 255, 255, 0.95);
-      --button-green-bg: #e5f7ea;
-      --button-red-bg: #fdecee;
-      --launch-bg: #e8f3ff;
-      --pill-bg: rgba(255, 255, 255, 0.92);
-      --canvas-wrap-bg: rgba(255, 255, 255, 0.7);
-      --menu-card-bg: rgba(255, 255, 255, 0.84);
-      --menu-card-border: #d7e8f0;
-      --menu-card-title: #0a3c52;
-      --menu-card-text: #5f7f8e;
-      --menu-button-text: #1a53b3;
+      --toggle-bg: rgba(255, 255, 255, 0.96);
+      --toggle-border: #cfe0f5;
+      --toggle-thumb: #1f6feb;
+      --toggle-text: #113d6b;
+      --card-soft: rgba(255, 255, 255, 0.92);
+      --button-bg: rgba(255, 255, 255, 0.96);
+      --button-green-bg: #e8f8ec;
+      --button-red-bg: #fff1f3;
+      --launch-bg: linear-gradient(180deg, #f8fbff 0%, #e6f1ff 100%);
+      --pill-bg: rgba(248, 251, 255, 0.94);
+      --canvas-wrap-bg: rgba(244, 249, 255, 0.9);
+      --menu-card-bg: rgba(255, 255, 255, 0.92);
+      --menu-card-border: #d9e7f7;
+      --menu-card-title: #113d6b;
+      --menu-card-text: #617d99;
+      --menu-button-text: #145fce;
 
       /* Canvas-specific materials used to shade the schematic parts. */
-      --canvas-panel-bg: rgba(250, 254, 255, 0.72);
-      --canvas-surface: #f4f5f7;
-      --canvas-surface-alt: #f1f3f5;
-      --canvas-metal: #eeeff0;
-      --canvas-deep-blue: #0f428f;
-      --gray: #bec2c7;
-      --dark-gray: #7b8187;
+      --canvas-panel-bg: rgba(249, 252, 255, 0.84);
+      --canvas-surface: #f7faff;
+      --canvas-surface-alt: #eef4fb;
+      --canvas-metal: #e8edf4;
+      --canvas-deep-blue: #1356bb;
+      --gray: #bfd0df;
+      --dark-gray: #74859b;
       --black: #12181f;
     }
 
@@ -114,7 +125,10 @@
       margin: 0;
       min-height: 100vh;
       font-family: "Segoe UI", Arial, sans-serif;
-      background: linear-gradient(180deg, #8fd1ea 0%, var(--bg) 100%);
+      background:
+        radial-gradient(circle at top left, rgba(95, 159, 255, 0.18) 0%, transparent 32%),
+        radial-gradient(circle at top right, rgba(32, 183, 255, 0.16) 0%, transparent 24%),
+        linear-gradient(180deg, #f9fcff 0%, var(--bg) 58%, #e8f1ff 100%);
       color: var(--text);
     }
 
@@ -143,11 +157,12 @@
     }
 
     .menu-hero {
-      background: var(--panel);
-      border: 2px solid var(--panel-line);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.86) 0%, rgba(244, 249, 255, 0.82) 100%);
+      border: 1px solid var(--panel-line);
       border-radius: 30px;
       padding: 28px;
-      box-shadow: 0 10px 26px rgba(55, 106, 128, 0.08);
+      box-shadow: 0 24px 56px rgba(38, 84, 138, 0.1);
+      backdrop-filter: blur(16px);
     }
 
     .brand-lockup {
@@ -204,15 +219,34 @@
       width: 100%;
       padding: 14px 16px;
       border-radius: 18px;
-      border: 2px solid var(--toggle-border);
+      border: 1px solid var(--toggle-border);
       background: var(--button-bg);
       color: var(--title);
       font: inherit;
       font-size: 16px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 10px 24px rgba(40, 89, 142, 0.06);
     }
 
     .menu-search input::placeholder {
       color: var(--subtle);
+    }
+
+    html.theme-dark .menu-hero {
+      background: linear-gradient(180deg, rgba(24, 40, 52, 0.96) 0%, rgba(18, 32, 42, 0.96) 100%);
+      border-color: #355669;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+      backdrop-filter: none;
+    }
+
+    html.theme-dark .menu-search input {
+      border-color: #3d6679;
+      background: rgba(15, 29, 39, 0.92);
+      color: #e8f6ff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    html.theme-dark .menu-search input::placeholder {
+      color: #8fb0c0;
     }
 
     .menu-search-note {
@@ -261,15 +295,23 @@
     }
 
     .menu-column {
-      background: var(--panel);
-      border: 2px solid var(--panel-line);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(245, 249, 255, 0.78) 100%);
+      border: 1px solid var(--panel-line);
       border-radius: 28px;
       padding: 20px;
-      box-shadow: 0 10px 26px rgba(55, 106, 128, 0.08);
+      box-shadow: 0 22px 48px rgba(38, 84, 138, 0.08);
+      backdrop-filter: blur(14px);
       display: grid;
       gap: 14px;
       align-content: start;
       min-height: 360px;
+    }
+
+    html.theme-dark .menu-column {
+      background: linear-gradient(180deg, rgba(22, 38, 49, 0.96) 0%, rgba(18, 32, 42, 0.96) 100%);
+      border-color: #355669;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+      backdrop-filter: none;
     }
 
     .menu-column h2 {
@@ -287,6 +329,23 @@
       grid-template-columns: auto minmax(0, 1fr) auto;
       align-items: center;
       gap: 18px;
+      box-shadow: 0 14px 34px rgba(31, 91, 157, 0.08);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .menu-card:hover {
+      transform: translateY(-2px);
+      border-color: #c1d8f8;
+      box-shadow: 0 20px 42px rgba(31, 91, 157, 0.12);
+    }
+
+    html.theme-dark .menu-card {
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.16);
+    }
+
+    html.theme-dark .menu-card:hover {
+      border-color: #5a7f96;
+      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
     }
 
     .menu-card-image {
@@ -296,8 +355,12 @@
       display: block;
       border-radius: 18px;
       border: 1px solid var(--menu-card-border);
-      background: rgba(12, 24, 32, 0.45);
+      background: linear-gradient(180deg, #f9fbff 0%, #edf4ff 100%);
       padding: 6px;
+    }
+
+    html.theme-dark .menu-card-image {
+      background: rgba(12, 24, 32, 0.45);
     }
 
     .menu-card-copy {
@@ -330,12 +393,17 @@
       padding: 6px 10px;
       border-radius: 999px;
       border: 1px solid var(--menu-card-border);
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--subtle);
+      background: rgba(31, 111, 235, 0.08);
+      color: #4f7094;
       font-size: 12px;
       font-weight: 700;
       line-height: 1;
       white-space: nowrap;
+    }
+
+    html.theme-dark .menu-tag {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--subtle);
     }
 
     .launch-button {
@@ -343,15 +411,36 @@
       padding: 14px 20px;
       border-radius: 16px;
       border: 2px solid var(--blue);
-      background: #e8f3ff;
+      background: var(--launch-bg);
       color: var(--menu-button-text);
       font-size: 16px;
       font-weight: 800;
       text-decoration: none;
       white-space: nowrap;
+      box-shadow: 0 12px 24px rgba(31, 91, 157, 0.12);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    .launch-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 28px rgba(31, 91, 157, 0.16);
+    }
+
+    html.theme-dark .launch-button {
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    }
+
+    html.theme-dark .launch-button:hover {
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 10px 22px rgba(0, 0, 0, 0.18);
     }
 
     .menu-card.disabled-feature {
+      background: rgba(241, 246, 252, 0.88);
+      border-color: #d4dfec;
+      box-shadow: inset 0 0 0 1px rgba(31, 111, 235, 0.04);
+    }
+
+    html.theme-dark .menu-card.disabled-feature {
       background: rgba(31, 52, 65, 0.7);
       border-color: rgba(72, 99, 117, 0.74);
       box-shadow: inset 0 0 0 1px rgba(143, 195, 255, 0.05);
@@ -368,15 +457,22 @@
     }
 
     .launch-button.is-disabled-feature {
-      border-color: rgba(77, 184, 255, 0.42);
-      background: rgba(24, 51, 78, 0.18);
-      color: rgba(143, 195, 255, 0.68);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+      border-color: #c6d6ea;
+      background: rgba(238, 245, 255, 0.96);
+      color: #89a0ba;
+      box-shadow: none;
       cursor: default;
       pointer-events: none;
       text-transform: uppercase;
       letter-spacing: 0.04em;
       opacity: 0.72;
+    }
+
+    html.theme-dark .launch-button.is-disabled-feature {
+      border-color: rgba(77, 184, 255, 0.42);
+      background: rgba(24, 51, 78, 0.18);
+      color: rgba(143, 195, 255, 0.68);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
     }
 
     @media (max-width: 760px) {
@@ -441,10 +537,16 @@
     /* Generic panel/card styles used in the simulation screen. */
     .panel {
       background: var(--panel);
-      border: 2px solid var(--panel-line);
+      border: 1px solid var(--panel-line);
       border-radius: 28px;
       padding: 16px;
-      box-shadow: 0 10px 26px rgba(55, 106, 128, 0.08);
+      box-shadow: 0 22px 48px rgba(38, 84, 138, 0.08);
+      backdrop-filter: blur(14px);
+    }
+
+    html.theme-dark .panel {
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
+      backdrop-filter: none;
     }
 
     .panel h2 {
@@ -454,7 +556,7 @@
     }
 
     .canvas-wrap {
-      background: rgba(9, 18, 24, 0.88);
+      background: var(--canvas-wrap-bg);
       border: 1px solid var(--panel-line);
       border-radius: 22px;
       overflow: hidden;
@@ -569,7 +671,11 @@
     }
 
     .canvas-wrap {
-      background: rgba(9, 18, 24, 0.88);
+      background: var(--canvas-wrap-bg);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+
+    html.theme-dark .canvas-wrap {
       box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
     }
 
@@ -619,7 +725,6 @@
               <h1>Embedded Programming Dashboard</h1>
               <span class="hero-version">v1.0</span>
             </div>
-            <p>Select a learning activity to open an interactive simulation or experiment. This start page can grow into a small course hub.</p>
           </div>
           <img class="brand-logo" src="../assets/branding/hanze_logo.png" alt="Hanze logo" />
         </div>

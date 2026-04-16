@@ -1,10 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="en" data-sync-dashboard-lights="true">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Embedded Programming - Pull-Up / Pull-Down</title>
-  <script>document.documentElement.classList.add("theme-dark");</script>
+    <script>
+    (() => {
+      try {
+        const storedLights = localStorage.getItem("embedded-dashboard-lights-on");
+        const legacyStoredLights = localStorage.getItem("embedded-lights-on");
+        const resolvedLights = storedLights ?? legacyStoredLights;
+        if (resolvedLights === "false") {
+          document.documentElement.classList.add("theme-dark");
+        }
+      } catch (error) {
+        // Ignore storage failures and keep the light theme.
+      }
+    })();
+  </script>
   <script src="../shared/mouse_glow.js"></script>
   <script src="../shared/page_header.js"></script>
   <style>
@@ -24,117 +38,719 @@
       --button-bg: #173245;
       --code-bg: #0d1720;
       --stage-bg: linear-gradient(180deg, #162c3b 0%, #11202a 100%);
+      --circuit-board-bg: rgba(9, 20, 28, 0.36);
+      --circuit-area-bg: rgba(255, 255, 255, 0.02);
+      --circuit-area-line: rgba(255, 255, 255, 0.08);
+      --circuit-wire: rgba(255, 255, 255, 0.38);
+      --circuit-device-bg: rgba(255, 255, 255, 0.04);
+      --switch-metal: var(--white);
+      --switch-knob: var(--white);
+      --switch-knob-ring: rgba(8, 17, 24, 0.6);
+      --led-off-color: #d9e9f4;
+      --led-off-wire: rgba(255, 255, 255, 0.38);
+      --led-off-ring: rgba(255, 255, 255, 0.55);
+      --led-off-fill: rgba(255, 255, 255, 0.03);
+      --led-off-triangle: rgba(217, 233, 244, 0.08);
+      --plot-fill: rgba(255,255,255,0.03);
+      --plot-stroke: rgba(255,255,255,0.08);
+      --plot-grid: rgba(255,255,255,0.10);
+      --plot-grid-strong: rgba(255,255,255,0.12);
+      --plot-axis: rgba(255,255,255,0.52);
       --shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
     }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; font-family: "Segoe UI", Arial, sans-serif; color: var(--text); background: radial-gradient(circle at top, #193549 0%, var(--bg) 58%, #081118 100%); }
-    .app { padding: 22px; display: grid; gap: 18px; }
-    .header, .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 28px; box-shadow: var(--shadow); }
-    .header { padding: 18px 20px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: center; }
-    .back { color: var(--text); text-decoration: none; border: 2px solid var(--line); border-radius: 16px; padding: 12px 16px; background: var(--button-bg); font-weight: 800; }
-    .brand-logo { width: 132px; max-width: 100%; height: auto; object-fit: contain; }
-    .title h1 { margin: 0; font-size: clamp(28px, 3vw, 46px); }
-    .title p { margin: 6px 0 0; color: var(--subtle); line-height: 1.45; }
-    .layout { display: grid; grid-template-columns: minmax(320px, 1fr) minmax(320px, 0.9fr) minmax(380px, 1.05fr); gap: 18px; align-items: start; }
-    .panel { padding: 18px; display: grid; gap: 14px; }
-    .panel h2, .panel h3, .panel p { margin: 0; }
-    .topic-head { display: grid; gap: 8px; }
-    .topic-head p { color: var(--subtle); }
-    .status-pill { justify-self: start; border: 2px solid var(--accent); border-radius: 999px; padding: 10px 16px; background: var(--accent-soft); color: var(--accent); font-weight: 800; }
-    .controls-card, .visual-card, .timeline-card, .code-card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 14px; display: grid; gap: 12px; }
-    .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .controls-grid, .control-row { display: grid; gap: 8px; }
-    .field-label, .value-line { color: var(--subtle); font-size: 14px; font-weight: 700; }
-    .value-line { display: flex; justify-content: space-between; gap: 12px; }
-    select { width: 100%; padding: 11px 12px; border-radius: 14px; border: 2px solid var(--line); background: rgba(11, 24, 34, 0.84); color: var(--text); font: inherit; }
-    button.action-btn, .copy-btn { appearance: none; border: 2px solid var(--line); border-radius: 14px; padding: 10px 14px; background: var(--button-bg); color: var(--text); font-weight: 800; cursor: pointer; }
-    button.action-btn.active, .copy-btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--white); }
-    .copy-btn.copied { border-color: var(--green); background: rgba(47, 199, 107, 0.14); }
-    .visual-stage { min-height: 360px; border-radius: 20px; border: 1px solid var(--line); background: var(--stage-bg); padding: 18px; display: grid; place-items: center; overflow: hidden; }
-    .visual-wrap { width: 100%; max-width: 500px; display: grid; gap: 18px; justify-items: center; }
-    .wiring-note, #wiringNote { display: none !important; }
-    .circuit-board { width: 100%; min-height: 236px; border-radius: 20px; border: 1px solid var(--line); background: rgba(9, 20, 28, 0.36); padding: 20px; display: grid; }
-    .logic-row { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-    .logic-box { border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); padding: 12px 10px; display: grid; gap: 8px; text-align: center; }
-    .logic-box strong { color: var(--subtle); font-size: 13px; }
-    .logic-box span { color: var(--white); font-size: 22px; font-weight: 900; }
-    .circuit-area { position: relative; height: 280px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.02); overflow: hidden; }
-    .rail { position: absolute; left: 32px; right: 78px; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.38); }
-    .rail.top { top: 28px; }
-    .rail.bottom { bottom: 28px; }
-    .rail-label { position: absolute; left: 8px; color: var(--subtle); font-size: 13px; font-weight: 800; letter-spacing: 0.04em; }
-    .rail-label.top { top: 12px; }
-    .rail-label.bottom { bottom: 12px; }
-    .node { position: absolute; left: 102px; top: 126px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(99, 196, 255, 0.16); }
-    .pin-wire { position: absolute; left: 124px; top: 136px; width: 78px; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.38); }
-    .pin-label { position: absolute; left: 146px; top: 107px; color: var(--subtle); font-size: 13px; font-weight: 800; }
-    .mcu-pin { position: absolute; left: 198px; top: 113px; width: 74px; height: 50px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); display: grid; place-items: center; text-align: center; }
-    .mcu-pin strong { color: var(--white); font-size: 15px; }
-    .branch-device { position: absolute; left: 85px; width: 58px; height: 92px; }
-    .branch-device::before, .branch-device::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); width: 4px; height: 22px; border-radius: 999px; background: rgba(255,255,255,0.38); }
-    .branch-device::before { top: 0; }
-    .branch-device::after { bottom: 0; }
-    .branch-device.top { top: 42px; }
-    .branch-device.top::before { top: -14px; height: 36px; }
-    .branch-device.bottom { bottom: 30px; }
-    .device-label { position: absolute; left: -8px; top: 50%; width: 82px; transform: translate(-100%, -50%); color: var(--subtle); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; text-align: right; line-height: 1.2; }
-    .branch-device > .resistor, .branch-device > .switch { position: absolute; left: 50%; top: 15px; transform: translateX(-50%); }
-    .resistor { position: relative; width: 16px; height: 62px; }
-    .resistor::before, .resistor::after { display: none; }
-    .resistor-body { position: absolute; inset: 0; border-radius: 10px; background: linear-gradient(180deg, #f0e0b0 0%, #d1ba78 100%); border: 2px solid #9d7f3b; }
-    .resistor-band { position: absolute; left: 3px; right: 3px; height: 5px; border-radius: 999px; background: #8a5c3c; }
-    .resistor-band.band-a { top: 16px; }
-    .resistor-band.band-b { top: 28px; }
-    .resistor-band.band-c { top: 40px; }
-    .switch { position: relative; width: 54px; height: 62px; }
-    .switch::before, .switch::after { display: none; }
-    .switch-base { position: absolute; left: 15px; top: 7px; width: 24px; height: 48px; border-radius: 999px; border: 2px solid var(--line); background: rgba(255,255,255,0.04); }
-    .switch-contact { position: absolute; top: 12px; width: 4px; height: 24px; border-radius: 999px; background: var(--white); transform-origin: top center; transition: left 0.15s ease, height 0.15s ease, transform 0.15s ease; }
-    .switch-contact::after { content: ""; position: absolute; left: -5px; bottom: -8px; width: 14px; height: 14px; border-radius: 50%; background: var(--white); box-shadow: 0 0 0 2px rgba(8, 17, 24, 0.6); }
-    .switch.closed .switch-contact { left: 25px; height: 36px; transform: rotate(0deg); }
-    .switch.open .switch-contact { left: 17px; height: 28px; transform: rotate(-18deg); }
-    .led-branch { position: absolute; left: 252px; top: 50px; width: 104px; height: 198px; }
-    .led-branch-label { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); color: var(--subtle); font-size: 12px; font-weight: 800; white-space: nowrap; }
-    .led-schematic { position: absolute; left: 2px; top: 22px; width: 98px; height: 176px; overflow: visible; color: #d9e9f4; }
-    .led-schematic .wire { stroke: rgba(255,255,255,0.38); stroke-width: 4; stroke-linecap: round; fill: none; }
-    .led-schematic .symbol-ring { stroke: rgba(255,255,255,0.55); stroke-width: 3; fill: rgba(255,255,255,0.03); }
+    html:not(.theme-dark) {
+      --white: #244765;
+      --code-bg: #f4f8fd;
+      --stage-bg: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+      --circuit-board-bg: rgba(255, 255, 255, 0.76);
+      --circuit-area-bg: rgba(255, 255, 255, 0.9);
+      --circuit-area-line: rgba(207, 224, 245, 0.96);
+      --circuit-wire: rgba(111, 136, 163, 0.38);
+      --circuit-device-bg: rgba(255, 255, 255, 0.78);
+      --switch-metal: #7a91aa;
+      --switch-knob: #ffffff;
+      --switch-knob-ring: rgba(111, 136, 163, 0.28);
+      --led-off-color: #6985a4;
+      --led-off-wire: rgba(111, 136, 163, 0.38);
+      --led-off-ring: rgba(111, 136, 163, 0.54);
+      --led-off-fill: rgba(111, 136, 163, 0.06);
+      --led-off-triangle: rgba(111, 136, 163, 0.08);
+      --plot-fill: rgba(255,255,255,0.74);
+      --plot-stroke: rgba(111,136,163,0.24);
+      --plot-grid: rgba(111,136,163,0.18);
+      --plot-grid-strong: rgba(111,136,163,0.24);
+      --plot-axis: rgba(92,119,148,0.74);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top, #193549 0%, var(--bg) 58%, #081118 100%);
+    }
+
+    .app {
+      padding: 22px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .header,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .header {
+      padding: 18px 20px;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .back {
+      color: var(--text);
+      text-decoration: none;
+      border: 2px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 16px;
+      background: var(--button-bg);
+      font-weight: 800;
+    }
+
+    .brand-logo {
+      width: 132px;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: clamp(28px, 3vw, 46px);
+    }
+
+    .title p {
+      margin: 6px 0 0;
+      color: var(--subtle);
+      line-height: 1.45;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) minmax(320px, 0.9fr) minmax(380px, 1.05fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel h2,
+    .panel h3,
+    .panel p {
+      margin: 0;
+    }
+
+    .topic-head {
+      display: grid;
+      gap: 8px;
+    }
+
+    .topic-head p {
+      color: var(--subtle);
+    }
+
+    .status-pill {
+      justify-self: start;
+      border: 2px solid var(--accent);
+      border-radius: 999px;
+      padding: 10px 16px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .controls-card,
+    .visual-card,
+    .timeline-card,
+    .code-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .controls-grid,
+    .control-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field-label,
+    .value-line {
+      color: var(--subtle);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .value-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 2px solid var(--line);
+      background: rgba(11, 24, 34, 0.84);
+      color: var(--text);
+      font: inherit;
+    }
+
+    button.action-btn,
+    .copy-btn {
+      appearance: none;
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 14px;
+      background: var(--button-bg);
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button.action-btn.active,
+    .copy-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--white);
+    }
+
+    .copy-btn.copied {
+      border-color: var(--green);
+      background: rgba(47, 199, 107, 0.14);
+    }
+
+    .visual-stage {
+      min-height: 360px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--stage-bg);
+      padding: 18px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .visual-wrap {
+      width: 100%;
+      max-width: 500px;
+      display: grid;
+      gap: 18px;
+      justify-items: center;
+    }
+
+    .wiring-note,
+    #wiringNote {
+      display: none !important;
+    }
+
+    .circuit-board {
+      width: 100%;
+      min-height: 236px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--circuit-board-bg);
+      padding: 20px;
+      display: grid;
+    }
+
+    .logic-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .logic-box {
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 12px 10px;
+      display: grid;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .logic-box strong {
+      color: var(--subtle);
+      font-size: 13px;
+    }
+
+    .logic-box span {
+      color: var(--white);
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .circuit-area {
+      position: relative;
+      height: 280px;
+      border-radius: 18px;
+      border: 1px solid var(--circuit-area-line);
+      background: var(--circuit-area-bg);
+      overflow: hidden;
+    }
+
+    .rail {
+      position: absolute;
+      left: 32px;
+      right: 78px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--circuit-wire);
+    }
+
+    .rail.top {
+      top: 28px;
+    }
+
+    .rail.bottom {
+      bottom: 28px;
+    }
+
+    .rail-label {
+      position: absolute;
+      left: 8px;
+      color: var(--subtle);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .rail-label.top {
+      top: 12px;
+    }
+
+    .rail-label.bottom {
+      bottom: 12px;
+    }
+
+    .node {
+      position: absolute;
+      left: 102px;
+      top: 126px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(99, 196, 255, 0.16);
+    }
+
+    .pin-wire {
+      position: absolute;
+      left: 124px;
+      top: 136px;
+      width: 78px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--circuit-wire);
+    }
+
+    .pin-label {
+      position: absolute;
+      left: 146px;
+      top: 107px;
+      color: var(--subtle);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .mcu-pin {
+      position: absolute;
+      left: 198px;
+      top: 113px;
+      width: 74px;
+      height: 50px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: var(--circuit-device-bg);
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+
+    .mcu-pin strong {
+      color: var(--white);
+      font-size: 15px;
+    }
+
+    .branch-device {
+      position: absolute;
+      left: 85px;
+      width: 58px;
+      height: 92px;
+    }
+
+    .branch-device::before,
+    .branch-device::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 22px;
+      border-radius: 999px;
+      background: var(--circuit-wire);
+    }
+
+    .branch-device::before {
+      top: 0;
+    }
+
+    .branch-device::after {
+      bottom: 0;
+    }
+
+    .branch-device.top {
+      top: 42px;
+    }
+
+    .branch-device.top::before {
+      top: -14px;
+      height: 36px;
+    }
+
+    .branch-device.bottom {
+      bottom: 30px;
+    }
+
+    .device-label {
+      position: absolute;
+      left: -8px;
+      top: 50%;
+      width: 82px;
+      transform: translate(-100%, -50%);
+      color: var(--subtle);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-align: right;
+      line-height: 1.2;
+    }
+
+    .branch-device>.resistor,
+    .branch-device>.switch {
+      position: absolute;
+      left: 50%;
+      top: 15px;
+      transform: translateX(-50%);
+    }
+
+    .resistor {
+      position: relative;
+      width: 16px;
+      height: 62px;
+    }
+
+    .resistor::before,
+    .resistor::after {
+      display: none;
+    }
+
+    .resistor-body {
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #f0e0b0 0%, #d1ba78 100%);
+      border: 2px solid #9d7f3b;
+    }
+
+    .resistor-band {
+      position: absolute;
+      left: 3px;
+      right: 3px;
+      height: 5px;
+      border-radius: 999px;
+      background: #8a5c3c;
+    }
+
+    .resistor-band.band-a {
+      top: 16px;
+    }
+
+    .resistor-band.band-b {
+      top: 28px;
+    }
+
+    .resistor-band.band-c {
+      top: 40px;
+    }
+
+    .switch {
+      position: relative;
+      width: 54px;
+      height: 62px;
+    }
+
+    .switch::before,
+    .switch::after {
+      display: none;
+    }
+
+    .switch-base {
+      position: absolute;
+      left: 15px;
+      top: 7px;
+      width: 24px;
+      height: 48px;
+      border-radius: 999px;
+      border: 2px solid var(--line);
+      background: var(--circuit-device-bg);
+    }
+
+    .switch-contact {
+      position: absolute;
+      top: 12px;
+      width: 4px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--switch-metal);
+      transform-origin: top center;
+      transition: left 0.15s ease, height 0.15s ease, transform 0.15s ease;
+    }
+
+    .switch-contact::after {
+      content: "";
+      position: absolute;
+      left: -5px;
+      bottom: -8px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--switch-knob);
+      box-shadow: 0 0 0 2px var(--switch-knob-ring);
+    }
+
+    .switch.closed .switch-contact {
+      left: 25px;
+      height: 36px;
+      transform: rotate(0deg);
+    }
+
+    .switch.open .switch-contact {
+      left: 17px;
+      height: 28px;
+      transform: rotate(-18deg);
+    }
+
+    .led-branch {
+      position: absolute;
+      left: 252px;
+      top: 50px;
+      width: 104px;
+      height: 198px;
+    }
+
+    .led-branch-label {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--subtle);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .led-schematic {
+      position: absolute;
+      left: 2px;
+      top: 23px;
+      width: 98px;
+      height: 176px;
+      overflow: visible;
+      color: var(--led-off-color);
+    }
+
+    .led-schematic .wire {
+      stroke: var(--led-off-wire);
+      stroke-width: 4;
+      stroke-linecap: round;
+      fill: none;
+    }
+
+    .led-schematic .symbol-ring {
+      stroke: var(--led-off-ring);
+      stroke-width: 3;
+      fill: var(--led-off-fill);
+    }
+
     .led-schematic .symbol-line,
     .led-schematic .symbol-triangle,
     .led-schematic .symbol-bar,
-    .led-schematic .light-arrow { stroke: #d9e9f4; fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-    .led-schematic .symbol-triangle { fill: rgba(217,233,244,0.08); }
-    .led-schematic .light-arrow { marker-end: url(#ledArrowHead); opacity: 0.38; }
-    .led-schematic.on .symbol-ring { stroke: #75f1a1; fill: rgba(47,199,107,0.14); filter: drop-shadow(0 0 8px rgba(47,199,107,0.32)); }
+    .led-schematic .light-arrow {
+      stroke: var(--led-off-color);
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .led-schematic .symbol-triangle {
+      fill: var(--led-off-triangle);
+    }
+
+    .led-schematic .light-arrow {
+      marker-end: url(#ledArrowHead);
+      opacity: 0.38;
+    }
+
+    .led-schematic.on .symbol-ring {
+      stroke: #75f1a1;
+      fill: rgba(47, 199, 107, 0.14);
+      filter: drop-shadow(0 0 8px rgba(47, 199, 107, 0.32));
+    }
+
     .led-schematic.on .symbol-line,
     .led-schematic.on .symbol-triangle,
     .led-schematic.on .symbol-bar,
-    .led-schematic.on .light-arrow { stroke: #97f7bb; }
-    .led-schematic.on .symbol-triangle { fill: rgba(151,247,187,0.16); }
-    .led-schematic.on { color: #97f7bb; }
-    .timeline-canvas { width: 100%; height: 460px; display: block; border-radius: 18px; background: rgba(7, 15, 21, 0.86); border: 1px solid var(--line); }
-    .timeline-note, .code-note { color: var(--subtle); font-size: 14px; line-height: 1.45; }
-    pre.code-block { margin: 0; min-height: 460px; padding: 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--code-bg); color: #d8f2ff; font-family: Consolas, "Courier New", monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; user-select: text; -webkit-user-select: text; cursor: text; }
-    .code-line { display: block; margin: 0 -6px; padding: 1px 6px; border-radius: 8px; transition: background 0.16s ease, box-shadow 0.16s ease; }
-    .code-line.active { background: rgba(99, 196, 255, 0.16); box-shadow: inset 3px 0 0 rgba(99, 196, 255, 0.9); color: var(--white); }
-    @media (max-width: 1320px) { .layout { grid-template-columns: 1fr; } .timeline-canvas, pre.code-block { min-height: 360px; } }
+    .led-schematic.on .light-arrow {
+      stroke: #97f7bb;
+    }
+
+    .led-schematic.on .symbol-triangle {
+      fill: rgba(151, 247, 187, 0.16);
+    }
+
+    .led-schematic.on {
+      color: #97f7bb;
+    }
+
+    .timeline-canvas {
+      width: 100%;
+      height: 460px;
+      display: block;
+      border-radius: 18px;
+      background: rgba(7, 15, 21, 0.86);
+      border: 1px solid var(--line);
+    }
+
+    .timeline-note,
+    .code-note {
+      color: var(--subtle);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    pre.code-block {
+      margin: 0;
+      min-height: 460px;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--code-bg);
+      color: #d8f2ff;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      user-select: text;
+      -webkit-user-select: text;
+      cursor: text;
+    }
+
+    .code-line {
+      display: block;
+      margin: 0 -6px;
+      padding: 1px 6px;
+      border-radius: 8px;
+      transition: background 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .code-line.active {
+      background: rgba(99, 196, 255, 0.16);
+      box-shadow: inset 3px 0 0 rgba(99, 196, 255, 0.9);
+      color: var(--white);
+    }
+
+    @media (max-width: 1320px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline-canvas,
+      pre.code-block {
+        min-height: 360px;
+      }
+    }
+
     @media (max-width: 760px) {
-      .header { grid-template-columns: 1fr; }
-      .logic-row { grid-template-columns: 1fr; }
-      .circuit-area { height: 320px; }
-      .rail { right: 70px; }
-      .pin-wire { width: 74px; }
-      .mcu-pin { left: 194px; }
-      .led-branch { left: 246px; width: 98px; }
+      .header {
+        grid-template-columns: 1fr;
+      }
+
+      .logic-row {
+        grid-template-columns: 1fr;
+      }
+
+      .circuit-area {
+        height: 320px;
+      }
+
+      .rail {
+        right: 70px;
+      }
+
+      .pin-wire {
+        width: 74px;
+      }
+
+      .mcu-pin {
+        left: 194px;
+      }
+
+      .led-branch {
+        left: 246px;
+        width: 98px;
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="app">
     <header class="header">
       <a class="back" href="../index.html">Back to menu</a>
       <div class="title">
         <h1>Pull-Up / Pull-Down</h1>
-        <p>Compare the default input state, button action, resistor placement, and LED behavior in pull-up and pull-down circuits.</p>
+        <p>Compare the default input state, button action, resistor placement, and LED behavior in pull-up and pull-down
+          circuits.</p>
       </div>
       <img class="brand-logo" src="../../assets/branding/hanze_logo.png" alt="Hanze logo" />
     </header>
@@ -143,7 +759,8 @@
       <section class="panel">
         <div class="topic-head">
           <h2>Input Wiring with Resistors</h2>
-          <p>Switch between a resistor to VCC and a resistor to GND. The button drives the input to the opposite rail.</p>
+          <p>Switch between a resistor to VCC and a resistor to GND. The button drives the input to the opposite rail.
+          </p>
           <div class="status-pill" id="statusPill">Mode: Pull-up | Released = HIGH</div>
         </div>
         <div class="controls-card">
@@ -193,14 +810,14 @@
                           <path d="M0 0 L8 4 L0 8 z" fill="currentColor"></path>
                         </marker>
                       </defs>
-                      <path class="wire" d="M0 68 H56 V80"></path>
-                      <path class="wire" d="M56 112 V184"></path>
-                      <circle class="symbol-ring" cx="56" cy="96" r="34"></circle>
-                      <path class="symbol-line" d="M56 62 V80"></path>
-                      <path class="symbol-triangle" d="M28 80 H84 L56 112 Z"></path>
-                      <path class="symbol-bar" d="M28 112 H84"></path>
-                      <path class="light-arrow" d="M82 62 L100 44"></path>
-                      <path class="light-arrow" d="M90 82 L108 64"></path>
+                      <path class="wire" d="M0 68 H56 V93"></path>
+                      <path class="wire" d="M56 125 V184"></path>
+                      <circle class="symbol-ring" cx="56" cy="109" r="34"></circle>
+                      <path class="symbol-line" d="M56 75 V93"></path>
+                      <path class="symbol-triangle" d="M28 93 H84 L56 125 Z"></path>
+                      <path class="symbol-bar" d="M28 125 H84"></path>
+                      <path class="light-arrow" d="M82 75 L100 57"></path>
+                      <path class="light-arrow" d="M90 95 L108 77"></path>
                     </svg>
                   </div>
                 </div>
@@ -216,7 +833,8 @@
             <h2>Timeline</h2>
             <button class="action-btn" id="toggleTimelineBtn" type="button">Pause timeline</button>
           </div>
-          <p class="timeline-note">Watch the button state, the GPIO input, and the LED response over the last 12 seconds.</p>
+          <p class="timeline-note">Watch the button state, the GPIO input, and the LED response over the last 12
+            seconds.</p>
           <canvas class="timeline-canvas" id="timelineCanvas" width="720" height="460"></canvas>
         </div>
       </section>
@@ -227,7 +845,8 @@
             <h2>Arduino C++</h2>
             <button class="copy-btn" id="copyCodeBtn" type="button">Copy code</button>
           </div>
-          <p class="code-note" id="codeNote">The sketch changes between an internal pull-up input and an external pull-down input.</p>
+          <p class="code-note" id="codeNote">The sketch changes between an internal pull-up input and an external
+            pull-down input.</p>
           <pre class="code-block" id="codeBlock"></pre>
         </div>
       </section>
@@ -392,8 +1011,8 @@ void loop() {
     }
 
     function drawSignalPlot(signal, x, y, width, height) {
-      timelineCtx.fillStyle = "rgba(255,255,255,0.03)";
-      timelineCtx.strokeStyle = "rgba(255,255,255,0.08)";
+      timelineCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--plot-fill").trim() || "rgba(255,255,255,0.03)";
+      timelineCtx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--plot-stroke").trim() || "rgba(255,255,255,0.08)";
       roundRect(timelineCtx, x, y, width, height, 14);
       timelineCtx.fill();
       timelineCtx.stroke();
@@ -415,7 +1034,7 @@ void loop() {
 
       for (let g = 1; g < 5; g++) {
         const gy = y + (g / 5) * height;
-        timelineCtx.strokeStyle = "rgba(255,255,255,0.10)";
+        timelineCtx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--plot-grid").trim() || "rgba(255,255,255,0.10)";
         timelineCtx.beginPath();
         timelineCtx.moveTo(x + 4, gy);
         timelineCtx.lineTo(x + width - 4, gy);
@@ -424,12 +1043,12 @@ void loop() {
 
       for (let t = 0; t <= historySeconds; t += 3) {
         const gx = x + width - (t / historySeconds) * width;
-        timelineCtx.strokeStyle = "rgba(255,255,255,0.12)";
+        timelineCtx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--plot-grid-strong").trim() || "rgba(255,255,255,0.12)";
         timelineCtx.beginPath();
         timelineCtx.moveTo(gx, y + 4);
         timelineCtx.lineTo(gx, y + height - 4);
         timelineCtx.stroke();
-        timelineCtx.fillStyle = "rgba(255,255,255,0.52)";
+        timelineCtx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--plot-axis").trim() || "rgba(255,255,255,0.52)";
         timelineCtx.textAlign = "center";
         timelineCtx.fillText(`-${t}s`, gx, y + height + 12);
       }
@@ -619,5 +1238,9 @@ void loop() {
     renderAll();
     requestAnimationFrame(animate);
   </script>
+  <script src="../shared/sound_fx.js"></script>
 </body>
+
 </html>
+
+

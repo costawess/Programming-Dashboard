@@ -1,10 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-sync-dashboard-lights="true">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Embedded Programming - Digital Input & Output</title>
-  <script>document.documentElement.classList.add("theme-dark");</script>
+  <script>
+    (() => {
+      try {
+        const storedLights = localStorage.getItem("embedded-dashboard-lights-on");
+        const legacyStoredLights = localStorage.getItem("embedded-lights-on");
+        const resolvedLights = storedLights ?? legacyStoredLights;
+        if (resolvedLights === "false") {
+          document.documentElement.classList.add("theme-dark");
+        }
+      } catch (error) {
+        // Ignore storage failures and keep the light theme.
+      }
+    })();
+  </script>
   <script src="../shared/mouse_glow.js"></script>
   <script src="../shared/page_header.js"></script>
   <style>
@@ -26,11 +39,53 @@
       --white: #f6fbff;
       --button-bg: #173245;
       --code-bg: #0d1720;
+      --code-text: #d8f2ff;
+      --code-active-text: #f6fbff;
       --stage-bg: linear-gradient(180deg, #162c3b 0%, #11202a 100%);
+      --timeline-canvas-bg: rgba(7, 15, 21, 0.86);
+      --timeline-plot-fill: rgba(255, 255, 255, 0.03);
+      --timeline-plot-stroke: rgba(255, 255, 255, 0.08);
+      --timeline-grid: rgba(255, 255, 255, 0.10);
+      --timeline-axis-text: rgba(255, 255, 255, 0.52);
+      --timeline-hover-line: rgba(255, 255, 255, 0.55);
+      --timeline-multi-active-text: #e8f4ff;
+      --copy-btn-bg: rgba(11, 24, 34, 0.84);
       --shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+    }
+    html:not(.theme-dark) {
+      --bg: #eef5ff;
+      --panel: rgba(255, 255, 255, 0.88);
+      --card: rgba(248, 251, 255, 0.96);
+      --line: #d4e3f4;
+      --text: #244765;
+      --subtle: #6f88a3;
+      --accent: #2d86e6;
+      --accent-soft: rgba(45, 134, 230, 0.14);
+      --green: #2bbd68;
+      --yellow: #e4b428;
+      --red: #e45a58;
+      --purple: #8f6ce4;
+      --orange: #ea9440;
+      --cyan: #24b9d4;
+      --white: #ffffff;
+      --button-bg: #f5f9ff;
+      --code-bg: #f4f8fd;
+      --code-text: #3a5978;
+      --code-active-text: #163b63;
+      --stage-bg: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+      --timeline-canvas-bg: rgba(244, 248, 253, 0.96);
+      --timeline-plot-fill: rgba(45, 134, 230, 0.05);
+      --timeline-plot-stroke: rgba(45, 134, 230, 0.16);
+      --timeline-grid: rgba(83, 117, 154, 0.18);
+      --timeline-axis-text: rgba(74, 99, 128, 0.78);
+      --timeline-hover-line: rgba(45, 134, 230, 0.42);
+      --timeline-multi-active-text: #244765;
+      --copy-btn-bg: rgba(245, 249, 255, 0.98);
+      --shadow: 0 18px 42px rgba(48, 92, 145, 0.12);
     }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; font-family: "Segoe UI", Arial, sans-serif; color: var(--text); background: radial-gradient(circle at top, #193549 0%, var(--bg) 58%, #081118 100%); }
+    html:not(.theme-dark) body { background: radial-gradient(circle at top left, rgba(120, 180, 255, 0.18) 0%, transparent 28%), linear-gradient(180deg, #f8fbff 0%, var(--bg) 58%, #e8f1ff 100%); }
     .app { padding: 16px; display: grid; gap: 14px; }
     .header, .panel, .card { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
     .header { padding: 14px 16px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; }
@@ -58,6 +113,7 @@
     .control-inline { display: flex; gap: 10px; flex-wrap: wrap; }
     .field-label { color: var(--subtle); font-size: 13px; font-weight: 700; }
     input[type="range"], select, input[type="text"] { width: 100%; padding: 10px 11px; border-radius: 12px; border: 2px solid var(--line); background: rgba(11, 24, 34, 0.84); color: var(--text); font: inherit; }
+    html:not(.theme-dark) input[type="range"], html:not(.theme-dark) select, html:not(.theme-dark) input[type="text"] { background: rgba(255, 255, 255, 0.96); }
     input[type="range"] { padding: 0; accent-color: var(--accent); }
     button.action-btn { appearance: none; border: 2px solid var(--line); border-radius: 12px; padding: 9px 12px; background: var(--button-bg); color: var(--text); font-weight: 800; cursor: pointer; }
     button.action-btn.active { border-color: var(--accent); background: var(--accent-soft); color: var(--white); }
@@ -66,6 +122,7 @@
     .visual-wrap { width: 100%; max-width: 420px; display: grid; gap: 14px; justify-items: center; }
     .rig-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; justify-content: center; }
     .push-button, .sensor-box, .code-box, .serial-box, .function-box, .counter-box { min-width: 96px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); padding: 12px; text-align: center; display: grid; gap: 6px; }
+    html:not(.theme-dark) .push-button, html:not(.theme-dark) .sensor-box, html:not(.theme-dark) .code-box, html:not(.theme-dark) .serial-box, html:not(.theme-dark) .function-box, html:not(.theme-dark) .counter-box { background: rgba(45, 134, 230, 0.04); }
     .push-button strong, .sensor-box strong, .code-box strong, .serial-box strong, .function-box strong, .counter-box strong { font-size: 13px; color: var(--subtle); }
     .foundations-io-row { width: 100%; max-width: 290px; display: grid; grid-template-columns: repeat(2, minmax(110px, 1fr)); gap: 18px; justify-items: center; }
     .io-button { width: 72px; height: 72px; border-radius: 50%; border: 5px solid rgba(255, 255, 255, 0.16); background: radial-gradient(circle at 35% 30%, #4e6270 0%, #243844 70%, #11202a 100%); box-shadow: inset 0 8px 12px rgba(255, 255, 255, 0.08); }
@@ -104,9 +161,11 @@
     .lane { border-radius: 18px; border: 1px solid var(--line); padding: 14px; background: rgba(255, 255, 255, 0.04); display: grid; gap: 8px; }
     .lane strong { color: var(--subtle); font-size: 14px; }
     .lane code { display: block; border-radius: 12px; padding: 10px 12px; background: rgba(7, 15, 21, 0.82); color: var(--accent); font-family: Consolas, monospace; font-size: 14px; min-height: 42px; user-select: text; -webkit-user-select: text; cursor: text; }
+    html:not(.theme-dark) .lane code { background: rgba(238, 245, 255, 0.96); }
     .state-machine-wrap { width: 100%; max-width: 460px; display: grid; gap: 14px; justify-items: center; }
     .state-machine-status { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     .state-chip { border-radius: 18px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); padding: 12px 14px; display: grid; gap: 6px; text-align: center; }
+    html:not(.theme-dark) .state-chip { background: rgba(45, 134, 230, 0.04); }
     .state-chip strong { color: var(--subtle); font-size: 13px; }
     .state-chip span { color: var(--white); font-size: 18px; font-weight: 900; }
     .state-diagram-svg { width: 100%; max-width: 500px; height: auto; display: block; overflow: visible; }
@@ -167,17 +226,17 @@
     .loop-led-item { display: grid; gap: 8px; justify-items: center; text-align: center; color: var(--subtle); font-size: 12px; }
     .loop-led-item strong { color: var(--white); font-size: 13px; }
     .loop-led-item span { line-height: 1.3; }
-    .timeline-canvas { width: 100%; height: 380px; display: block; border-radius: 18px; background: rgba(7, 15, 21, 0.86); border: 1px solid var(--line); }
+    .timeline-canvas { width: 100%; height: 380px; display: block; border-radius: 18px; background: var(--timeline-canvas-bg); border: 1px solid var(--line); }
     .timeline-extra { display: none; }
     .timeline-extra.show { display: grid; gap: 12px; }
     .diagram-stage { min-height: 300px; align-items: start; }
     .timeline-note, .code-note { color: var(--subtle); font-size: 14px; line-height: 1.45; }
-    pre.code-block { margin: 0; min-height: 380px; padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--code-bg); color: #d8f2ff; font-family: Consolas, "Courier New", monospace; font-size: 12px; line-height: 1.45; white-space: pre-wrap; user-select: text; -webkit-user-select: text; cursor: text; }
+    pre.code-block { margin: 0; min-height: 380px; padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: var(--code-bg); color: var(--code-text); font-family: Consolas, "Courier New", monospace; font-size: 12px; line-height: 1.45; white-space: pre-wrap; user-select: text; -webkit-user-select: text; cursor: text; }
     .code-line { display: block; margin: 0 -6px; padding: 1px 6px; border-radius: 8px; transition: background 0.16s ease, box-shadow 0.16s ease; }
-    .code-line.active { background: rgba(99, 196, 255, 0.16); box-shadow: inset 3px 0 0 rgba(99, 196, 255, 0.9); color: var(--white); }
-    .copy-btn { appearance: none; border: 2px solid var(--line); border-radius: 12px; padding: 8px 12px; background: rgba(11, 24, 34, 0.84); color: var(--text); font-weight: 800; cursor: pointer; transition: .16s ease; }
+    .code-line.active { background: rgba(99, 196, 255, 0.16); box-shadow: inset 3px 0 0 rgba(99, 196, 255, 0.9); color: var(--code-active-text); }
+    .copy-btn { appearance: none; border: 2px solid var(--line); border-radius: 12px; padding: 8px 12px; background: var(--copy-btn-bg); color: var(--text); font-weight: 800; cursor: pointer; transition: .16s ease; }
     .copy-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
-    .copy-btn.copied { border-color: var(--green); color: var(--white); background: rgba(47, 199, 107, 0.14); }
+    .copy-btn.copied { border-color: var(--green); color: var(--code-active-text); background: rgba(47, 199, 107, 0.14); }
     @media (max-width: 1320px) { .layout { grid-template-columns: 1fr; } .timeline-canvas, pre.code-block { min-height: 360px; } }
     @media (max-width: 760px) { .header { grid-template-columns: 1fr; } .variable-grid, .stat-grid, .adc-value-grid, .state-machine-status, .state-machine-row, .state-machine-row.bottom, .conditional-layout, .loop-led-grid, .foundations-io-row, .adc-circuit { grid-template-columns: 1fr; padding: 0; } }
   </style>
@@ -1198,7 +1257,7 @@
       else if (currentTopicId === "conditionals") {
         if (sim.mode === "comparison") {
           const compareText = `if(sensorValue ${getComparisonLabel(sim.compareOp)} threshold)`;
-          visualStage.innerHTML = `<div class="visual-wrap"><div class="io-mini-row"><div class="mini-io-card"><strong>Sensor</strong><div>${sim.sensor}</div></div><div class="mini-io-card"><strong>Threshold</strong><div>${sim.threshold}</div></div><div class="mini-io-card"><strong>Main LED</strong><div class="led green small ${sim.led ? "on" : ""}"></div></div></div><div class="compare-box">${compareText}<br />sensor=${sim.sensor} | threshold=${sim.threshold}</div></div>`;
+          visualStage.innerHTML = `<div class="visual-wrap"><div class="io-mini-row"><div class="mini-io-card"><strong>Sensor</strong><div>${sim.sensor}</div></div><div class="mini-io-card"><strong>Threshold</strong><div>${sim.threshold}</div></div><div class="mini-io-card"><strong>LED</strong><div class="led green small ${sim.led ? "on" : ""}"></div></div></div><div class="compare-box">${compareText}<br />sensor=${sim.sensor} | threshold=${sim.threshold}</div></div>`;
         } else if (sim.mode === "nested") {
           const nestedLabel = getNestedPatternLabel(sim.nestedPattern);
           const comboCards = [
@@ -1207,7 +1266,7 @@
             { key: "ab_or_cd", title: "Combo 3", text: "(A && B) || (C && D)" },
             { key: "a_notb_cd", title: "Combo 4", text: "A && !B && (C || D)" }
           ];
-          visualStage.innerHTML = `<div class="visual-wrap"><div class="io-mini-row five"><div class="mini-io-card"><strong>Input A</strong><div class="io-button small ${sim.buttonA ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input B</strong><div class="io-button small ${sim.buttonB ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input C</strong><div class="io-button small ${sim.buttonC ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input D</strong><div class="io-button small ${sim.buttonD ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Main LED</strong><div class="led green small ${sim.led ? "on" : ""}"></div></div></div><div class="compare-box">if (${nestedLabel})<br />A=${sim.buttonA ? 1 : 0} | B=${sim.buttonB ? 1 : 0} | C=${sim.buttonC ? 1 : 0} | D=${sim.buttonD ? 1 : 0}</div><div class="combo-grid">${comboCards.map(card => `<div class="combo-card ${evaluateNestedCombination(card.key, sim.buttonA, sim.buttonB, sim.buttonC, sim.buttonD) ? "active" : ""} ${card.key === sim.nestedPattern ? "selected" : ""}"><strong>${card.title}</strong><span>if (${card.text})</span></div>`).join("")}</div></div>`;
+          visualStage.innerHTML = `<div class="visual-wrap"><div class="io-mini-row five"><div class="mini-io-card"><strong>Input A</strong><div class="io-button small ${sim.buttonA ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input B</strong><div class="io-button small ${sim.buttonB ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input C</strong><div class="io-button small ${sim.buttonC ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input D</strong><div class="io-button small ${sim.buttonD ? "on" : ""}"></div></div><div class="mini-io-card"><strong>LED</strong><div class="led green small ${sim.led ? "on" : ""}"></div></div></div><div class="compare-box">if (${nestedLabel})<br />A=${sim.buttonA ? 1 : 0} | B=${sim.buttonB ? 1 : 0} | C=${sim.buttonC ? 1 : 0} | D=${sim.buttonD ? 1 : 0}</div><div class="combo-grid">${comboCards.map(card => `<div class="combo-card ${evaluateNestedCombination(card.key, sim.buttonA, sim.buttonB, sim.buttonC, sim.buttonD) ? "active" : ""} ${card.key === sim.nestedPattern ? "selected" : ""}"><strong>${card.title}</strong><span>if (${card.text})</span></div>`).join("")}</div></div>`;
         } else {
           const operationLabel = getLogicOperatorLabel(sim.operation);
           const operationExpression = getLogicOperatorExpression(sim.operation);
@@ -1219,7 +1278,7 @@
           ];
           const activeKey = `${sim.buttonA ? 1 : 0}${sim.buttonB ? 1 : 0}`;
           const compareText = `if (${operationExpression})`;
-          visualStage.innerHTML = `<div class="conditional-layout"><div class="visual-wrap"><div class="io-mini-row"><div class="mini-io-card"><strong>Input A</strong><div class="io-button small ${sim.buttonA ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input B</strong><div class="io-button small ${sim.buttonB ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Main LED</strong><div class="led green small ${sim.led ? "on" : ""}"></div></div></div><div class="compare-box">${compareText}<br />Current inputs: A=${sim.buttonA ? 1 : 0} | B=${sim.buttonB ? 1 : 0}</div></div><div class="truth-card"><strong>Truth table</strong><table class="truth-table"><thead><tr><th>A</th><th>B</th><th>OUT</th></tr></thead><tbody>${truthRows.map(row => `<tr class="${`${row.a}${row.b}` === activeKey ? "active-row" : ""}"><td>${row.a}</td><td>${row.b}</td><td>${row.out}</td></tr>`).join("")}</tbody></table><div class="truth-note">${operationLabel} is highlighted with the current input row.</div></div></div>`;
+          visualStage.innerHTML = `<div class="conditional-layout"><div class="visual-wrap"><div class="io-mini-row"><div class="mini-io-card"><strong>Input A</strong><div class="io-button small ${sim.buttonA ? "on" : ""}"></div></div><div class="mini-io-card"><strong>Input B</strong><div class="io-button small ${sim.buttonB ? "on" : ""}"></div></div><div class="mini-io-card"><strong>LED</strong><div class="led green small ${sim.led ? "on" : ""}"></div></div></div><div class="compare-box">${compareText}<br />Current inputs: A=${sim.buttonA ? 1 : 0} | B=${sim.buttonB ? 1 : 0}</div></div><div class="truth-card"><strong>Truth table</strong><table class="truth-table"><thead><tr><th>A</th><th>B</th><th>OUT</th></tr></thead><tbody>${truthRows.map(row => `<tr class="${`${row.a}${row.b}` === activeKey ? "active-row" : ""}"><td>${row.a}</td><td>${row.b}</td><td>${row.out}</td></tr>`).join("")}</tbody></table><div class="truth-note">${operationLabel} is highlighted with the current input row.</div></div></div>`;
         }
       } else if (currentTopicId === "loops") {
         const loopHeader = sim.pattern === "blink"
@@ -1265,6 +1324,9 @@
       if (signal.max <= 5) return Number(value).toFixed(2);
       return Number(value).toFixed(0);
     }
+    function themeColor(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
     function drawSignalSeries(signal, x, y, width, height) {
       if (samples.length < 2) return;
       timelineCtx.strokeStyle = signal.color;
@@ -1303,13 +1365,13 @@
       const last = samples[samples.length - 1];
       const activeSeries = signal.series.filter(series => last.values[series.key] > 0.5);
       const activeLabel = activeSeries.length ? activeSeries.map(series => series.label).join(" ") : "none";
-      timelineCtx.fillStyle = activeSeries.length === 1 ? activeSeries[0].color : activeSeries.length > 1 ? "#e8f4ff" : "rgba(255,255,255,0.55)";
+      timelineCtx.fillStyle = activeSeries.length === 1 ? activeSeries[0].color : activeSeries.length > 1 ? themeColor("--timeline-multi-active-text") : themeColor("--timeline-axis-text");
       timelineCtx.textAlign = "right";
       timelineCtx.fillText(activeLabel, x + width - 8, y + 14);
     }
     function drawSignalPlot(signal, x, y, width, height) {
-      timelineCtx.fillStyle = "rgba(255,255,255,0.03)";
-      timelineCtx.strokeStyle = "rgba(255,255,255,0.08)";
+      timelineCtx.fillStyle = themeColor("--timeline-plot-fill");
+      timelineCtx.strokeStyle = themeColor("--timeline-plot-stroke");
       roundRect(timelineCtx, x, y, width, height, 14);
       timelineCtx.fill();
       timelineCtx.stroke();
@@ -1328,7 +1390,7 @@
       timelineCtx.fillText(`${signal.max}${signal.unit ? ` ${signal.unit}` : ""}`, x - 52, y + 12);
       for (let g = 1; g < 5; g++) {
         const gy = y + (g / 5) * height;
-        timelineCtx.strokeStyle = "rgba(255,255,255,0.10)";
+        timelineCtx.strokeStyle = themeColor("--timeline-grid");
         timelineCtx.beginPath();
         timelineCtx.moveTo(x + 4, gy);
         timelineCtx.lineTo(x + width - 4, gy);
@@ -1336,12 +1398,12 @@
       }
       for (let t = 0; t <= 12; t += 3) {
         const gx = x + width - (t / 12) * width;
-        timelineCtx.strokeStyle = "rgba(255,255,255,0.12)";
+        timelineCtx.strokeStyle = themeColor("--timeline-grid");
         timelineCtx.beginPath();
         timelineCtx.moveTo(gx, y + 4);
         timelineCtx.lineTo(gx, y + height - 4);
         timelineCtx.stroke();
-        timelineCtx.fillStyle = "rgba(255,255,255,0.52)";
+        timelineCtx.fillStyle = themeColor("--timeline-axis-text");
         timelineCtx.textAlign = "center";
         timelineCtx.fillText(`-${t}s`, gx, y + height + 12);
       }
@@ -1351,7 +1413,7 @@
     function drawTimelineHoverLine(x, y, height) {
       timelineCtx.save();
       timelineCtx.setLineDash([6, 6]);
-      timelineCtx.strokeStyle = "rgba(255,255,255,0.55)";
+      timelineCtx.strokeStyle = themeColor("--timeline-hover-line");
       timelineCtx.lineWidth = 1.2;
       timelineCtx.beginPath();
       timelineCtx.moveTo(x, y + 4);
@@ -1376,13 +1438,13 @@
       const plotW = width - margin.left - margin.right;
       const plotH = height - margin.top - margin.bottom;
       roundRect(timelineCtx, plotX, plotY, plotW, plotH, 18);
-      timelineCtx.fillStyle = "rgba(7, 15, 21, 0.86)";
-      timelineCtx.strokeStyle = "rgba(255,255,255,0.08)";
+      timelineCtx.fillStyle = themeColor("--timeline-canvas-bg");
+      timelineCtx.strokeStyle = themeColor("--timeline-plot-stroke");
       timelineCtx.fill();
       timelineCtx.stroke();
       for (let i = 1; i < 5; i++) {
         const gy = plotY + (i / 5) * plotH;
-        timelineCtx.strokeStyle = "rgba(255,255,255,0.10)";
+        timelineCtx.strokeStyle = themeColor("--timeline-grid");
         timelineCtx.beginPath();
         timelineCtx.moveTo(plotX + 4, gy);
         timelineCtx.lineTo(plotX + plotW - 4, gy);
@@ -1390,7 +1452,7 @@
       }
       for (let i = 0; i <= 4; i++) {
         const gx = plotX + (i / 4) * plotW;
-        timelineCtx.strokeStyle = "rgba(255,255,255,0.10)";
+        timelineCtx.strokeStyle = themeColor("--timeline-grid");
         timelineCtx.beginPath();
         timelineCtx.moveTo(gx, plotY + 4);
         timelineCtx.lineTo(gx, plotY + plotH - 4);
@@ -1404,7 +1466,7 @@
       timelineCtx.textAlign = "center";
       timelineCtx.fillText("Voltage", 0, 0);
       timelineCtx.restore();
-      timelineCtx.fillStyle = "rgba(255,255,255,0.52)";
+      timelineCtx.fillStyle = themeColor("--timeline-axis-text");
       timelineCtx.font = "12px Segoe UI";
       timelineCtx.textAlign = "center";
       timelineCtx.fillText("Digital word", plotX + plotW / 2, plotY + plotH + 26);
@@ -1465,13 +1527,13 @@
       const plotW = width - margin.left - margin.right;
       const plotH = height - margin.top - margin.bottom;
       roundRect(timelineCtx, plotX, plotY, plotW, plotH, 18);
-      timelineCtx.fillStyle = "rgba(7, 15, 21, 0.86)";
-      timelineCtx.strokeStyle = "rgba(255,255,255,0.08)";
+      timelineCtx.fillStyle = themeColor("--timeline-canvas-bg");
+      timelineCtx.strokeStyle = themeColor("--timeline-plot-stroke");
       timelineCtx.fill();
       timelineCtx.stroke();
       for (let i = 1; i < 5; i++) {
         const gy = plotY + (i / 5) * plotH;
-        timelineCtx.strokeStyle = "rgba(255,255,255,0.10)";
+        timelineCtx.strokeStyle = themeColor("--timeline-grid");
         timelineCtx.beginPath();
         timelineCtx.moveTo(plotX + 4, gy);
         timelineCtx.lineTo(plotX + plotW - 4, gy);
@@ -1479,7 +1541,7 @@
       }
       for (let i = 0; i <= 4; i++) {
         const gx = plotX + (i / 4) * plotW;
-        timelineCtx.strokeStyle = "rgba(255,255,255,0.10)";
+        timelineCtx.strokeStyle = themeColor("--timeline-grid");
         timelineCtx.beginPath();
         timelineCtx.moveTo(gx, plotY + 4);
         timelineCtx.lineTo(gx, plotY + plotH - 4);
@@ -1493,7 +1555,7 @@
       timelineCtx.textAlign = "center";
       timelineCtx.fillText("Estimated voltage", 0, 0);
       timelineCtx.restore();
-      timelineCtx.fillStyle = "rgba(255,255,255,0.52)";
+      timelineCtx.fillStyle = themeColor("--timeline-axis-text");
       timelineCtx.font = "12px Segoe UI";
       timelineCtx.textAlign = "center";
       timelineCtx.fillText("Input voltage", plotX + plotW / 2, plotY + plotH + 26);
