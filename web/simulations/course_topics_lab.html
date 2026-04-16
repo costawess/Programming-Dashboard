@@ -282,7 +282,7 @@
     };
     function createTopicState(topicId) {
       if (topicId === "foundations") return { time: 0, example: "output", button: false, led: true, blinkDelayMs: 600, blinkTimer: 0 };
-      if (topicId === "variables") return { time: 0, sensor: 510, pwm: 128, brightness: 50 };
+      if (topicId === "variables") return { time: 0, example: "latch", sensor: 510, pwm: 128, brightness: 50, latchState: false, b1: false, b2: false, counterCount: 0, counterBtn: false, counterBtnPrev: false, counterEdge: false };
       if (topicId === "conditionals") return { time: 0, mode: "basic", operation: "and", nestedPattern: "ab", compareOp: "gt", buttonA: false, buttonB: false, buttonC: false, buttonD: false, sensor: 480, threshold: 600, led: false };
       if (topicId === "loops") return { time: 0, running: true, mode: "for", pattern: "sequence", speed: 0.7, index: 0, blinkState: 0, leds: [true, false, false, false], ledYellow: 1, ledRed: 0, ledGreen: 0, ledBlue: 0, accum: 0, cyclePulse: 0 };
       if (topicId === "adc") return { time: 0, adcScenario: "linear", adcBits: 12, pot: 1.03 / 3.3, analog: 1281, pwm: 80, voltage: 1.03, esp32Word: 0, adcNaiveVoltage: 0, adcCalibratedVoltage: 0 };
@@ -780,12 +780,24 @@
         return;
       }
       if (currentTopicId === "variables") {
-        controlsPane.innerHTML = `<div class="control-row"><div class="value-line"><span>Sensor variable (← →)</span><span>${sim.sensor}</span></div><input id="sensorSlider" type="range" min="0" max="1023" step="10" value="${sim.sensor}" /></div>`;
-        document.getElementById("sensorSlider").addEventListener("input", event => {
-          sim.sensor = Number(event.target.value);
-          renderControls();
-          renderVisual();
-          renderCode();
+        const exampleSelect = `<div class="control-row"><div class="field-label">Example</div><select id="variablesExample"><option value="latch" ${sim.example === "latch" ? "selected" : ""}>Latch (B1 / B2)</option><option value="counter" ${sim.example === "counter" ? "selected" : ""}>Button counter</option><option value="sensor_pwm" ${sim.example === "sensor_pwm" ? "selected" : ""}>Sensor to PWM</option></select></div>`;
+        if (sim.example === "sensor_pwm") {
+          controlsPane.innerHTML = exampleSelect + `<div class="control-row"><div class="value-line"><span>Sensor variable (← →)</span><span>${sim.sensor}</span></div><input id="sensorSlider" type="range" min="0" max="1023" step="10" value="${sim.sensor}" /></div>`;
+          document.getElementById("sensorSlider").addEventListener("input", event => { sim.sensor = Number(event.target.value); renderControls(); renderVisual(); renderCode(); updateStatusFromTopic(); });
+        } else if (sim.example === "latch") {
+          controlsPane.innerHTML = exampleSelect + `<div class="control-row"><div class="field-label">Digital input</div><div class="control-inline"><button class="action-btn" id="b1Btn">B1 — Set</button><button class="action-btn" id="b2Btn">B2 — Reset</button></div></div>`;
+          bindMomentaryButton(document.getElementById("b1Btn"), pressed => { sim.b1 = pressed; });
+          bindMomentaryButton(document.getElementById("b2Btn"), pressed => { sim.b2 = pressed; });
+        } else {
+          controlsPane.innerHTML = exampleSelect + `<div class="control-row"><div class="field-label">Digital input</div><div class="control-inline"><button class="action-btn" id="counterBtnEl">Press B1</button></div></div>`;
+          bindMomentaryButton(document.getElementById("counterBtnEl"), pressed => { sim.counterBtn = pressed; });
+        }
+        document.getElementById("variablesExample").addEventListener("change", event => {
+          sim.example = event.target.value;
+          sim.b1 = false; sim.b2 = false; sim.latchState = false;
+          sim.counterBtn = false; sim.counterBtnPrev = false; sim.counterEdge = false;
+          samples = []; sampleAccum = 0; sampleSignals();
+          renderControls(); renderVisual(); renderTimeline(); renderCode(); updateStatusFromTopic();
         });
         return;
       }
@@ -1053,7 +1065,12 @@
         }
         return;
       }
-      if (currentTopicId === "variables") { sim.pwm = Math.round(sim.sensor / 1023 * 255); sim.brightness = Math.round(sim.pwm / 255 * 100); return; }
+      if (currentTopicId === "variables") {
+        if (sim.example === "sensor_pwm") { sim.pwm = Math.round(sim.sensor / 1023 * 255); sim.brightness = Math.round(sim.pwm / 255 * 100); }
+        else if (sim.example === "latch") { if (sim.b1) sim.latchState = true; if (sim.b2) sim.latchState = false; }
+        else if (sim.example === "counter") { sim.counterEdge = sim.counterBtn && !sim.counterBtnPrev; if (sim.counterEdge) sim.counterCount++; sim.counterBtnPrev = sim.counterBtn; }
+        return;
+      }
       if (currentTopicId === "conditionals") {
         if (sim.mode === "basic") sim.led = evaluateLogicOperation(sim.operation, sim.buttonA, sim.buttonB);
         else if (sim.mode === "nested") sim.led = evaluateNestedCombination(sim.nestedPattern, sim.buttonA, sim.buttonB, sim.buttonC, sim.buttonD);
@@ -1201,7 +1218,11 @@
     }
     function getSignals() {
       if (currentTopicId === "foundations") return sim.example === "input" ? [{ key: "button", label: "Button", color: "#63c4ff", min: 0, max: 1, unit: "0-1" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }] : [{ key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }];
-      if (currentTopicId === "variables") return [{ key: "sensor", label: "Sensor", color: "#63c4ff", min: 0, max: 1023, unit: "raw" }, { key: "pwm", label: "PWM", color: "#ffcc45", min: 0, max: 255, unit: "8-bit" }, { key: "brightness", label: "Brightness", color: "#2fc76b", min: 0, max: 100, unit: "%" }];
+      if (currentTopicId === "variables") {
+        if (sim.example === "latch") return [{ key: "b1", label: "B1", color: "#63c4ff", min: 0, max: 1, unit: "0-1" }, { key: "b2", label: "B2", color: "#b98cff", min: 0, max: 1, unit: "0-1" }, { key: "latchState", label: "ledState", color: "#2fc76b", min: 0, max: 1, unit: "bool" }];
+        if (sim.example === "counter") return [{ key: "counterBtn", label: "Button", color: "#63c4ff", min: 0, max: 1, unit: "0-1" }, { key: "counterCount", label: "count", color: "#ffcc45", min: 0, max: 20, unit: "int" }];
+        return [{ key: "sensor", label: "Sensor", color: "#63c4ff", min: 0, max: 1023, unit: "raw" }, { key: "pwm", label: "PWM", color: "#ffcc45", min: 0, max: 255, unit: "8-bit" }, { key: "brightness", label: "Brightness", color: "#2fc76b", min: 0, max: 100, unit: "%" }];
+      }
       if (currentTopicId === "conditionals") return sim.mode === "comparison" ? [{ key: "sensor", label: "Sensor", color: "#63c4ff", min: 0, max: 1023, unit: "raw" }, { key: "threshold", label: "Threshold", color: "#ff9f43", min: 0, max: 1023, unit: "raw" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }] : sim.mode === "nested" ? [{ key: "buttonA", label: "Input A", color: "#63c4ff", min: 0, max: 1, unit: "0-1" }, { key: "buttonB", label: "Input B", color: "#b98cff", min: 0, max: 1, unit: "0-1" }, { key: "buttonC", label: "Input C", color: "#ff9f43", min: 0, max: 1, unit: "0-1" }, { key: "buttonD", label: "Input D", color: "#ff6b65", min: 0, max: 1, unit: "0-1" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }] : [{ key: "buttonA", label: "Input A", color: "#63c4ff", min: 0, max: 1, unit: "0-1" }, { key: "buttonB", label: "Input B", color: "#b98cff", min: 0, max: 1, unit: "0-1" }, { key: "led", label: "LED", color: "#2fc76b", min: 0, max: 1, unit: "0-1" }];
       if (currentTopicId === "loops") return [{ key: sim.pattern === "blink" ? "blinkState" : "index", label: sim.pattern === "blink" ? "Blink" : "i", color: "#ffcc45", min: sim.pattern === "blink" ? 0 : 0, max: sim.pattern === "blink" ? 1 : 3, unit: sim.pattern === "blink" ? "0-1" : "id" }, { key: "loopLeds", label: "LEDs", color: "#63c4ff", min: 0, max: 1, unit: "0-1", series: [{ key: "ledYellow", label: "Y", color: "#ffcc45" }, { key: "ledRed", label: "R", color: "#ff6b65" }, { key: "ledGreen", label: "G", color: "#2fc76b" }, { key: "ledBlue", label: "B", color: "#63c4ff" }] }];
       if (currentTopicId === "adc") return sim.adcScenario === "esp32_nonlinear"
@@ -1234,7 +1255,11 @@
     }
     function updateStatusFromTopic() {
       if (currentTopicId === "foundations") setStatus(sim.example === "input" ? (sim.led ? "Input pressed: LED is ON" : "Press and hold the input button") : (sim.led ? `Digital output HIGH | delay ${sim.blinkDelayMs} ms` : `Digital output LOW | delay ${sim.blinkDelayMs} ms`), sim.led ? "green" : "accent");
-      else if (currentTopicId === "variables") setStatus(`PWM = ${sim.pwm}`, "accent");
+      else if (currentTopicId === "variables") {
+        if (sim.example === "latch") setStatus(`ledState = ${sim.latchState ? "true" : "false"}`, sim.latchState ? "green" : "accent");
+        else if (sim.example === "counter") setStatus(`count = ${sim.counterCount}`, "accent");
+        else setStatus(`PWM = ${sim.pwm}`, "accent");
+      }
       else if (currentTopicId === "conditionals") setStatus(sim.mode === "comparison" ? `Comparison: sensor ${getComparisonLabel(sim.compareOp)} threshold` : sim.mode === "nested" ? `Nested if | ${getNestedPatternLabel(sim.nestedPattern)}` : `Basic if | ${getLogicOperatorLabel(sim.operation)}`, "accent");
       else if (currentTopicId === "loops") {
         const buttons = topicStatus.querySelectorAll("[data-loop-pattern]");
@@ -1253,7 +1278,15 @@
     }
     function renderVisual() {
       if (currentTopicId === "foundations") visualStage.innerHTML = sim.example === "input" ? `<div class="visual-wrap"><div class="compare-box">digitalRead(buttonPin) = ${sim.button ? "HIGH" : "LOW"}</div><div class="foundations-io-row"><div class="push-button"><strong>Button</strong><div class="io-button ${sim.button ? "on" : ""}"></div></div><div class="push-button"><strong>LED</strong><div class="led green ${sim.led ? "on" : ""}"></div></div></div></div>` : `<div class="visual-wrap"><div class="compare-box">digitalWrite(ledPin, ${sim.led ? "HIGH" : "LOW"})<br />delay(${sim.blinkDelayMs});</div><div class="rig-row"><div class="push-button"><strong>LED output</strong><div class="led green ${sim.led ? "on" : ""}"></div></div><div class="counter-box"><strong>Delay</strong><div>${sim.blinkDelayMs} ms</div></div></div></div>`;
-      else if (currentTopicId === "variables") visualStage.innerHTML = `<div class="visual-wrap"><div class="variable-grid"><div class="counter-box"><strong>sensorValue</strong><div>${sim.sensor}</div></div><div class="counter-box"><strong>pwmValue</strong><div>${sim.pwm}</div></div></div><div class="bar-shell"><div class="bar-fill" style="width:${sim.brightness}%"></div></div><div class="rig-row"><div class="sensor-box"><strong>Brightness</strong><div>${sim.brightness}%</div></div><div class="led blue ${sim.brightness > 3 ? "on" : ""}" style="opacity:${0.25 + sim.brightness / 100 * 0.75};"></div></div></div>`;
+      else if (currentTopicId === "variables") {
+        if (sim.example === "latch") {
+          visualStage.innerHTML = `<div class="visual-wrap"><div class="compare-box">bool ledState = ${sim.latchState ? "true" : "false"}</div><div class="io-mini-row"><div class="mini-io-card"><strong>B1 — Set</strong><div class="io-button small ${sim.b1 ? "on" : ""}"></div></div><div class="mini-io-card"><strong>B2 — Reset</strong><div class="io-button small ${sim.b2 ? "on" : ""}"></div></div><div class="mini-io-card"><strong>LED</strong><div class="led green small ${sim.latchState ? "on" : ""}"></div></div></div></div>`;
+        } else if (sim.example === "counter") {
+          visualStage.innerHTML = `<div class="visual-wrap"><div class="compare-box">int count = ${sim.counterCount}</div><div class="rig-row"><div class="push-button"><strong>Button</strong><div class="io-button ${sim.counterBtn ? "on" : ""}"></div></div><div class="counter-box"><strong>count</strong><div style="font-size:28px;font-weight:900;color:var(--white)">${sim.counterCount}</div></div></div></div>`;
+        } else {
+          visualStage.innerHTML = `<div class="visual-wrap"><div class="variable-grid"><div class="counter-box"><strong>sensorValue</strong><div>${sim.sensor}</div></div><div class="counter-box"><strong>pwmValue</strong><div>${sim.pwm}</div></div></div><div class="bar-shell"><div class="bar-fill" style="width:${sim.brightness}%"></div></div><div class="rig-row"><div class="sensor-box"><strong>Brightness</strong><div>${sim.brightness}%</div></div><div class="led blue ${sim.brightness > 3 ? "on" : ""}" style="opacity:${0.25 + sim.brightness / 100 * 0.75};"></div></div></div>`;
+        }
+      }
       else if (currentTopicId === "conditionals") {
         if (sim.mode === "comparison") {
           const compareText = `if(sensorValue ${getComparisonLabel(sim.compareOp)} threshold)`;
@@ -1734,8 +1767,18 @@
         return;
       }
       if (currentTopicId === "variables") {
-        codeText = `const int sensorPin = A0;\nconst int ledPin = 9;\n\nvoid setup() {\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  int sensorValue = analogRead(sensorPin);\n  int pwmValue = map(sensorValue, 0, 1023, 0, 255);\n\n  analogWrite(ledPin, pwmValue);\n}`;
-        activeLines = [9, 10, 12];
+        if (sim.example === "latch") {
+          codeNote.textContent = "B1 sets ledState to true and latches the LED on. B2 resets it to false. The variable holds its value between loop() calls — that is the latch effect.";
+          codeText = `const int b1Pin = 2;\nconst int b2Pin = 3;\nconst int ledPin = 13;\n\nbool ledState = false;\n\nvoid setup() {\n  pinMode(b1Pin, INPUT_PULLUP);\n  pinMode(b2Pin, INPUT_PULLUP);\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  bool b1 = digitalRead(b1Pin) == LOW;\n  bool b2 = digitalRead(b2Pin) == LOW;\n\n  if (b1) ledState = true;\n  if (b2) ledState = false;\n\n  digitalWrite(ledPin, ledState ? HIGH : LOW);\n}`;
+          activeLines = sim.b1 ? [14, 15, 17, 20] : sim.b2 ? [14, 15, 18, 20] : [14, 15, 20];
+        } else if (sim.example === "counter") {
+          codeNote.textContent = "Each button press increments count by one. lastButtonState tracks the previous frame so the counter only reacts to the rising edge, not while the button is held.";
+          codeText = `const int buttonPin = 2;\n\nint count = 0;\nbool lastButtonState = false;\n\nvoid setup() {\n  pinMode(buttonPin, INPUT_PULLUP);\n  Serial.begin(115200);\n}\n\nvoid loop() {\n  bool buttonPressed = digitalRead(buttonPin) == LOW;\n\n  if (buttonPressed && !lastButtonState) {\n    count++;\n  }\n\n  lastButtonState = buttonPressed;\n  Serial.println(count);\n}`;
+          activeLines = sim.counterEdge ? [12, 14, 15, 18, 19] : [12, 14, 18, 19];
+        } else {
+          codeText = `const int sensorPin = A0;\nconst int ledPin = 9;\n\nvoid setup() {\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  int sensorValue = analogRead(sensorPin);\n  int pwmValue = map(sensorValue, 0, 1023, 0, 255);\n\n  analogWrite(ledPin, pwmValue);\n}`;
+          activeLines = [9, 10, 12];
+        }
         renderHighlightedCode(codeText, activeLines);
         return;
       }
@@ -1908,6 +1951,7 @@
         return;
       }
       if (currentTopicId === "variables") {
+        if (sim.example !== "sensor_pwm") return;
         const step = 10;
         if (event.key === "ArrowLeft") {
           event.preventDefault();
