@@ -1,6 +1,6 @@
-# Embedded Programming Hub
+# Embedded Programming Simulations
 
-This repository is now focused on the publishable web version of the project.
+This project is intended to facitilate the understanding of the students in EP.
 
 ## Main Entry Points
 
