@@ -93,35 +93,16 @@
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(280px, 0.85fr) minmax(380px, 1.1fr) minmax(300px, 0.95fr);
+      grid-template-columns: minmax(210px, 0.5fr) minmax(360px, 1.15fr) minmax(300px, 0.95fr);
       gap: 18px;
       align-items: start;
     }
 
     .panel { padding: 18px; display: grid; gap: 14px; }
+    .panel.full-row { grid-column: 1 / -1; }
     .card { background: var(--card); border-radius: 22px; padding: 16px; display: grid; gap: 12px; }
     .card h2, .card h3, .card p { margin: 0; }
     .card p { color: var(--subtle); line-height: 1.45; }
-
-    .status-row {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .status-pill {
-      border: 2px solid var(--accent);
-      border-radius: 18px;
-      padding: 12px 14px;
-      background: var(--accent-soft);
-      display: grid;
-      gap: 6px;
-    }
-
-    .status-pill strong { font-size: 13px; color: var(--subtle); }
-    .status-pill span { font-size: 26px; font-weight: 900; color: var(--white); }
-    .status-pill.green { border-color: var(--green); background: var(--green-soft); }
-    .status-pill.yellow { border-color: var(--yellow); background: var(--yellow-soft); }
 
     .controls-grid { display: grid; gap: 12px; }
     .control-row { display: grid; gap: 6px; }
@@ -223,7 +204,9 @@
 
     .plots-column { display: grid; gap: 14px; }
     .plot-card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 14px; display: grid; gap: 10px; }
-    .plot-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+    .plot-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .plot-head h2 { margin: 0; font-size: 20px; }
+    .plot-head .action-btn { padding-top: 6px; padding-bottom: 6px; }
     .plot-head p { margin: 0; color: var(--subtle); font-size: 14px; }
     .plot-canvas {
       width: 100%;
@@ -259,16 +242,13 @@
       display: inline-block;
     }
 
-    @media (max-width: 1400px) {
-      .layout { grid-template-columns: minmax(280px, 0.85fr) minmax(380px, 1.1fr); }
-    }
     @media (max-width: 1000px) {
       .layout { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 760px) {
       .header { grid-template-columns: 1fr; }
-      .status-row, .helper-grid, .diagram-row, .diagram-row.return { grid-template-columns: 1fr; }
+      .helper-grid, .diagram-row, .diagram-row.return { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -288,11 +268,10 @@
 
     <section class="layout">
 
-      <!-- Column 1: Controls + Comparator logic -->
+      <!-- Column 1: Controls -->
       <section class="panel">
         <div class="card">
           <h2>Interactive controls</h2>
-          <p>Move the baseline, swing, noise, and thresholds. The single-threshold output will chatter near the boundary, while the hysteresis output keeps its last state inside the dead band.</p>
           <div class="controls-grid">
             <div class="control-row">
               <div class="value-line"><span>Signal center</span><span id="centerValue">54.0 %</span></div>
@@ -324,7 +303,48 @@
             </div>
           </div>
         </div>
+      </section>
 
+      <!-- Column 2: Plots 2 and 3 -->
+      <section class="panel">
+        <div class="plots-column">
+          <div class="plot-card">
+            <div class="plot-head">
+              <div>
+                <h2>One threshold only</h2>
+              </div>
+              <button class="action-btn timelineToggleBtn" type="button">Pause timeline</button>
+            </div>
+            <canvas class="plot-canvas decision" id="singleCanvas" width="900" height="260"></canvas>
+          </div>
+
+          <div class="plot-card">
+            <div class="plot-head">
+              <div>
+                <h2>Two thresholds with hysteresis</h2>
+              </div>
+            </div>
+            <canvas class="plot-canvas decision" id="hysteresisCanvas" width="900" height="260"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Column 3: State diagram + Transfer graph -->
+      <section class="panel">
+        <div class="card diagram-card">
+          <h3>Hysteresis state diagram</h3>
+          <div class="hysteresis-diagram" id="hysteresisDiagram"></div>
+          <div class="transfer-graph-card">
+            <div class="transfer-graph-head">
+              <strong>Transfer graph</strong>
+            </div>
+            <div class="hysteresis-diagram" id="hysteresisTransferGraph"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Last row: Comparator logic across the full width -->
+      <section class="panel full-row">
         <div class="card">
           <h3>Comparator logic</h3>
           <div class="helper-grid">
@@ -344,63 +364,6 @@
   output = OFF;
 }</code>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Column 2: Plots 2 and 3 -->
-      <section class="panel">
-        <div class="plots-column">
-          <div class="plot-card">
-            <div class="plot-head">
-              <div>
-                <h2>One threshold only</h2>
-                <p>The noisy signal crosses the same threshold repeatedly, so the digital output flips on and off around the boundary.</p>
-              </div>
-              <button class="action-btn timelineToggleBtn" type="button">Pause timeline</button>
-            </div>
-            <canvas class="plot-canvas decision" id="singleCanvas" width="900" height="260"></canvas>
-          </div>
-
-          <div class="plot-card">
-            <div class="plot-head">
-              <div>
-                <h2>Two thresholds with hysteresis</h2>
-                <p>The output only turns on above the upper threshold and only turns off below the lower threshold, so the middle band keeps the previous state.</p>
-              </div>
-            </div>
-            <canvas class="plot-canvas decision" id="hysteresisCanvas" width="900" height="260"></canvas>
-          </div>
-        </div>
-      </section>
-
-      <!-- Column 3: Status pills + State diagram + Transfer graph -->
-      <section class="panel">
-        <div class="status-row" style="grid-template-columns: 1fr;">
-          <div class="status-pill">
-            <strong>Current noisy signal</strong>
-            <span id="signalNow">0.0%</span>
-          </div>
-          <div class="status-pill yellow">
-            <strong>Single-threshold toggles</strong>
-            <span id="singleToggles">0</span>
-          </div>
-          <div class="status-pill green">
-            <strong>Hysteresis toggles</strong>
-            <span id="hysteresisToggles">0</span>
-          </div>
-        </div>
-
-        <div class="card diagram-card">
-          <h3>Hysteresis state diagram</h3>
-          <p>The hysteresis comparator has memory. Inside the band between the two thresholds, the output does not change state.</p>
-          <div class="hysteresis-diagram" id="hysteresisDiagram"></div>
-          <div class="transfer-graph-card">
-            <div class="transfer-graph-head">
-              <strong>Transfer graph</strong>
-              <span>The vertical marker follows the current signal value.</span>
-            </div>
-            <div class="hysteresis-diagram" id="hysteresisTransferGraph"></div>
           </div>
         </div>
       </section>
@@ -438,9 +401,6 @@
       singleThresholdValue: document.getElementById("singleThresholdValue"),
       lowerThresholdValue: document.getElementById("lowerThresholdValue"),
       upperThresholdValue: document.getElementById("upperThresholdValue"),
-      signalNow: document.getElementById("signalNow"),
-      singleToggles: document.getElementById("singleToggles"),
-      hysteresisToggles: document.getElementById("hysteresisToggles"),
       hysteresisDiagram: document.getElementById("hysteresisDiagram"),
       hysteresisTransferGraph: document.getElementById("hysteresisTransferGraph")
     };
@@ -566,18 +526,7 @@
       ui.upperThresholdValue.textContent = `${settings.upperThreshold.toFixed(1)} %`;
       const last = state.samples[state.samples.length - 1];
       if (!last) return;
-      ui.signalNow.textContent = `${last.noisy.toFixed(1)}%`;
-      ui.singleToggles.textContent = countToggles("singleState");
-      ui.hysteresisToggles.textContent = countToggles("hysteresisState");
       updateDiagram(last);
-    }
-
-    function countToggles(key) {
-      let toggles = 0;
-      for (let i = 1; i < state.samples.length; i++) {
-        if (state.samples[i][key] !== state.samples[i - 1][key]) toggles += 1;
-      }
-      return toggles;
     }
 
     function addSample(dt) {

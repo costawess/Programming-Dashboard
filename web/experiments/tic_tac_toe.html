@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-sync-dashboard-lights="true">
 <head>
   <meta charset="UTF-8" />
@@ -307,12 +307,31 @@
     #board {
       background: var(--board-bg);
       border-color: var(--board-line);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    #board.my-turn {
+      border-color: var(--green);
+      animation: myTurnPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes myTurnPulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(40, 180, 99, 0.35), 0 0 18px rgba(40, 180, 99, 0.35); }
+      50% { box-shadow: 0 0 0 6px rgba(40, 180, 99, 0.5), 0 0 34px rgba(40, 180, 99, 0.6); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #board.my-turn {
+        animation: none;
+        box-shadow: 0 0 0 5px rgba(40, 180, 99, 0.45), 0 0 26px rgba(40, 180, 99, 0.5);
+      }
     }
     .cell {
       border-color: var(--board-line);
     }
     .cell.expiring {
       box-shadow: inset 0 0 0 4px rgba(244, 208, 63, 0.28);
+    }
+    .cell.winning {
+      background: rgba(244, 208, 63, 0.18);
+      box-shadow: inset 0 0 0 4px rgba(244, 208, 63, 0.75);
     }
     .cell.hoverable:hover {
       background: var(--hover-bg);
@@ -344,6 +363,8 @@
       display: grid;
       gap: 12px;
     }
+    .score-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 0; }
+    .score-grid .score-card { min-width: 0; overflow-wrap: anywhere; text-align: center; }
     .score-card, .log-item {
       background: rgba(255,255,255,0.03);
       border: 1px solid #373737;
@@ -359,9 +380,11 @@
       font-size: 14px;
       color: var(--subtle);
     }
-    .overlay {
+    /* Override the shared mouse-glow positioning for this popup. */
+    #resultOverlay {
       position: fixed;
       inset: 0;
+      z-index: 1000;
       background: rgba(0,0,0,0.74);
       display: grid;
       place-items: center;
@@ -379,9 +402,16 @@
     }
     .modal h3 { font-size: clamp(30px, 5vw, 52px); }
     .modal .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    #symbolDialog, #confirmDialog { position: fixed; inset: 0; margin: auto; max-height: 90vh; overflow: auto; color: var(--text); }
+    #symbolDialog:not([open]), #confirmDialog:not([open]) { display: none; }
+    #symbolDialog::backdrop, #confirmDialog::backdrop { background: rgba(0,0,0,.74); }
     .hidden { display: none !important; }
     @media (max-width: 1080px) { .layout { grid-template-columns: 1fr; } }
     @media (max-width: 720px) { .header { grid-template-columns: 1fr; } }
+    .history-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .history-heading h2 { margin: 0; }
+    .uart-test-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+    #serialToggleBtn { white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -390,14 +420,18 @@
       <a class="back" href="../index.html">Back to menu</a>
       <div class="title">
         <h1>Tic-Tac-Toe</h1>
-        <p>HTML version of the pygame game. Play locally with alternating turns for X and O.</p>
+        <p>Play locally with alternating turns for X and O.</p>
       </div>
       <img class="brand-logo" src="../../assets/branding/hanze_logo.png" alt="Hanze logo" />
     </header>
 
     <section class="layout">
       <section class="board-panel">
-        <h2>Board</h2>
+        <div class="score-grid">
+          <div class="score-card x">Player X<strong id="xScore">0</strong></div>
+          <div class="score-card o">Player O<strong id="oScore">0</strong></div>
+          <div class="score-card draw">Draws<strong id="drawScore">0</strong></div>
+        </div>
         <div class="board-wrap">
           <div id="board"></div>
           <div class="controls">
@@ -409,46 +443,37 @@
 
       <aside class="side-panel">
         <div class="serial-card">
-          <h2>ESP32 / UART</h2>
+          <h2>UART</h2>
           <div class="serial-controls">
             <label class="field">
               <span>Baud rate</span>
               <select id="baudSelect">
                 <option value="9600">9600</option>
-                <option value="115200">115200</option>
+                <option value="115200" selected>115200</option>
               </select>
             </label>
-            <button id="serialToggleBtn" type="button">Connect ESP32<small class="shortcut-hint">(Key C)</small></button>
+            <button id="serialToggleBtn" type="button">Connect (Key C)</button>
           </div>
           <div class="serial-state" id="serialStatus">Not connected</div>
-          <div class="serial-hint" id="serialHint">Use Chrome or Edge with `localhost` or `https`. UART2 on ESP32: TX = GPIO17, RX = GPIO16, shared GND.</div>
+          <!-- <div class="serial-hint" id="serialHint">Use Chrome or Edge with `localhost` or `https`. UART2 on ESP32: TX = GPIO17, RX = GPIO16, shared GND.</div> -->
         </div>
         <div class="symbol-card">
-          <h2>UART symbol</h2>
-          <div class="symbol-row">
-            <button class="symbol-btn" id="chooseXBtn" type="button">Play as X<small class="shortcut-hint">(Key X)</small></button>
-            <button class="symbol-btn" id="chooseOBtn" type="button">Play as O<small class="shortcut-hint">(Key O)</small></button>
-          </div>
           <h2 style="margin-top:2px;">Game mode</h2>
           <div class="mode-row">
             <button class="mode-btn active" id="traditionalModeBtn" type="button">Traditional<small class="shortcut-hint">(Key T)</small></button>
             <button class="mode-btn" id="slidingModeBtn" type="button">Sliding Tic-Tac-Toe<small class="shortcut-hint">(Key S)</small></button>
           </div>
           <div class="status" id="statusPill">Player X starts</div>
-          <div class="serial-hint">This follows the pygame handshake: `SYMBOL:SELECTED`, `MOVE`, `REMATCH:REQUEST`, and `REMATCH:ACCEPT`. The HTML page also syncs the local mode with `MODE:TRADITIONAL` and `MODE:SLIDING`.</div>
+          <!-- <div class="serial-hint">This follows the pygame handshake: `SYMBOL:SELECTED`, `MOVE`, `REMATCH:REQUEST`, and `REMATCH:ACCEPT`. The HTML page also syncs the local mode with `MODE:TRADITIONAL` and `MODE:SLIDING`.</div> -->
         </div>
-        <h2>Scoreboard</h2>
-        <div class="score-grid">
-          <div class="score-card x">Player X<strong id="xScore">0</strong></div>
-          <div class="score-card o">Player O<strong id="oScore">0</strong></div>
-          <div class="score-card draw">Draws<strong id="drawScore">0</strong></div>
-        </div>
-        <h2 style="margin-top:18px;">History tools</h2>
-        <div class="tool-row">
+        <h2 style="margin-top:18px;">UART test</h2>
+        <div class="tool-row uart-test-row">
           <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example MOVE:5, then press Enter" />
+        </div>
+        <div class="history-heading" style="margin-top:18px;">
+          <h2>History</h2>
           <button id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
         </div>
-        <h2 style="margin-top:18px;">Messages</h2>
         <div class="log-list" id="logList"></div>
       </aside>
     </section>
@@ -464,6 +489,28 @@
       </div>
     </div>
   </div>
+
+  <dialog class="modal" id="symbolDialog" aria-labelledby="symbolDialogTitle">
+    <h3 id="symbolDialogTitle">Connect</h3>
+    <p id="symbolDialogHint">Connect your board to play against another board.</p>
+    <div class="symbol-row hidden" id="symbolRow">
+      <button class="symbol-btn" id="chooseXBtn" type="button">Play as X (Key X)</button>
+      <button class="symbol-btn" id="chooseOBtn" type="button">Play as O (Key O)</button>
+    </div>
+    <button id="symbolConnectBtn" type="button">Connect (Key C)</button>
+    <div class="actions hidden" id="symbolLeftActions">
+      <a class="back" href="../index.html">Back to menu</a>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="confirmDialog" aria-labelledby="confirmDialogTitle">
+    <h3 id="confirmDialogTitle">Reset round?</h3>
+    <p id="confirmDialogText">Your opponent wants to reset this round. Do you agree?</p>
+    <div class="actions">
+      <button id="confirmAcceptBtn" type="button">Agree<small class="shortcut-hint">(Key Y)</small></button>
+      <button id="confirmDeclineBtn" type="button">Decline<small class="shortcut-hint">(Key N)</small></button>
+    </div>
+  </dialog>
 
   <script src="../shared/sound_fx.js"></script>
   <script src="../shared/web_serial_bridge.js"></script>
@@ -486,6 +533,17 @@
     const serialHint = document.getElementById("serialHint");
     const uartTestInput = document.getElementById("uartTestInput");
     const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+    const symbolDialog = document.getElementById("symbolDialog");
+    const symbolConnectBtn = document.getElementById("symbolConnectBtn");
+    const symbolDialogHint = document.getElementById("symbolDialogHint");
+    const symbolDialogTitle = document.getElementById("symbolDialogTitle");
+    const symbolRow = document.getElementById("symbolRow");
+    const symbolLeftActions = document.getElementById("symbolLeftActions");
+    const confirmDialog = document.getElementById("confirmDialog");
+    const confirmDialogTitle = document.getElementById("confirmDialogTitle");
+    const confirmDialogText = document.getElementById("confirmDialogText");
+    const confirmAcceptBtn = document.getElementById("confirmAcceptBtn");
+    const confirmDeclineBtn = document.getElementById("confirmDeclineBtn");
     const chooseXBtn = document.getElementById("chooseXBtn");
     const chooseOBtn = document.getElementById("chooseOBtn");
     const traditionalModeBtn = document.getElementById("traditionalModeBtn");
@@ -494,8 +552,10 @@
     const state = {
       board: Array(9).fill(""),
       current: "X",
+      startingSymbol: "X",
       mode: "traditional",
       finished: false,
+      winLine: null,
       scores: { X: 0, O: 0, draw: 0 },
       logs: ["(SYSTEM): Tic-Tac-Toe HTML experiment ready."],
       serialConnected: false,
@@ -505,6 +565,11 @@
       lastBroadcast: 0,
       rematchRequested: false,
       rematchReceived: false,
+      pendingRequest: null,
+      incomingRequest: null,
+      pillBeforeRequest: "",
+      opponentLeft: false,
+      leaving: false,
       sendingMove: false,
       moveHistory: { X: [], O: [] }
     };
@@ -558,36 +623,59 @@
 
     function renderBoard() {
       boardEl.innerHTML = "";
+      const myTurn = state.serialConnected && !state.finished && !state.sendingMove
+        && Boolean(state.mySymbol) && state.opponentSymbol !== null && state.current === state.mySymbol;
+      boardEl.classList.toggle("my-turn", myTurn);
       const expiringIndex = getExpiringIndex();
       state.board.forEach((value, index) => {
         const cell = document.createElement("button");
         const hoverable = canPlay(index) ? "hoverable" : "";
         const expiring = expiringIndex === index ? "expiring" : "";
-        cell.className = `cell ${value ? value.toLowerCase() : ""} ${hoverable} ${expiring}`.trim();
+        const winning = state.winLine && state.winLine.includes(index) ? "winning" : "";
+        cell.className = `cell ${value ? value.toLowerCase() : ""} ${hoverable} ${expiring} ${winning}`.trim();
         cell.textContent = value;
         cell.addEventListener("click", () => play(index));
         boardEl.appendChild(cell);
       });
     }
 
+    function updateSymbolDialog() {
+      // Step 1: connect. Step 2 (after connecting): choose the symbol.
+      // Without Web Serial there is nothing to connect, so fall back to a local game.
+      const localOnly = !serialBridge.supported;
+      const chooseStep = state.serialConnected || localOnly;
+      const opponentLeft = state.serialConnected && state.opponentLeft;
+      symbolDialogTitle.textContent = opponentLeft ? "Opponent left" : chooseStep ? "Choose your symbol" : "Connect";
+      symbolRow.classList.toggle("hidden", !chooseStep);
+      symbolConnectBtn.classList.toggle("hidden", chooseStep);
+      symbolLeftActions.classList.toggle("hidden", !opponentLeft);
+      if (localOnly) {
+        symbolDialogHint.textContent = "Web Serial is unavailable in this browser. Choose X or O to start a local game.";
+      } else if (opponentLeft) {
+        symbolDialogHint.textContent = "Your opponent left the game. Wait for them and choose X or O on ONE page to start again, or go back to the menu.";
+      } else if (state.serialConnected) {
+        symbolDialogHint.textContent = "Connect both players first. Choose X or O on ONE page; that player starts. The other page receives the remaining symbol automatically.";
+      } else {
+        symbolDialogHint.textContent = "Connect your board to play against another board.";
+      }
+    }
+
     function updateSerialUi() {
+      updateSymbolDialog();
       if (!serialBridge.supported) {
         serialToggleBtn.disabled = true;
-        chooseXBtn.disabled = true;
-        chooseOBtn.disabled = true;
+        symbolConnectBtn.disabled = true;
         serialStatus.textContent = "Web Serial unavailable";
-        serialHint.textContent = "Open this page in Chrome or Edge on localhost or https.";
+        if (serialHint) serialHint.textContent = "Open this page in Chrome or Edge on localhost or https.";
         return;
       }
 
       serialToggleBtn.disabled = false;
-      serialToggleBtn.textContent = state.serialConnected ? "Disconnect" : "Connect ESP32";
+      serialToggleBtn.textContent = state.serialConnected ? "Disconnect (Key C)" : "Connect (Key C)";
       serialStatus.textContent = state.serialConnected ? `Connected at ${baudSelect.value} baud` : "Not connected";
-      serialHint.textContent = state.serialConnected
+      if (serialHint) serialHint.textContent = state.serialConnected
         ? "Choose a symbol, select the mode, then wait for the other board. UART2 on ESP32: TX = GPIO17, RX = GPIO16, shared GND."
-        : "Use Chrome or Edge with localhost or https. UART2 on ESP32: TX = GPIO17, RX = GPIO16, shared GND.";
-      chooseXBtn.disabled = !state.serialConnected;
-      chooseOBtn.disabled = !state.serialConnected;
+        : "";
       chooseXBtn.classList.toggle("active", state.mySymbol === "X");
       chooseOBtn.classList.toggle("active", state.mySymbol === "O");
     }
@@ -601,14 +689,18 @@
 
     function clearBoardState() {
       state.board = Array(9).fill("");
-      state.current = "X";
+      state.current = state.serialConnected ? state.startingSymbol : "X";
       state.finished = false;
+      state.winLine = null;
       state.sendingMove = false;
       state.moveHistory = { X: [], O: [] };
       resultOverlay.classList.add("hidden");
     }
 
-    function startSerialSetup() {
+    function startSerialSetup(opponentLeft = false) {
+      closeConfirmDialog();
+      state.opponentLeft = opponentLeft;
+      if (!symbolDialog.open) symbolDialog.showModal();
       clearBoardState();
       state.mySymbol = null;
       state.opponentSymbol = null;
@@ -620,6 +712,7 @@
       updateSerialUi();
       updateStatus();
       renderBoard();
+      if (opponentLeft) return;
       sendSerialMessage(`MODE:${state.mode.toUpperCase()}`, false)
         .catch(error => addLog(`(SYSTEM): ${error.message || error}`));
     }
@@ -639,7 +732,10 @@
 
     function checkWinner() {
       for (const [a, b, c] of wins) {
-        if (state.board[a] && state.board[a] === state.board[b] && state.board[a] === state.board[c]) return state.board[a];
+        if (state.board[a] && state.board[a] === state.board[b] && state.board[a] === state.board[c]) {
+          state.winLine = [a, b, c];
+          return state.board[a];
+        }
       }
       if (state.mode === "traditional" && state.board.every(Boolean)) return "draw";
       return null;
@@ -702,13 +798,22 @@
       if (result === "draw") {
         state.scores.draw += 1;
         resultTitle.textContent = "Draw!";
-        resultText.textContent = "No winner this round.";
+        resultText.textContent = "An even match! Neither player won this round. Play again to break the tie.";
         addLog("(RESULT): Draw.");
       } else {
         state.scores[result] += 1;
-        resultTitle.textContent = `${result} wins!`;
-        resultText.textContent = `Player ${result} completed a winning line.`;
-        addLog(`(RESULT): Player ${result} wins.`);
+        const lineCells = state.winLine.map(i => i + 1).join("-");
+        if (state.serialConnected && state.mySymbol) {
+          const youWon = result === state.mySymbol;
+          resultTitle.textContent = youWon ? "You win!" : "You lost this round";
+          resultText.textContent = youWon
+            ? `Well played! You completed a winning line as ${state.mySymbol} (cells ${lineCells}). Ready for a rematch?`
+            : `Your opponent (${result}) completed a winning line (cells ${lineCells}). Try again in a rematch!`;
+        } else {
+          resultTitle.textContent = `${result} wins!`;
+          resultText.textContent = `Player ${result} completed a winning line (cells ${lineCells}). Play again for another round!`;
+        }
+        addLog(`(RESULT): Player ${result} wins (cells ${lineCells}).`);
       }
       updateScore();
       updateStatus(result);
@@ -765,10 +870,106 @@
       addLog(logMessage);
     }
 
-    function clearScores() {
+    function clearScores(logMessage = "(SYSTEM): Scoreboard cleared.") {
       state.scores = { X: 0, O: 0, draw: 0 };
       updateScore();
-      addLog("(SYSTEM): Scoreboard cleared.");
+      addLog(logMessage);
+    }
+
+    // Actions that change both pages need the opponent's agreement over UART:
+    // <KIND>:REQUEST is answered with <KIND>:ACCEPT or <KIND>:DECLINE.
+    const syncActions = {
+      RESET: {
+        title: "Reset round?",
+        ask: "Your opponent wants to reset this round. Do you agree?",
+        label: "reset the round",
+        apply: logMessage => resetRound(logMessage)
+      },
+      SCORES: {
+        title: "Clear scores?",
+        ask: "Your opponent wants to clear the scores. Do you agree?",
+        label: "clear the scores",
+        apply: logMessage => clearScores(logMessage)
+      }
+    };
+
+    function hasOpponent() {
+      return state.serialConnected && Boolean(state.mySymbol) && state.opponentSymbol !== null;
+    }
+
+    function closeConfirmDialog() {
+      state.pendingRequest = null;
+      state.incomingRequest = null;
+      if (confirmDialog.open) confirmDialog.close();
+    }
+
+    function requestSyncAction(kind) {
+      const action = syncActions[kind];
+      if (!hasOpponent()) {
+        action.apply();
+        return;
+      }
+
+      if (state.pendingRequest === null) state.pillBeforeRequest = statusPill.textContent;
+      state.pendingRequest = kind;
+      statusPill.textContent = `Asked opponent to ${action.label}. Waiting for an answer.`;
+      sendSerialMessage(`${kind}:REQUEST`).catch(error => {
+        state.pendingRequest = null;
+        statusPill.textContent = state.pillBeforeRequest;
+        addLog(`(SYSTEM): ${error.message || error}`);
+      });
+    }
+
+    function answerSyncRequest(accept) {
+      const kind = state.incomingRequest;
+      if (!kind) return;
+      const action = syncActions[kind];
+      state.incomingRequest = null;
+      confirmDialog.close();
+      if (accept) action.apply(`(SYSTEM): You agreed to ${action.label}.`);
+      else addLog(`(SYSTEM): You declined to ${action.label}.`);
+      sendSerialMessage(`${kind}:${accept ? "ACCEPT" : "DECLINE"}`)
+        .catch(error => addLog(`(SYSTEM): ${error.message || error}`));
+    }
+
+    function handleSyncLine(kind, verb) {
+      const action = syncActions[kind];
+
+      if (verb === "REQUEST") {
+        // Both players asked for the same thing at the same time: no need to confirm.
+        if (state.pendingRequest === kind) {
+          state.pendingRequest = null;
+          statusPill.textContent = state.pillBeforeRequest;
+          action.apply(`(SYSTEM): Both players agreed to ${action.label}.`);
+          sendSerialMessage(`${kind}:ACCEPT`)
+            .catch(error => addLog(`(SYSTEM): ${error.message || error}`));
+          return;
+        }
+        state.incomingRequest = kind;
+        confirmDialogTitle.textContent = action.title;
+        confirmDialogText.textContent = action.ask;
+        if (!confirmDialog.open) confirmDialog.showModal();
+        return;
+      }
+
+      if (state.pendingRequest !== kind) return;
+      state.pendingRequest = null;
+      if (verb === "ACCEPT") {
+        statusPill.textContent = state.pillBeforeRequest;
+        action.apply(`(SYSTEM): Opponent agreed to ${action.label}.`);
+      } else {
+        statusPill.textContent = `Opponent declined to ${action.label}.`;
+        addLog(`(SYSTEM): Opponent declined to ${action.label}.`);
+      }
+    }
+
+    // Tell the other page that this player is leaving (menu, disconnect, closed tab).
+    async function announceLeave() {
+      if (!state.serialConnected || state.leaving) return;
+      state.leaving = true;
+      try {
+        await sendSerialMessage("PLAYER:LEFT", false);
+      } catch (_) {}
     }
 
     function updateOverlayAction() {
@@ -799,6 +1000,7 @@
       try {
         if (state.rematchReceived) {
           await sendSerialMessage("REMATCH:ACCEPT");
+          state.startingSymbol = state.startingSymbol === "X" ? "O" : "X";
           resetSerialRound("(SYSTEM): Rematch accepted.");
         } else if (!state.rematchRequested) {
           state.rematchRequested = true;
@@ -814,7 +1016,21 @@
     }
 
     function chooseSymbol(symbol) {
-      if (!state.serialConnected) return;
+      if (!symbolDialog.open) return;
+      if (!state.serialConnected) {
+        if (serialBridge.supported) return;
+        state.startingSymbol = symbol;
+        clearBoardState();
+        state.current = symbol;
+        symbolDialog.close();
+        updateStatus();
+        renderBoard();
+        return;
+      }
+      if (state.mySymbol) return;
+      symbolDialog.close();
+      state.startingSymbol = symbol;
+      state.current = symbol;
       state.mySymbol = symbol;
       state.opponentSymbol = null;
       state.broadcastingSymbol = true;
@@ -852,6 +1068,25 @@
     function handleSerialLine(line) {
       addLog(`(RX): ${line}`);
 
+      if (line === "PLAYER:LEFT") {
+        if (!state.serialConnected) return;
+        addLog("(SYSTEM): Opponent left the game.");
+        startSerialSetup(true);
+        return;
+      }
+
+      // Any other line means the opponent is (back) on the page.
+      if (state.opponentLeft) {
+        state.opponentLeft = false;
+        updateSymbolDialog();
+      }
+
+      const syncMatch = line.match(/^(RESET|SCORES):(REQUEST|ACCEPT|DECLINE)$/);
+      if (syncMatch) {
+        handleSyncLine(syncMatch[1], syncMatch[2]);
+        return;
+      }
+
       if (line === "MODE:TRADITIONAL") {
         setMode("traditional", "UART", false);
         return;
@@ -866,6 +1101,10 @@
         const remoteSymbol = line.split(":").pop().toUpperCase();
 
         if (state.mySymbol === null) {
+          if (remoteSymbol !== "X" && remoteSymbol !== "O") return;
+          state.startingSymbol = remoteSymbol;
+          state.current = remoteSymbol;
+          symbolDialog.close();
           state.opponentSymbol = remoteSymbol;
           state.mySymbol = remoteSymbol === "X" ? "O" : "X";
           sendSerialMessage(`SYMBOL:SELECTED:${state.mySymbol}`)
@@ -905,6 +1144,7 @@
       }
 
       if (line === "REMATCH:ACCEPT") {
+        state.startingSymbol = state.startingSymbol === "X" ? "O" : "X";
         resetSerialRound("(SYSTEM): Opponent accepted the rematch.");
       }
     }
@@ -917,6 +1157,9 @@
         startSerialSetup();
       } else {
         addLog("(SYSTEM): UART disconnected. Local mode enabled.");
+        closeConfirmDialog();
+        state.opponentLeft = false;
+        state.leaving = false;
         state.mySymbol = null;
         state.opponentSymbol = null;
         state.broadcastingSymbol = false;
@@ -935,6 +1178,7 @@
       serialToggleBtn.disabled = true;
       try {
         if (state.serialConnected) {
+          await announceLeave();
           await serialBridge.disconnect();
         } else {
           await serialBridge.connect(Number(baudSelect.value));
@@ -962,11 +1206,46 @@
       requestAnimationFrame(animate);
     }
 
-    resetRoundBtn.addEventListener("click", resetRound);
-    clearScoresBtn.addEventListener("click", clearScores);
+    resetRoundBtn.addEventListener("click", () => requestSyncAction("RESET"));
+    clearScoresBtn.addEventListener("click", () => requestSyncAction("SCORES"));
+    confirmAcceptBtn.addEventListener("click", () => answerSyncRequest(true));
+    confirmDeclineBtn.addEventListener("click", () => answerSyncRequest(false));
+    confirmDialog.addEventListener("cancel", event => event.preventDefault());
+    window.addEventListener("keydown", event => {
+      if (!confirmDialog.open) return;
+      event.stopImmediatePropagation();
+      const key = event.key.toLowerCase();
+      if (key === "y" || key === "n") {
+        event.preventDefault();
+        answerSyncRequest(key === "y");
+      }
+    }, true);
+    document.querySelectorAll("a.back").forEach(link => {
+      link.addEventListener("click", event => {
+        if (!state.serialConnected) return;
+        event.preventDefault();
+        // Give the serial port a moment to send the line before leaving the page.
+        announceLeave().finally(() => setTimeout(() => { window.location.href = link.href; }, 150));
+      });
+    });
+    window.addEventListener("pagehide", () => { announceLeave(); });
     clearHistoryBtn.addEventListener("click", clearHistory);
     playAgainBtn.addEventListener("click", handleReplayAction);
     serialToggleBtn.addEventListener("click", toggleSerialConnection);
+    symbolConnectBtn.addEventListener("click", toggleSerialConnection);
+    symbolDialog.addEventListener("cancel", event => event.preventDefault());
+    window.addEventListener("keydown", event => {
+      if (!symbolDialog.open) return;
+      event.stopImmediatePropagation();
+      const key = event.key.toLowerCase();
+      if (key === "x" || key === "o") {
+        event.preventDefault();
+        chooseSymbol(key.toUpperCase());
+      } else if (key === "c") {
+        event.preventDefault();
+        toggleSerialConnection();
+      }
+    }, true);
     chooseXBtn.addEventListener("click", () => chooseSymbol("X"));
     chooseOBtn.addEventListener("click", () => chooseSymbol("O"));
     traditionalModeBtn.addEventListener("click", () => setMode("traditional"));
@@ -988,13 +1267,13 @@
       const key = event.key.toLowerCase();
       if (key === "r") {
         event.preventDefault();
-        resetRound();
+        requestSyncAction("RESET");
       } else if (key === "h") {
         event.preventDefault();
         clearHistory();
       } else if (key === "l") {
         event.preventDefault();
-        clearScores();
+        requestSyncAction("SCORES");
       } else if (key === "c") {
         event.preventDefault();
         toggleSerialConnection();
@@ -1023,9 +1302,8 @@
     updateSerialUi();
     renderBoard();
     renderLogs();
+    symbolDialog.showModal();
     requestAnimationFrame(animate);
   </script>
 </body>
 </html>
-
-

@@ -46,11 +46,6 @@
       --switch-metal: var(--white);
       --switch-knob: var(--white);
       --switch-knob-ring: rgba(8, 17, 24, 0.6);
-      --led-off-color: #d9e9f4;
-      --led-off-wire: rgba(255, 255, 255, 0.38);
-      --led-off-ring: rgba(255, 255, 255, 0.55);
-      --led-off-fill: rgba(255, 255, 255, 0.03);
-      --led-off-triangle: rgba(217, 233, 244, 0.08);
       --plot-fill: rgba(255,255,255,0.03);
       --plot-stroke: rgba(255,255,255,0.08);
       --plot-grid: rgba(255,255,255,0.10);
@@ -70,11 +65,6 @@
       --switch-metal: #7a91aa;
       --switch-knob: #ffffff;
       --switch-knob-ring: rgba(111, 136, 163, 0.28);
-      --led-off-color: #6985a4;
-      --led-off-wire: rgba(111, 136, 163, 0.38);
-      --led-off-ring: rgba(111, 136, 163, 0.54);
-      --led-off-fill: rgba(111, 136, 163, 0.06);
-      --led-off-triangle: rgba(111, 136, 163, 0.08);
       --plot-fill: rgba(255,255,255,0.74);
       --plot-stroke: rgba(111,136,163,0.24);
       --plot-grid: rgba(111,136,163,0.18);
@@ -146,7 +136,7 @@
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(320px, 1fr) minmax(320px, 0.9fr) minmax(380px, 1.05fr);
+      grid-template-columns: minmax(240px, 0.5fr) minmax(820px, 1.9fr) minmax(360px, 1fr);
       gap: 18px;
       align-items: start;
     }
@@ -155,6 +145,40 @@
       padding: 18px;
       display: grid;
       gap: 14px;
+    }
+
+    /* Circuit view sits beside the timing diagram. */
+    .panel.side-view {
+      grid-template-columns: minmax(440px, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    /* Compact timeline header: controls and Pause button share one row. */
+    .panel.side-view .controls-card {
+      flex: 1 1 auto;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      background: none !important;
+      box-shadow: none;
+    }
+
+    .panel.side-view .controls-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      align-items: center;
+    }
+
+    .panel.side-view .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .panel.side-view .control-row select {
+      width: auto;
     }
 
     .panel h2,
@@ -292,7 +316,7 @@
     .logic-row {
       width: 100%;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
     }
 
@@ -569,89 +593,6 @@
       transform: rotate(-18deg);
     }
 
-    .led-branch {
-      position: absolute;
-      left: 252px;
-      top: 50px;
-      width: 104px;
-      height: 198px;
-    }
-
-    .led-branch-label {
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: var(--subtle);
-      font-size: 12px;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .led-schematic {
-      position: absolute;
-      left: 2px;
-      top: 23px;
-      width: 98px;
-      height: 176px;
-      overflow: visible;
-      color: var(--led-off-color);
-    }
-
-    .led-schematic .wire {
-      stroke: var(--led-off-wire);
-      stroke-width: 4;
-      stroke-linecap: round;
-      fill: none;
-    }
-
-    .led-schematic .symbol-ring {
-      stroke: var(--led-off-ring);
-      stroke-width: 3;
-      fill: var(--led-off-fill);
-    }
-
-    .led-schematic .symbol-line,
-    .led-schematic .symbol-triangle,
-    .led-schematic .symbol-bar,
-    .led-schematic .light-arrow {
-      stroke: var(--led-off-color);
-      fill: none;
-      stroke-width: 3;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .led-schematic .symbol-triangle {
-      fill: var(--led-off-triangle);
-    }
-
-    .led-schematic .light-arrow {
-      marker-end: url(#ledArrowHead);
-      opacity: 0.38;
-    }
-
-    .led-schematic.on .symbol-ring {
-      stroke: #75f1a1;
-      fill: rgba(47, 199, 107, 0.14);
-      filter: drop-shadow(0 0 8px rgba(47, 199, 107, 0.32));
-    }
-
-    .led-schematic.on .symbol-line,
-    .led-schematic.on .symbol-triangle,
-    .led-schematic.on .symbol-bar,
-    .led-schematic.on .light-arrow {
-      stroke: #97f7bb;
-    }
-
-    .led-schematic.on .symbol-triangle {
-      fill: rgba(151, 247, 187, 0.16);
-    }
-
-    .led-schematic.on {
-      color: #97f7bb;
-    }
-
     .timeline-canvas {
       width: 100%;
       height: 460px;
@@ -699,7 +640,13 @@
       color: var(--white);
     }
 
-    @media (max-width: 1320px) {
+    @media (max-width: 900px) {
+      .panel.side-view {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 1560px) {
       .layout {
         grid-template-columns: 1fr;
       }
@@ -734,11 +681,6 @@
       .mcu-pin {
         left: 194px;
       }
-
-      .led-branch {
-        left: 246px;
-        width: 98px;
-      }
     }
   </style>
 </head>
@@ -749,7 +691,7 @@
       <a class="back" href="../index.html">Back to menu</a>
       <div class="title">
         <h1>Pull-Up / Pull-Down</h1>
-        <p>Compare the default input state, button action, resistor placement, and LED behavior in pull-up and pull-down
+        <p>Compare the default input state, button action, and resistor placement in pull-up and pull-down
           circuits.</p>
       </div>
       <img class="brand-logo" src="../../assets/branding/hanze_logo.png" alt="Hanze logo" />
@@ -763,22 +705,9 @@
           </p>
           <div class="status-pill" id="statusPill">Mode: Pull-up | Released = HIGH</div>
         </div>
-        <div class="controls-card">
-          <h3>Interactive controls</h3>
-          <div class="controls-grid">
-            <div class="control-row">
-              <div class="field-label">Wiring mode</div>
-              <select id="modeSelect">
-                <option value="pullup">Pull-up resistor</option>
-                <option value="pulldown">Pull-down resistor</option>
-              </select>
-            </div>
-            <div class="control-row">
-              <div class="field-label">Button</div>
-              <button class="action-btn" id="pressButtonBtn" type="button">Press and hold (Space)</button>
-            </div>
-          </div>
-        </div>
+      </section>
+
+      <section class="panel side-view">
         <div class="visual-card">
           <h3>Circuit view</h3>
           <div class="visual-stage">
@@ -786,7 +715,6 @@
               <div class="logic-row">
                 <div class="logic-box"><strong>Button</strong><span id="buttonState">OPEN</span></div>
                 <div class="logic-box"><strong>Input</strong><span id="inputState">HIGH</span></div>
-                <div class="logic-box"><strong>LED</strong><span id="ledState">ON</span></div>
               </div>
               <div class="circuit-board">
                 <div class="circuit-area">
@@ -801,40 +729,30 @@
 
                   <div class="branch-device top" id="topBranch"></div>
                   <div class="branch-device bottom" id="bottomBranch"></div>
-
-                  <div class="led-branch">
-                    <div class="led-branch-label">LED to GND</div>
-                    <svg class="led-schematic" id="ledLamp" viewBox="0 0 112 180" aria-hidden="true">
-                      <defs>
-                        <marker id="ledArrowHead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-                          <path d="M0 0 L8 4 L0 8 z" fill="currentColor"></path>
-                        </marker>
-                      </defs>
-                      <path class="wire" d="M0 68 H56 V93"></path>
-                      <path class="wire" d="M56 125 V184"></path>
-                      <circle class="symbol-ring" cx="56" cy="109" r="34"></circle>
-                      <path class="symbol-line" d="M56 75 V93"></path>
-                      <path class="symbol-triangle" d="M28 93 H84 L56 125 Z"></path>
-                      <path class="symbol-bar" d="M28 125 H84"></path>
-                      <path class="light-arrow" d="M82 75 L100 57"></path>
-                      <path class="light-arrow" d="M90 95 L108 77"></path>
-                    </svg>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </section>
-
-      <section class="panel">
         <div class="timeline-card">
           <div class="card-head">
-            <h2>Timeline</h2>
+            <div class="controls-card">
+              <div class="controls-grid">
+                <div class="control-row">
+                  <div class="field-label">Wiring mode</div>
+                  <select id="modeSelect">
+                    <option value="pullup">Pull-up resistor</option>
+                    <option value="pulldown">Pull-down resistor</option>
+                  </select>
+                </div>
+                <div class="control-row">
+                  <div class="field-label">Button</div>
+                  <button class="action-btn" id="pressButtonBtn" type="button">Press and hold (Space)</button>
+                </div>
+              </div>
+            </div>
             <button class="action-btn" id="toggleTimelineBtn" type="button">Pause timeline</button>
           </div>
-          <p class="timeline-note">Watch the button state, the GPIO input, and the LED response over the last 12
-            seconds.</p>
           <canvas class="timeline-canvas" id="timelineCanvas" width="720" height="460"></canvas>
         </div>
       </section>
@@ -842,11 +760,9 @@
       <section class="panel">
         <div class="code-card">
           <div class="card-head">
-            <h2>Arduino C++</h2>
+            <h2>Code</h2>
             <button class="copy-btn" id="copyCodeBtn" type="button">Copy code</button>
           </div>
-          <p class="code-note" id="codeNote">The sketch changes between an internal pull-up input and an external
-            pull-down input.</p>
           <pre class="code-block" id="codeBlock"></pre>
         </div>
       </section>
@@ -858,7 +774,6 @@
       mode: "pullup",
       buttonPressed: false,
       inputHigh: true,
-      ledOn: true,
       time: 0
     };
 
@@ -875,8 +790,6 @@
     const statusPill = document.getElementById("statusPill");
     const buttonState = document.getElementById("buttonState");
     const inputState = document.getElementById("inputState");
-    const ledState = document.getElementById("ledState");
-    const ledLamp = document.getElementById("ledLamp");
     const pinLabel = document.getElementById("pinLabel");
     const topBranch = document.getElementById("topBranch");
     const bottomBranch = document.getElementById("bottomBranch");
@@ -940,7 +853,6 @@
     function updateLogic() {
       if (state.mode === "pullup") state.inputHigh = !state.buttonPressed;
       else state.inputHigh = state.buttonPressed;
-      state.ledOn = state.inputHigh;
     }
 
     function renderCircuit() {
@@ -950,9 +862,7 @@
 
       buttonState.textContent = state.buttonPressed ? "CLOSED" : "OPEN";
       inputState.textContent = state.inputHigh ? "HIGH" : "LOW";
-      ledState.textContent = state.ledOn ? "ON" : "OFF";
       pinLabel.textContent = state.inputHigh ? "3.3 V" : "0.0 V";
-      ledLamp.classList.toggle("on", state.ledOn);
 
       statusPill.textContent = isPullUp ? `Mode: Pull-up | Released = HIGH` : `Mode: Pull-down | Released = LOW`;
     }
@@ -994,8 +904,7 @@ void loop() {
       samples.push({
         t: state.time,
         button: state.buttonPressed ? 1 : 0,
-        input: state.inputHigh ? 1 : 0,
-        led: state.ledOn ? 1 : 0
+        input: state.inputHigh ? 1 : 0
       });
       while (samples.length && getTimelineReferenceTime() - samples[0].t > historySeconds) samples.shift();
     }
@@ -1096,8 +1005,7 @@ void loop() {
 
       const signals = [
         { key: "button", label: "Button", color: "#63c4ff" },
-        { key: "input", label: "Input", color: "#ffcc45" },
-        { key: "led", label: "LED", color: "#2fc76b" }
+        { key: "input", label: "Input", color: "#ffcc45" }
       ];
 
       const margin = { left: 76, right: 18, top: 18, bottom: 24 };

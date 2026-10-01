@@ -1,32 +1,25 @@
-const uint8_t BTN_UP = 18;
-const uint8_t BTN_RIGHT = 19;
-const uint8_t BTN_DOWN = 21;
-const uint8_t BTN_LEFT = 22;
-
-bool lastUp = HIGH;
-bool lastRight = HIGH;
-bool lastDown = HIGH;
-bool lastLeft = HIGH;
+/* MAZE
+In this experiment you send via UART the words: UP, DOWN, LEFT, RIGHT and control the robot on a Maze!
+Objective: reach the end without touching the walls!!
+*/
 
 void setup() {
+  // start serial communication at 115200 baud rate
   Serial.begin(115200);
-  pinMode(BTN_UP, INPUT_PULLUP);
-  pinMode(BTN_RIGHT, INPUT_PULLUP);
-  pinMode(BTN_DOWN, INPUT_PULLUP);
-  pinMode(BTN_LEFT, INPUT_PULLUP);
-}
-
-void sendOnPress(uint8_t pin, bool& lastState, const char* command) {
-  bool current = digitalRead(pin);
-  if (lastState == HIGH && current == LOW) {
-    Serial.println(command);
-  }
-  lastState = current;
 }
 
 void loop() {
-  sendOnPress(BTN_UP, lastUp, "UP");
-  sendOnPress(BTN_RIGHT, lastRight, "RIGHT");
-  sendOnPress(BTN_DOWN, lastDown, "DOWN");
-  sendOnPress(BTN_LEFT, lastLeft, "LEFT");
+
+  // maze solution (testing...)
+  Serial.println("START");
+  delay(500);
+  Serial.println("RIGHT");
+  delay(500);
+  Serial.println("RIGHT");
+  delay(500);
+
+  // continue with the rest of the maze solution :)
+
+  // Serial.println("LEFT");
+  // Serial.println("UP");
 }

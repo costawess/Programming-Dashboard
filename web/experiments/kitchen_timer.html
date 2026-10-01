@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-sync-dashboard-lights="true">
 <head>
   <meta charset="UTF-8" />
@@ -344,6 +344,10 @@
         grid-template-columns: 1fr;
       }
     }
+    .history-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .history-heading h2 { margin: 0; }
+    .uart-test-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+    #serialToggleBtn { white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -384,16 +388,16 @@
 
       <aside class="side-panel">
         <div class="serial-card">
-          <h3>ESP32 / UART</h3>
+          <h3>UART</h3>
           <div class="serial-controls">
             <label class="field">
               <span>Baud rate</span>
               <select id="baudSelect">
-                <option value="115200">115200</option>
+                <option value="115200" selected>115200</option>
                 <option value="9600">9600</option>
               </select>
             </label>
-            <button id="serialToggleBtn" type="button">Connect ESP32<small class="shortcut-hint">(Key C)</small></button>
+            <button id="serialToggleBtn" type="button">Connect (Key C)</button>
           </div>
           <div class="serial-state" id="serialStatus">Not connected</div>
           <div class="serial-hint" id="serialHint">Accepted UART lines: plain integers like `42` or prefixed values like `TIME:42`.</div>
@@ -406,12 +410,14 @@
           <div class="stat-card alarm-card">Alarm<strong id="alarmValue">Idle</strong></div>
         </div>
 
-        <div class="toolbar" style="margin-top:18px;">
+        <div class="toolbar uart-test-row" style="margin-top:18px;">
           <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example TIME:42, then press Enter" />
-          <button id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
         </div>
 
-        <h2 style="margin-top:18px;">Messages</h2>
+        <div class="history-heading" style="margin-top:18px;">
+          <h2>History</h2>
+          <button id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
+        </div>
         <div class="log-list" id="logList"></div>
       </aside>
     </section>
@@ -508,7 +514,7 @@
       }
 
       serialToggleBtn.disabled = false;
-      serialToggleBtn.innerHTML = `${state.serialConnected ? "Disconnect" : "Connect ESP32"}<small class="shortcut-hint">(Key C)</small>`;
+      serialToggleBtn.textContent = `${state.serialConnected ? "Disconnect" : "Connect"} (Key C)`;
       serialStatus.textContent = state.serialConnected ? `Connected at ${baudSelect.value} baud` : "Not connected";
       serialHint.textContent = state.serialConnected
         ? "The timer now follows incoming UART values in seconds."

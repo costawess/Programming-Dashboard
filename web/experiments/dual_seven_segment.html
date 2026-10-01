@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-sync-dashboard-lights="true">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Embedded Programming - Dual Seven Segment</title>
+  <title>Embedded Programming - Seven Segment Displays</title>
     <script>
     (() => {
       try {
@@ -43,7 +43,7 @@
     .display-row.count-2{grid-template-columns:repeat(2,auto)}
     .display-row.count-4{grid-template-columns:repeat(4,auto);gap:8px}
     .digit-card,.info-card,.serial-card,.history-card,.history-item{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px}
-    .digit-card{display:grid;gap:8px;justify-items:center;align-content:start;text-align:center;background:transparent;border:0;padding:2px}
+    .digit-card{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;justify-items:center;align-content:start;text-align:center;background:transparent;border:0;padding:2px}
     .digit-card h3{justify-self:center;width:auto;text-align:center;font-size:14px;color:var(--subtle)}
     .digit{position:relative;width:230px;height:380px;border-radius:28px;background:linear-gradient(180deg,#0e0c13 0%,var(--screen) 100%);border:4px solid var(--bezel);box-shadow:inset 0 0 0 2px rgba(255,255,255,.06)}
     .display-row.count-1 .digit-card,.display-row.count-2 .digit-card{width:152px}
@@ -84,6 +84,10 @@
     .history-item strong{font-size:15px}.history-item span{color:var(--subtle);font-family:Consolas,monospace;font-size:13px}
     @media (max-width:1180px){.layout{grid-template-columns:1fr}.info-grid,.display-controls{grid-template-columns:1fr}.display-row.count-4 .digit-card{width:120px}.display-row.count-4 .digit{transform:scale(.5);margin-bottom:-178px}.display-row.count-4 .bitline{font-size:12px;letter-spacing:.1em}}
     @media (max-width:720px){.header,.serial-controls{grid-template-columns:1fr}.display-row{grid-template-columns:1fr;justify-items:center}.display-row.count-2{grid-template-columns:1fr}.display-row.count-4{grid-template-columns:repeat(2,auto)}.digit{width:100%;max-width:230px;height:380px}.display-row.count-4 .digit-card{width:120px}.display-row.count-4 .digit{width:230px;height:380px;transform:scale(.5);transform-origin:top center;margin-bottom:-178px}}
+    .history-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .history-heading h2 { margin: 0; }
+    .uart-test-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+    #serialToggleBtn { white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -91,7 +95,7 @@
     <header class="header">
       <a class="back" href="../index.html">Back to menu</a>
       <div class="title">
-        <h1>Dual Seven Segment</h1>
+        <h1>Seven Segment Displays</h1>
         <p>Receive the segment bits of two displays over UART and mirror the pattern beautifully on screen in real time.</p>
       </div>
       <img class="brand-logo" src="../../assets/branding/hanze_logo.png" alt="Hanze logo" />
@@ -103,10 +107,10 @@
         <div class="status-badge" id="statusBadge">Waiting for UART frames</div>
         <div class="display-shell">
           <div class="display-controls">
-            <label class="field"><span>Displays on screen</span><select id="displayCountSelect"><option value="1">1 display</option><option value="2" selected>2 displays</option><option value="4">4 displays</option></select></label>
-            <div class="serial-hint" id="expectedBitsHint">Expected payload: 2 displays x 8 bits = 16 bits total. Use `DISPLAYS:b1,b2` or individual `D1:` / `D2:` frames.</div>
+            <label class="field"><span>Displays on screen</span><select id="displayCountSelect"><option value="1" selected>1 display</option><option value="2">2 displays</option><option value="4">4 displays</option></select></label>
+            <div class="serial-hint" id="expectedBitsHint">Expected payload: 1 display x 8 bits = 8 bits total. Use `DISPLAYS:b1` or `D1:` frames.</div>
           </div>
-          <div class="display-row count-2" id="displayRow"></div>
+          <div class="display-row count-1" id="displayRow"></div>
           <div class="info-grid">
             <div class="info-card">
               <h3>Active segments</h3>
@@ -122,19 +126,21 @@
 
       <aside class="side">
         <div class="serial-card">
-          <h3>ESP32 / UART</h3>
+          <h3>UART</h3>
           <div class="serial-controls">
-            <label class="field"><span>Baud rate</span><select id="baudSelect"><option value="115200">115200</option><option value="9600">9600</option></select></label>
-            <button id="serialToggleBtn" type="button">Connect ESP32<small class="shortcut-hint">(Key C)</small></button>
+            <label class="field"><span>Baud rate</span><select id="baudSelect"><option value="115200" selected>115200</option><option value="9600">9600</option></select></label>
+            <button id="serialToggleBtn" type="button">Connect (Key C)</button>
           </div>
           <div class="serial-state" id="serialStatus">Not connected</div>
-          <div class="serial-hint" id="serialHint">Accepted UART lines: `LEFT:*`, `RIGHT:*`, `D1:*`, `D2:*`, `D3:*`, `D4:*`, or `DISPLAYS:b1,b2,...`.</div>
+          <div class="serial-hint" id="serialHint" hidden></div>
         </div>
         <div class="history-card">
-          <h2>History</h2>
-          <div class="tool-row">
-            <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example DISPLAYS:10111111,01100000, then press Enter" />
+          <div class="history-heading">
+            <h2>History</h2>
             <button id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
+          </div>
+          <div class="tool-row uart-test-row">
+            <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example DISPLAYS:10111111,01100000, then press Enter" />
           </div>
           <div class="history-list" id="historyList"></div>
         </div>
@@ -163,10 +169,10 @@
     const historyList = document.getElementById("historyList");
 
     const state = {
-      displayCount: 2,
+      displayCount: 1,
       digits: { D1: "00000000", D2: "00000000", D3: "00000000", D4: "00000000" },
       serialConnected: false,
-      history: [{ title: "Dual seven segment experiment ready.", detail: "Waiting for the first UART frame." }]
+      history: [{ title: "Seven Segment Displays experiment ready.", detail: "Waiting for the first UART frame." }]
     };
 
     const serialBridge = new WebSerialLineBridge({
@@ -235,7 +241,7 @@
       const totalBits = state.displayCount * 8;
       const visible = DIGIT_KEYS.slice(0, state.displayCount);
       const list = visible.join(", ");
-      expectedBitsHint.textContent = `Expected payload: ${state.displayCount} display${state.displayCount > 1 ? "s" : ""} x 8 bits = ${totalBits} bits total. Use DISPLAYS:b1,b2${state.displayCount >= 3 ? ",b3" : ""}${state.displayCount >= 4 ? ",b4" : ""} or individual ${list} frames.`;
+      expectedBitsHint.textContent = `Expected payload: ${state.displayCount} display${state.displayCount > 1 ? "s" : ""} x 8 bits = ${totalBits} bits total. Use DISPLAYS:b1${state.displayCount >= 2 ? ",b2" : ""}${state.displayCount >= 3 ? ",b3" : ""}${state.displayCount >= 4 ? ",b4" : ""} or individual ${list} frames.`;
       bitOrderText.innerHTML = `Each display expects <strong>8 bits</strong> in the order <strong>ABCDEFGDP</strong>. Visible now: <strong>${list}</strong>.`;
       uartTestInput.placeholder = state.displayCount === 1
         ? "Type a UART line, for example D1:10111111, then press Enter"
@@ -249,14 +255,16 @@
         serialToggleBtn.disabled = true;
         serialStatus.textContent = "Web Serial unavailable";
         serialHint.textContent = "Open this page in Chrome or Edge on localhost or https.";
+        serialHint.hidden = false;
         return;
       }
       serialToggleBtn.disabled = false;
-      serialToggleBtn.innerHTML = `${state.serialConnected ? "Disconnect" : "Connect ESP32"}<small class="shortcut-hint">(Key C)</small>`;
+      serialToggleBtn.textContent = `${state.serialConnected ? "Disconnect" : "Connect"} (Key C)`;
       serialStatus.textContent = state.serialConnected ? `Connected at ${baudSelect.value} baud` : "Not connected";
       serialHint.textContent = state.serialConnected
         ? "UART frames now update the displays in real time."
-        : `Accepted UART lines: LEFT, RIGHT, D1...D${state.displayCount}, and DISPLAYS with ${state.displayCount} byte group${state.displayCount > 1 ? "s" : ""}.`;
+        : "";
+      serialHint.hidden = !state.serialConnected;
     }
 
     function paintDigit(target) {

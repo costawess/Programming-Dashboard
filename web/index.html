@@ -787,8 +787,8 @@
             <img class="menu-card-image" src="./assets/cards/variable_types_lab.svg" alt="Variable Types Lab card image" />
             <div class="menu-card-copy">
               <h3>Variable Types</h3>
-              <p>Compare bool, signed and unsigned integers, and float, then inspect exactly how each value is stored byte by byte in memory.</p>
-              <div class="menu-tags"><span class="menu-tag">types</span><span class="menu-tag">signed/unsigned</span><span class="menu-tag">float</span><span class="menu-tag">memory bytes</span></div>
+              <p>Pick a variable type to see its size in ESP32 memory, its minimum and maximum values, and an example sketch that uses it.</p>
+              <div class="menu-tags"><span class="menu-tag">types</span><span class="menu-tag">signed/unsigned</span><span class="menu-tag">float</span><span class="menu-tag">size and range</span></div>
             </div>
             <a class="launch-button" href="./simulations/variable_types_lab.html">Open simulation</a>
           </article>
@@ -886,7 +886,7 @@
             <img class="menu-card-image" src="./assets/cards/timers_lab.svg" alt="Timers Lab card image" />
             <div class="menu-card-copy">
               <h3>Timers</h3>
-              <p>Put `delay()` and `millis()` side by side and see why blocking code affects event handling over time.</p>
+              <p>Blink an LED in three ways: a blocking `delay()`, a non-blocking `millis()` check, and an ESP32 hardware timer ISR.</p>
               <div class="menu-tags"><span class="menu-tag">delay()</span><span class="menu-tag">millis()</span><span class="menu-tag">hardware timer</span><span class="menu-tag">timing</span></div>
             </div>
             <a class="launch-button" href="./simulations/course_topics_lab.html?topic=timers">Open simulation</a>
@@ -936,7 +936,7 @@
             <img class="menu-card-image" src="./assets/cards/maze.svg" alt="Maze card image" />
             <div class="menu-card-copy">
               <h3>Maze</h3>
-              <p>Maze challenge with keyboard control, score tracking, and direct UART movement commands from the ESP32.</p>
+              <p>Maze challenge with keyboard control, score tracking, and direct UART movement commands.</p>
               <div class="menu-tags"><span class="menu-tag">movement</span><span class="menu-tag">UART commands</span><span class="menu-tag">logic</span><span class="menu-tag">game loop</span></div>
             </div>
             <a class="launch-button" href="./experiments/maze.html">Open experiment</a>
@@ -946,7 +946,7 @@
             <div class="menu-card-copy">
               <h3>Tic-Tac-Toe</h3>
               <p>Browser-based Tic-Tac-Toe with the original UART handshake, move exchange, and rematch flow used by the pygame version.</p>
-              <div class="menu-tags"><span class="menu-tag">game state</span><span class="menu-tag">UART protocol</span><span class="menu-tag">events</span><span class="menu-tag">logic</span></div>
+              <div class="menu-tags"><span class="menu-tag">UART protocol</span><span class="menu-tag">events</span><span class="menu-tag">logic</span></div>
             </div>
             <a class="launch-button" href="./experiments/tic_tac_toe.html">Open experiment</a>
           </article>
@@ -978,9 +978,9 @@
             <a class="launch-button" href="./experiments/intersection_controller.html">Open experiment</a>
           </article>
           <article class="menu-card" data-feature-key="dualSevenSegment">
-            <img class="menu-card-image" src="./assets/cards/dual_seven_segment.svg" alt="Dual Seven Segment card image" />
+            <img class="menu-card-image" src="./assets/cards/dual_seven_segment.svg" alt="Seven Segment Displays card image" />
             <div class="menu-card-copy">
-              <h3>Dual Seven Segment</h3>
+              <h3>Seven Segment Displays</h3>
               <p>UART-driven twin 7-segment display visualizer that renders the exact segment bits received for the left and right digits.</p>
               <div class="menu-tags"><span class="menu-tag">7-segment</span><span class="menu-tag">bits</span><span class="menu-tag">display encoding</span><span class="menu-tag">UART</span></div>
             </div>
@@ -1004,12 +1004,21 @@
             </div>
             <a class="launch-button" href="./experiments/heating_cooling_lab.html">Open experiment</a>
           </article>
+          <article class="menu-card" data-feature-key="realTimeChallenge">
+            <img class="menu-card-image" src="./assets/cards/real_time_challenge.svg" alt="Real-Time Challenge execution timeline" />
+            <div class="menu-card-copy">
+              <h3>Real-Time Challenge</h3>
+              <p>Experience how blocking code, non-blocking execution, polling, and interrupts affect a system while performing multiple tasks.</p>
+              <div class="menu-tags"><span class="menu-tag">delay()</span><span class="menu-tag">millis()</span><span class="menu-tag">interrupts</span><span class="menu-tag">classroom</span></div>
+            </div>
+            <a class="launch-button" href="./experiments/real_time_challenge.html">Open experiment</a>
+          </article>
         </section>
       </div>
       <div class="menu-empty" id="menuEmptyState">No simulation or experiment matched this search. Try a broader word such as <code>memory</code>, <code>timer</code>, <code>UART</code>, or <code>traffic</code>.</div>
       <footer class="menu-footer">
         <div>Contact: <strong id="siteContactName">Your Name</strong> | <a id="siteContactEmailLink" href="mailto:your.email@example.com">your.email@example.com</a></div>
-        <div>Last edition: <span id="siteContactLastEdition">April 13, 2026</span></div>
+        <div>Last edition: <span id="siteContactLastEdition">October 1, 2026</span></div>
       </footer>
     </section>
   </div>

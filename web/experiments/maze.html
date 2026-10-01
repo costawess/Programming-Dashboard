@@ -301,6 +301,8 @@
       display: grid;
       gap: 12px;
     }
+    .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .stats .stat-card { min-width: 0; overflow-wrap: anywhere; }
     .stat-card, .log-item {
       background: rgba(255,255,255,0.03);
       border: 1px solid #343434;
@@ -318,9 +320,11 @@
       color: var(--subtle);
       line-height: 1.5;
     }
-    .overlay {
+    /* Keep the popup fixed above the shared mouse-glow styles. */
+    #overlay {
       position: fixed;
       inset: 0;
+      z-index: 1000;
       background: var(--overlay-bg);
       display: grid;
       place-items: center;
@@ -338,9 +342,16 @@
     }
     .modal h3 { font-size: clamp(30px, 5vw, 48px); color: var(--yellow); }
     .modal .actions { justify-content: center; }
+    #uartReminder { position: fixed; inset: 0; margin: auto; max-height: 85vh; overflow: auto; color: var(--text); }
+    #uartReminder:not([open]) { display: none; }
+    #uartReminder::backdrop { background: var(--overlay-bg); }
     .hidden { display: none !important; }
     @media (max-width: 1080px) { .layout { grid-template-columns: 1fr; } }
     @media (max-width: 720px) { .header { grid-template-columns: 1fr; } }
+    .history-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .history-heading h2 { margin: 0; }
+    .uart-test-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+    #serialToggleBtn { white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -366,52 +377,63 @@
 
       <aside class="side-panel">
         <div class="serial-card">
-          <h2>ESP32 / UART</h2>
+          <h2>UART</h2>
           <div class="serial-controls">
             <label class="field">
               <span>Baud rate</span>
               <select id="baudSelect">
                 <option value="9600">9600</option>
-                <option value="115200">115200</option>
+                <option value="115200" selected>115200</option>
               </select>
             </label>
-            <button id="serialToggleBtn" type="button">Connect ESP32<small class="shortcut-hint">(Key C)</small></button>
+            <button id="serialToggleBtn" type="button">Connect (Key C)</button>
           </div>
           <div class="serial-state" id="serialStatus">Not connected</div>
-          <div class="serial-hint" id="serialHint">The maze listens for `UP`, `DOWN`, `LEFT`, and `RIGHT`, just like the pygame version.</div>
+          <div class="serial-hint" id="serialHint">Send START first, then UP, DOWN, LEFT, and RIGHT.</div>
         </div>
-        <div class="tool-row">
-          <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example UP, then press Enter" />
-          <button id="clearHistoryBtn">Clear history<small class="shortcut-hint">(Key H)</small></button>
+        <div class="tool-row uart-test-row">
+          <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Test: type or send via UART the word 'RIGHT' " />
         </div>
         <h2>Progress</h2>
         <div class="stats">
           <div class="stat-card">Current level<strong id="levelValue">1</strong></div>
           <div class="stat-card">Score<strong id="scoreValue">0</strong></div>
-          <div class="stat-card">Completed levels<strong id="completedValue">0 / 4</strong></div>
+          <div class="stat-card">Completed levels<strong id="completedValue">0 / 6</strong></div>
         </div>
-        <h2 style="margin-top:18px;">Messages</h2>
+        <div class="history-heading" style="margin-top:18px;">
+          <h2>History</h2>
+          <button id="clearHistoryBtn">Clear history<small class="shortcut-hint">(Key H)</small></button>
+        </div>
         <div class="log-list" id="logList"></div>
       </aside>
     </section>
   </div>
 
   <div class="overlay hidden" id="overlay">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="overlayTitle" aria-describedby="overlayText">
       <h3 id="overlayTitle">You win!</h3>
       <p id="overlayText">Choose what to do next.</p>
       <div class="actions" id="overlayActions"></div>
     </div>
   </div>
 
+  <dialog class="modal" id="uartReminder" aria-labelledby="uartReminderTitle">
+    <h3 id="uartReminderTitle">Try UART control</h3>
+    <p>You have made five moves with the keyboard. The keyboard is useful for initial tests, but the goal is to send START first, then UP, DOWN, LEFT, and RIGHT commands from your ESP32 over UART.</p>
+    <!-- <p>You can close this message and continue playing with the keyboard.</p> -->
+    <form method="dialog"><button type="submit">Continue</button></form>
+  </dialog>
+
   <script src="../shared/sound_fx.js"></script>
   <script src="../shared/web_serial_bridge.js"></script>
   <script>
     const levels = [
       [[0,0,0,0,1,0,0,0,0,0],[1,1,0,1,1,0,1,1,1,0],[0,0,0,0,0,0,0,0,1,0],[0,1,1,1,1,1,1,0,1,0],[0,1,0,0,0,0,1,0,0,0],[0,1,0,1,1,0,1,1,1,0],[0,0,0,1,0,0,0,0,1,0],[1,1,0,1,0,1,1,0,0,0]],
-      [[0,0,0,0,1,0,1,0,0,0],[1,1,0,1,1,0,1,1,1,0],[0,0,0,0,0,0,0,0,1,0],[0,1,1,1,0,1,1,0,1,0],[0,1,0,0,0,0,1,0,0,0],[1,1,0,1,0,0,1,1,1,0],[0,0,0,0,0,0,1,0,1,0],[1,1,0,1,0,1,1,0,0,0]],
+      [[0,0,0,0,1,0,1,0,0,0],[0,1,1,1,1,0,1,1,1,0],[0,0,0,1,0,0,0,0,1,0],[0,0,0,1,0,1,1,0,1,0],[0,0,0,0,0,0,1,0,0,0],[1,1,0,1,0,0,1,1,1,0],[0,0,0,0,0,0,1,0,1,0],[1,1,0,1,0,1,1,0,0,0]],
       [[0,0,0,0,1,0,0,0,0,0],[1,1,0,0,1,0,1,1,1,0],[0,0,0,0,0,0,0,1,1,0],[0,1,1,1,1,1,1,0,1,0],[0,0,0,1,0,0,0,0,0,0],[0,1,0,1,1,0,0,1,1,0],[0,1,0,1,0,0,0,0,1,0],[1,1,1,1,0,1,1,0,0,0]],
-      [[0,0,0,0,1,0,0,0,0,0],[1,0,1,1,0,0,1,1,1,0],[0,0,0,0,0,0,0,0,1,0],[0,1,1,1,1,1,1,0,0,1],[0,0,0,0,0,0,1,0,0,0],[0,1,0,1,1,0,1,1,0,0],[0,0,0,0,0,0,1,0,1,0],[0,1,0,1,0,1,1,0,0,0]]
+      [[0,0,0,0,1,0,0,0,0,0],[1,0,1,1,0,0,1,1,1,0],[0,0,0,0,0,0,0,0,1,0],[0,1,1,1,1,1,1,0,0,1],[0,0,0,0,0,0,1,0,0,0],[0,1,0,1,1,0,1,1,0,0],[0,0,0,0,0,0,1,0,1,0],[0,1,0,1,0,1,1,0,0,0]],
+      [[0,1,0,0,0,1,0,0,0,0,0,0,0,0,0],[0,1,0,1,0,1,0,1,0,1,1,1,1,1,0],[0,1,0,1,0,0,0,1,0,0,0,0,0,1,0],[0,1,1,1,0,1,1,1,1,1,1,1,0,1,0],[0,0,0,1,0,0,0,1,0,0,0,0,0,1,0],[1,1,0,1,1,1,0,1,0,1,1,1,1,1,0],[0,1,0,1,0,0,0,1,0,0,0,0,0,1,0],[0,1,0,1,0,1,1,1,1,1,1,1,0,1,0],[0,0,0,1,0,0,0,1,0,0,0,0,0,1,0],[0,1,1,1,1,1,1,1,0,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,1,0,0,0,0,0]],
+      [[0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0],[1,1,0,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,0],[0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0],[0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0],[0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,1,0],[1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,0],[0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,0,0,0,0],[0,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,1,1,1],[0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0,1,0],[1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0],[0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0],[0,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,0],[0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0],[0,1,0,1,1,1,0,1,1,1,1,1,1,1,0,1,0,1,0],[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0]]
     ];
 
     const canvas = document.getElementById("mazeCanvas");
@@ -435,11 +457,12 @@
 
     const state = {
       levelIndex: 0,
-      completed: [false, false, false, false],
+      completed: Array(levels.length).fill(false),
       robot: { x: 0, y: 0, dir: 1 },
       score: 0,
       won: false,
       gameOver: false,
+      uartStarted: false,
       serialConnected: false,
       logs: ["(SYSTEM): Maze HTML experiment ready."]
     };
@@ -469,11 +492,13 @@
     }
 
     function resetRound() {
+      state.uartStarted = false;
       state.robot = { x: 0, y: 0, dir: 1 };
       state.score = 0;
       state.won = false;
       state.gameOver = false;
       overlay.classList.add("hidden");
+      resetBtn.focus();
       updateStatus("Use the arrow keys to move");
       updateSidebar();
       drawMaze();
@@ -527,11 +552,11 @@
       }
 
       serialToggleBtn.disabled = false;
-      serialToggleBtn.textContent = state.serialConnected ? "Disconnect" : "Connect ESP32";
+      serialToggleBtn.textContent = state.serialConnected ? "Disconnect (Key C)" : "Connect (Key C)";
       serialStatus.textContent = state.serialConnected ? `Connected at ${baudSelect.value} baud` : "Not connected";
       serialHint.textContent = state.serialConnected
-        ? "ESP32 commands now drive the robot. Expected lines: UP, DOWN, LEFT, RIGHT."
-        : "The maze listens for UP, DOWN, LEFT, and RIGHT, just like the pygame version.";
+        ? "Send START to begin this level, then UP, DOWN, LEFT, or RIGHT."
+        : "Send START first, then UP, DOWN, LEFT, or RIGHT.";
     }
 
     function drawMaze() {
@@ -580,10 +605,11 @@
 
       if (nx < 0 || ny < 0 || ny >= maze.length || nx >= maze[0].length || maze[ny][nx] === 1) {
         state.gameOver = true;
+        state.uartStarted = false;
         updateStatus("Collision detected - game over");
         addLog("(RESULT): Collision detected.");
-        showOverlay("Game Over", `You hit a wall on Maze ${state.levelIndex + 1}.`, [
-          { label: "Try again", action: resetRound }
+        showOverlay("You lost!", `You hit a wall on Maze ${state.levelIndex + 1}. Restart this level to try again.`, [
+          { label: `Restart level ${state.levelIndex + 1} (R)`, action: resetRound }
         ]);
         drawMaze();
         return;
@@ -597,6 +623,7 @@
 
       if (nx === maze[0].length - 1 && ny === maze.length - 1) {
         state.won = true;
+        state.uartStarted = false;
         state.completed[state.levelIndex] = true;
         renderLevelButtons();
         updateSidebar();
@@ -616,6 +643,17 @@
       const command = line.trim().toUpperCase();
       addLog(`(ESP): '${command}'`);
 
+      if (command === "START") {
+        resetRound();
+        state.uartStarted = true;
+        addLog("(SYSTEM): START received. Send UP, DOWN, LEFT, or RIGHT.");
+        return;
+      }
+      if (["UP", "DOWN", "LEFT", "RIGHT"].includes(command) && !state.uartStarted) {
+        addLog("(SYSTEM): Send START before sending the maze solution.");
+        return;
+      }
+
       if (command === "UP") move(0, -1, 0);
       else if (command === "RIGHT") move(1, 0, 1);
       else if (command === "DOWN") move(0, 1, 2);
@@ -623,6 +661,7 @@
     }
 
     function handleSerialStatus(status) {
+      state.uartStarted = false;
       state.serialConnected = status === "connected";
       updateSerialUi();
       addLog(state.serialConnected
@@ -655,17 +694,47 @@
         overlayActions.appendChild(btn);
       }
       overlay.classList.remove("hidden");
+      overlayActions.querySelector("button")?.focus();
     }
+
+    const uartReminder = document.getElementById("uartReminder");
+    let keyboardMoves = 0;
+    let uartReminderShown = false;
+
+    function moveWithKeyboard(dx, dy, dir) {
+      const previousScore = state.score;
+      move(dx, dy, dir);
+      if (state.score === previousScore) return;
+      keyboardMoves += 1;
+      if (keyboardMoves >= 5 && !uartReminderShown && !state.won) {
+        uartReminderShown = true;
+        uartReminder.showModal();
+      }
+    }
+
+    window.addEventListener("keydown", event => {
+      if (uartReminder.open) event.stopImmediatePropagation();
+    }, true);
 
     window.addEventListener("keydown", event => {
       const tag = document.activeElement?.tagName || "";
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
+      if (state.gameOver) {
+        if (event.key.toLowerCase() === "r") {
+          event.preventDefault();
+          resetRound();
+        } else if (event.key !== "Enter" && event.key !== " ") {
+          event.preventDefault();
+        }
+        return;
+      }
+
       if (overlay.classList.contains("hidden") === false && event.key === "Escape") {
         overlay.classList.add("hidden");
         return;
       }
-      if (event.key >= "1" && event.key <= "4") {
+      if (event.key >= "1" && event.key <= String(levels.length)) {
         const index = Number(event.key) - 1;
         if (levels[index]) {
           event.preventDefault();
@@ -688,10 +757,10 @@
         toggleSerialConnection();
         return;
       }
-      if (event.key === "ArrowUp") { event.preventDefault(); move(0, -1, 0); }
-      else if (event.key === "ArrowRight") { event.preventDefault(); move(1, 0, 1); }
-      else if (event.key === "ArrowDown") { event.preventDefault(); move(0, 1, 2); }
-      else if (event.key === "ArrowLeft") { event.preventDefault(); move(-1, 0, 3); }
+      if (event.key === "ArrowUp") { event.preventDefault(); moveWithKeyboard(0, -1, 0); }
+      else if (event.key === "ArrowRight") { event.preventDefault(); moveWithKeyboard(1, 0, 1); }
+      else if (event.key === "ArrowDown") { event.preventDefault(); moveWithKeyboard(0, 1, 2); }
+      else if (event.key === "ArrowLeft") { event.preventDefault(); moveWithKeyboard(-1, 0, 3); }
     });
 
     resetBtn.addEventListener("click", resetRound);
@@ -715,5 +784,3 @@
   </script>
 </body>
 </html>
-
-

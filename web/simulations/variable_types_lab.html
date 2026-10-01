@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-sync-dashboard-lights="true">
 <head>
   <meta charset="UTF-8" />
@@ -36,7 +36,6 @@
       --white: #f6fbff;
       --button-bg: #173245;
       --code-bg: #0d1720;
-      --stage-bg: linear-gradient(180deg, #162c3b 0%, #11202a 100%);
       --shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
     }
     html:not(.theme-dark) {
@@ -51,7 +50,6 @@
       --white: #244765;
       --button-bg: #f5f9ff;
       --code-bg: #f4f8fd;
-      --stage-bg: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
       --shadow: 0 18px 42px rgba(48, 92, 145, 0.12);
     }
     * { box-sizing: border-box; }
@@ -64,65 +62,51 @@
     .brand-logo { width: 132px; max-width: 100%; height: auto; object-fit: contain; }
     .title h1 { margin: 0; font-size: clamp(28px, 3vw, 46px); }
     .title p { margin: 6px 0 0; color: var(--subtle); line-height: 1.45; }
-    .layout { display: grid; grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1fr) minmax(390px, 1.02fr); gap: 18px; align-items: start; }
+    .layout { display: grid; grid-template-columns: minmax(230px, 290px) minmax(0, 1fr); gap: 18px; align-items: start; }
     .panel { padding: 18px; display: grid; gap: 14px; }
     .panel h2, .panel h3, .panel p { margin: 0; }
-    .topic-head { display: grid; gap: 8px; }
-    .topic-head p, .panel-note, .code-note, .memory-note, .tip-note { color: var(--subtle); line-height: 1.45; }
-    .status-pill { justify-self: start; border: 2px solid var(--accent); border-radius: 999px; padding: 10px 16px; background: var(--accent-soft); color: var(--accent); font-weight: 800; }
-    .controls-card, .visual-card, .memory-card, .code-card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 14px; display: grid; gap: 12px; }
-    .controls-grid, .control-row, .memory-grid, .summary-grid, .value-grid { display: grid; gap: 10px; }
-    .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .value-grid { grid-template-columns: minmax(0, 1fr) 116px; align-items: end; }
-    .field-label, .value-line { color: var(--subtle); font-size: 14px; font-weight: 700; }
-    .value-line { display: flex; justify-content: space-between; gap: 12px; }
-    select, input[type="number"], input[type="text"] { width: 100%; padding: 11px 12px; border-radius: 14px; border: 2px solid var(--line); background: rgba(11, 24, 34, 0.84); color: var(--text); font: inherit; }
-    input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent); }
-    button.action-btn, .copy-btn { appearance: none; border: 2px solid var(--line); border-radius: 14px; padding: 10px 14px; background: var(--button-bg); color: var(--text); font-weight: 800; cursor: pointer; }
-    button.action-btn:hover, .copy-btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--white); }
+    .info-card, .code-card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 14px; display: grid; gap: 12px; }
+    .card-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .copy-btn { appearance: none; border: 2px solid var(--line); border-radius: 14px; padding: 10px 14px; background: var(--button-bg); color: var(--text); font-weight: 800; cursor: pointer; }
+    .copy-btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--white); }
     .copy-btn.copied { border-color: var(--green); background: rgba(47, 199, 107, 0.14); }
-    .button-row { display: flex; gap: 10px; flex-wrap: wrap; }
-    .summary-box, .interpret-box, .memory-byte, .bit-chip { border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); }
-    .summary-box, .interpret-box { padding: 12px; display: grid; gap: 6px; text-align: center; }
-    .summary-box strong, .interpret-box strong { font-size: 13px; color: var(--subtle); }
-    .summary-box span, .interpret-box span { color: var(--white); font-size: 21px; font-weight: 900; }
-    .memory-stage { min-height: 420px; border-radius: 20px; border: 1px solid var(--line); background: var(--stage-bg); padding: 18px; display: grid; gap: 16px; align-content: start; }
-    .memory-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-    .memory-byte { padding: 12px 10px; text-align: center; display: grid; gap: 6px; min-height: 112px; align-content: start; }
-    .memory-byte.empty { opacity: 0.35; }
-    .memory-byte strong { color: var(--subtle); font-size: 12px; }
-    .memory-byte .address { color: var(--accent); font-size: 12px; font-weight: 800; }
-    .memory-byte .hex { color: var(--white); font-size: 28px; font-weight: 900; letter-spacing: 0.04em; }
-    .memory-byte .ascii { color: var(--subtle); font-size: 12px; }
-    .bit-row { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
-    .bit-chip { padding: 8px 0; text-align: center; font: 800 13px Consolas, monospace; color: var(--subtle); }
-    .bit-chip.one { color: var(--white); background: rgba(99, 196, 255, 0.16); border-color: rgba(99, 196, 255, 0.4); }
-    .interpret-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-    .memory-path { border-radius: 18px; border: 2px dashed var(--line); padding: 14px; text-align: center; color: var(--subtle); line-height: 1.45; }
-    pre.code-block { margin: 0; min-height: 420px; padding: 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--code-bg); color: #d8f2ff; font-family: Consolas, "Courier New", monospace; font-size: 13px; line-height: 1.5; white-space: pre-wrap; user-select: text; -webkit-user-select: text; cursor: text; }
-    .code-line { display: block; margin: 0 -6px; padding: 1px 6px; border-radius: 8px; transition: background 0.16s ease, box-shadow 0.16s ease; }
+
+    /* Left side: list of types */
+    .type-list { display: grid; gap: 14px; }
+    .type-group { display: grid; gap: 6px; }
+    .type-group-title { color: var(--subtle); font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+    .type-btn { appearance: none; width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; border: 2px solid var(--line); border-radius: 12px; padding: 8px 12px; background: var(--button-bg); color: var(--text); font: 700 14px Consolas, "Courier New", monospace; cursor: pointer; text-align: left; }
+    .type-btn small { font: 700 12px "Segoe UI", Arial, sans-serif; color: var(--subtle); white-space: nowrap; }
+    .type-btn:hover { border-color: var(--accent); }
+    .type-btn.active { border-color: var(--accent); background: var(--accent-soft); color: var(--white); }
+
+    /* Right side: information about the selected type */
+    .type-name { font: 900 clamp(26px, 3vw, 38px) Consolas, "Courier New", monospace; color: var(--white); }
+    .type-meaning { color: var(--subtle); font-size: 16px; font-weight: 700; }
+    .fact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .fact-box { border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04); padding: 12px; display: grid; gap: 6px; align-content: start; }
+    .fact-box strong { font-size: 13px; color: var(--subtle); }
+    .fact-box span { color: var(--white); font-size: 19px; font-weight: 900; overflow-wrap: anywhere; }
+    .fact-box small { color: var(--subtle); font-size: 13px; line-height: 1.35; }
+    .info-text { color: var(--text); line-height: 1.5; }
+    .info-text strong { color: var(--subtle); }
+    .board-note { border-radius: 14px; border: 2px dashed var(--line); padding: 10px 12px; color: var(--subtle); line-height: 1.45; }
+    .board-note:empty { display: none; }
+
+    pre.code-block { margin: 0; padding: 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--code-bg); color: #d8f2ff; font-family: Consolas, "Courier New", monospace; font-size: 14px; line-height: 1.5; white-space: pre-wrap; user-select: text; -webkit-user-select: text; cursor: text; }
+    .code-line { display: block; margin: 0 -6px; padding: 1px 6px; border-radius: 8px; }
     .code-line.active { background: rgba(99, 196, 255, 0.16); box-shadow: inset 3px 0 0 rgba(99, 196, 255, 0.9); color: var(--white); }
-    code.inline-chip { display: inline-block; padding: 3px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); color: var(--white); }
-    html:not(.theme-dark) select,
-    html:not(.theme-dark) input[type="number"],
-    html:not(.theme-dark) input[type="text"] { background: rgba(255, 255, 255, 0.96); }
-    html:not(.theme-dark) .summary-box,
-    html:not(.theme-dark) .interpret-box,
-    html:not(.theme-dark) .memory-byte,
-    html:not(.theme-dark) .bit-chip,
-    html:not(.theme-dark) code.inline-chip { background: rgba(255, 255, 255, 0.72); }
-    html:not(.theme-dark) .summary-box span,
-    html:not(.theme-dark) .interpret-box span,
-    html:not(.theme-dark) .memory-byte .hex,
-    html:not(.theme-dark) .bit-chip.one,
-    html:not(.theme-dark) .code-line.active,
-    html:not(.theme-dark) code.inline-chip { color: #244765; }
-    html:not(.theme-dark) .bit-chip.one { background: rgba(45, 134, 230, 0.14); border-color: rgba(45, 134, 230, 0.28); }
+    html:not(.theme-dark) .fact-box { background: rgba(255, 255, 255, 0.72); }
     html:not(.theme-dark) pre.code-block { color: #355775; }
-  @media (max-width: 1320px) { .layout { grid-template-columns: 1fr; } }
+    @media (max-width: 1100px) { .fact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .type-group { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+      .type-group-title { grid-column: 1 / -1; }
+    }
     @media (max-width: 760px) {
       .header { grid-template-columns: 1fr; }
-      .summary-grid, .value-grid, .interpret-grid, .memory-strip { grid-template-columns: 1fr; }
+      .fact-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -132,77 +116,39 @@
       <a class="back" href="../index.html">Back to menu</a>
       <div class="title">
         <h1>Variable Types</h1>
-        <p>Change the variable type, store a value, and inspect the exact bytes that would be placed in memory.</p>
+        <p>Select a variable type to see how much ESP32 memory it uses, which values it can hold, and an example of how to use it.</p>
       </div>
       <img class="brand-logo" src="../../assets/branding/hanze_logo.png" alt="Hanze logo" />
     </header>
 
     <section class="layout">
       <section class="panel">
-        <div class="topic-head">
-          <h2>Stored Variable</h2>
-          <p>Different variable types change the numeric range, signed behavior, and the number of bytes reserved in RAM.</p>
-          <div class="status-pill" id="statusPill">uint16_t | 2 bytes</div>
-        </div>
-
-        <div class="controls-card">
-          <h3>Interactive controls</h3>
-          <div class="controls-grid">
-            <div class="control-row">
-              <div class="field-label">Variable type</div>
-              <select id="typeSelect"></select>
-            </div>
-            <div class="control-row">
-              <div class="value-line">
-                <span id="valueLabel">Stored value (â† â†’)</span>
-                <span id="valueReadout">1024</span>
-              </div>
-              <div class="value-grid">
-                <input id="valueSlider" type="range" />
-                <input id="valueInput" type="number" />
-              </div>
-            </div>
-            <div class="button-row" id="presetButtons"></div>
-            <div class="memory-path" id="typeHint"></div>
-          </div>
-        </div>
-
-        <div class="visual-card">
-          <h3>Type summary</h3>
-          <div class="summary-grid">
-            <div class="summary-box"><strong>Type</strong><span id="summaryType">uint16_t</span></div>
-            <div class="summary-box"><strong>Size</strong><span id="summarySize">2 B</span></div>
-            <div class="summary-box"><strong>Range</strong><span id="summaryRange">0..65535</span></div>
-            <div class="summary-box"><strong>Meaning</strong><span id="summaryMeaning">Unsigned integer</span></div>
-          </div>
-          <p class="tip-note" id="typeExplanation"></p>
-        </div>
+        <h2>Variable type</h2>
+        <div class="type-list" id="typeList"></div>
       </section>
 
       <section class="panel">
-        <div class="memory-card">
-          <h2>Memory View</h2>
-          <p class="memory-note">The bytes below are shown in RAM order: lowest address first. ESP32 and most classroom MCUs store multi-byte values in little-endian order.</p>
-          <div class="memory-stage">
-            <div class="memory-strip" id="memoryStrip"></div>
-            <div class="interpret-grid">
-              <div class="interpret-box"><strong>Hex value</strong><span id="hexValue">0x0400</span></div>
-              <div class="interpret-box"><strong>Binary</strong><span id="binaryValue">00000100 00000000</span></div>
-              <div class="interpret-box"><strong>Bytes used</strong><span id="bytesUsed">2</span></div>
-            </div>
-            <div class="memory-path" id="memoryNote"></div>
-            <div class="memory-grid" id="bitGrid"></div>
+        <div class="info-card">
+          <div>
+            <div class="type-name" id="typeName">int</div>
+            <div class="type-meaning" id="typeMeaning"></div>
           </div>
+          <div class="fact-grid">
+            <div class="fact-box"><strong>Size in ESP32 memory</strong><span id="factSize"></span><small id="factBits"></small></div>
+            <div class="fact-box"><strong>Min</strong><span id="factMin"></span></div>
+            <div class="fact-box"><strong>Max</strong><span id="factMax"></span><small id="factCount"></small></div>
+            <div class="fact-box"><strong>Negative values</strong><span id="factSign"></span><small id="factSame"></small></div>
+          </div>
+          <p class="info-text" id="typeDescription"></p>
+          <p class="info-text" id="typeUse"></p>
+          <div class="board-note" id="boardNote"></div>
         </div>
-      </section>
 
-      <section class="panel">
         <div class="code-card">
           <div class="card-head">
-            <h2>Arduino C++</h2>
+            <h2>Code</h2>
             <button class="copy-btn" id="copyCodeBtn" type="button">Copy code</button>
           </div>
-          <p class="code-note">The code below declares the selected type, prints its value, and then dumps the raw bytes from memory.</p>
           <pre class="code-block" id="codeBlock"></pre>
         </div>
       </section>
@@ -210,287 +156,472 @@
   </div>
 
   <script>
+    // Sizes and ranges are the ones used by the ESP32 Arduino core.
+    // min/max are strings so large values stay readable; signed says if negatives fit.
+    const TYPE_GROUPS = [
+      { title: "True / false", types: ["bool"] },
+      { title: "Characters", types: ["char"] },
+      { title: "Small integers", types: ["byte", "uint8", "int8"] },
+      { title: "16-bit integers", types: ["ushort", "short", "uint16", "int16"] },
+      { title: "32-bit integers", types: ["int", "uint", "long", "ulong", "int32", "uint32"] },
+      { title: "Decimal numbers", types: ["float32"] }
+    ];
+
     const TYPE_CONFIGS = {
-      boolean: {
-        label: "boolean",
-        kind: "bool",
-        bytes: 1,
-        min: 0,
-        max: 1,
-        step: 1,
-        defaultValue: 0,
-        meaning: "Arduino boolean alias",
-        rangeLabel: "0 or 1",
-        hint: "In Arduino, boolean is an older alias for a logical true or false value.",
-        explain: "It behaves like bool in classroom code, but many examples still use the boolean name."
-      },
       bool: {
         label: "bool",
-        kind: "bool",
         bytes: 1,
-        min: 0,
-        max: 1,
-        step: 1,
-        defaultValue: 1,
+        min: "false (0)",
+        max: "true (1)",
+        count: "2 values",
+        signed: false,
         meaning: "True or false",
-        rangeLabel: "0 or 1",
-        hint: "A bool reserves one byte, but it only uses logical false (0) or true (1).",
-        explain: "Useful for flags such as buttonPressed, alarmEnabled, or systemReady."
-      },
-      byte: {
-        label: "byte",
-        kind: "uint8",
-        bytes: 1,
-        min: 0,
-        max: 255,
-        step: 1,
-        defaultValue: 120,
-        meaning: "Arduino byte alias",
-        rangeLabel: "0..255",
-        hint: "In Arduino, byte is an alias for an 8-bit unsigned value.",
-        explain: "Very common for raw serial bytes, PWM duty values, and compact counters."
-      },
-      uchar: {
-        label: "unsigned char",
-        kind: "uint8",
-        bytes: 1,
-        min: 0,
-        max: 255,
-        step: 1,
-        defaultValue: 90,
-        meaning: "Unsigned character-sized integer",
-        rangeLabel: "0..255",
-        hint: "unsigned char uses one byte, just like byte and uint8_t.",
-        explain: "Useful when you want to emphasize raw bytes or unsigned character data."
+        description: "A bool holds a logical value: true or false. It answers a yes/no question about your system.",
+        use: "Flags such as buttonPressed, alarmEnabled, or systemReady.",
+        note: "A bool reserves a whole byte, even though it only needs one bit.",
+        example: `const int buttonPin = 35;
+const int ledPin = 4;
+
+bool buttonPressed = false;
+
+void setup() {
+  pinMode(buttonPin, INPUT);
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  buttonPressed = digitalRead(buttonPin);
+
+  if (buttonPressed) {
+    digitalWrite(ledPin, HIGH);
+  } else {
+    digitalWrite(ledPin, LOW);
+  }
+}`
       },
       char: {
         label: "char",
-        kind: "char",
         bytes: 1,
-        min: -128,
-        max: 127,
-        step: 1,
-        defaultValue: 65,
-        meaning: "Character / signed byte",
-        rangeLabel: "-128..127",
-        hint: "A char is one byte wide and is often used to store ASCII characters.",
-        explain: "Great for letters, symbols, and raw character buffers received over serial."
+        min: "0",
+        max: "255",
+        count: "256 values",
+        signed: false,
+        meaning: "One character",
+        description: "A char stores one character, such as a letter or a digit, as its ASCII code. The letter 'A' is stored as the number 65.",
+        use: "Letters, symbols, and commands received over serial.",
+        note: "On the ESP32 a plain char is unsigned (0 to 255). On an Arduino Uno it is signed (-128 to 127). Use uint8_t or int8_t when you need a small number instead of a character.",
+        example: `char command = 'S';
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    command = Serial.read();
+
+    if (command == 'A') {
+      Serial.println("Command A received");
+    }
+  }
+}`
+      },
+      byte: {
+        label: "byte",
+        bytes: 1,
+        min: "0",
+        max: "255",
+        count: "256 values",
+        signed: false,
+        meaning: "Arduino name for one byte",
+        description: "byte is the Arduino name for an 8-bit value that is always positive.",
+        use: "Bytes received over serial, PWM values, and small counters.",
+        note: "",
+        example: `byte received = 0;
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    received = Serial.read();
+
+    Serial.print("Received: ");
+    Serial.println(received);
+  }
+}`
       },
       uint8: {
         label: "uint8_t",
-        kind: "uint8",
         bytes: 1,
-        min: 0,
-        max: 255,
-        step: 1,
-        defaultValue: 120,
-        meaning: "Unsigned integer",
-        rangeLabel: "0..255",
-        hint: "One byte stores 8 bits, so uint8_t is ideal for PWM values, counters, and packed flags.",
-        explain: "No sign bit is reserved, so the full byte is available for magnitude."
+        min: "0",
+        max: "255",
+        count: "256 values",
+        signed: false,
+        meaning: "Unsigned 8-bit integer",
+        description: "uint8_t is a whole number that always uses exactly 8 bits and is never negative. The name tells you the size, on every board.",
+        use: "PWM duty cycles (0 to 255), small counters, and data bytes.",
+        note: "If you add 1 to 255, the value wraps around to 0.",
+        example: `const int ledPin = 4;
+
+uint8_t brightness = 0;
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  analogWrite(ledPin, brightness);
+
+  brightness++;  // after 255 it wraps back to 0
+  delay(10);
+}`
       },
       int8: {
         label: "int8_t",
-        kind: "int8",
         bytes: 1,
-        min: -128,
-        max: 127,
-        step: 1,
-        defaultValue: -42,
-        meaning: "Signed integer",
-        rangeLabel: "-128..127",
-        hint: "Signed integers use two's complement, so the most significant bit acts as the sign.",
-        explain: "Great when you need small positive and negative values such as offsets or corrections."
-      },
-      word: {
-        label: "word",
-        kind: "uint16",
-        bytes: 2,
-        min: 0,
-        max: 65535,
-        step: 1,
-        defaultValue: 1024,
-        meaning: "Arduino word alias",
-        rangeLabel: "0..65535",
-        hint: "In Arduino, word is commonly used as a 16-bit unsigned container.",
-        explain: "Useful when packing two bytes or storing timer and ADC-style words."
+        min: "-128",
+        max: "127",
+        count: "256 values",
+        signed: true,
+        meaning: "Signed 8-bit integer",
+        description: "int8_t is a small whole number that can be positive or negative. Half of its values are used for negative numbers.",
+        use: "Small offsets and corrections that can go below zero.",
+        note: "",
+        example: `int8_t offset = -3;
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  int measured = 25;
+  int corrected = measured + offset;
+
+  Serial.println(corrected);  // prints 22
+  delay(1000);
+}`
       },
       ushort: {
         label: "unsigned short",
-        kind: "uint16",
         bytes: 2,
-        min: 0,
-        max: 65535,
-        step: 1,
-        defaultValue: 2048,
+        min: "0",
+        max: "65535",
+        count: "65,536 values",
+        signed: false,
         meaning: "Unsigned short integer",
-        rangeLabel: "0..65535",
-        hint: "unsigned short is another common name for a 16-bit unsigned quantity.",
-        explain: "Good for counters, timer values, and peripheral registers that never go below zero."
+        description: "unsigned short is a whole number that uses 2 bytes and is never negative.",
+        use: "ADC readings (0 to 4095 on the ESP32) and medium-sized counters.",
+        note: "",
+        example: `const int potPin = 32;
+
+unsigned short reading = 0;
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  reading = analogRead(potPin);  // 0 to 4095
+
+  Serial.println(reading);
+  delay(200);
+}`
       },
       short: {
         label: "short",
-        kind: "int16",
         bytes: 2,
-        min: -32768,
-        max: 32767,
-        step: 1,
-        defaultValue: -1500,
+        min: "-32768",
+        max: "32767",
+        count: "65,536 values",
+        signed: true,
         meaning: "Signed short integer",
-        rangeLabel: "-32768..32767",
-        hint: "short keeps the value in 16 bits but allows positive and negative numbers.",
-        explain: "A classic option for signed ADC offsets, PID errors, and compact intermediate math."
+        description: "short is a whole number that uses 2 bytes and can be positive or negative.",
+        use: "Differences and errors that can be negative, such as setpoint minus measurement.",
+        note: "",
+        example: `short setpoint = 500;
+short measured = 620;
+short error = 0;
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  error = setpoint - measured;
+
+  Serial.println(error);  // prints -120
+  delay(1000);
+}`
       },
       uint16: {
         label: "uint16_t",
-        kind: "uint16",
         bytes: 2,
-        min: 0,
-        max: 65535,
-        step: 1,
-        defaultValue: 1024,
-        meaning: "Unsigned integer",
-        rangeLabel: "0..65535",
-        hint: "Two bytes allow 16 bits of storage, which is common for ADC samples, timers, and sensor words.",
-        explain: "In little-endian memory, the low byte is stored first and the high byte comes next."
+        min: "0",
+        max: "65535",
+        count: "65,536 values",
+        signed: false,
+        meaning: "Unsigned 16-bit integer",
+        description: "uint16_t is a whole number that always uses exactly 16 bits and is never negative. The name tells you the size, on every board.",
+        use: "ADC samples, timer values, and sensor readings.",
+        note: "",
+        example: `const int potPin = 32;
+const int ledPin = 4;
+
+uint16_t adcValue = 0;
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  adcValue = analogRead(potPin);  // 0 to 4095
+
+  if (adcValue > 2000) {
+    digitalWrite(ledPin, HIGH);
+  } else {
+    digitalWrite(ledPin, LOW);
+  }
+}`
       },
       int16: {
         label: "int16_t",
-        kind: "int16",
         bytes: 2,
-        min: -32768,
-        max: 32767,
-        step: 1,
-        defaultValue: -1200,
-        meaning: "Signed integer",
-        rangeLabel: "-32768..32767",
-        hint: "The same two bytes can be interpreted as a signed value, which changes how the upper bits are read.",
-        explain: "Very common for signed sensor offsets, PID errors, and intermediate math in embedded code."
-      },
-      uint: {
-        label: "unsigned int",
-        kind: "uint32",
-        bytes: 4,
-        min: 0,
-        max: 4294967295,
-        step: 1,
-        defaultValue: 50000,
-        meaning: "Arduino unsigned int",
-        rangeLabel: "0..4294967295",
-        hint: "On ESP32-class boards, unsigned int is stored in 4 bytes.",
-        explain: "Useful for general counters and positive values when you want the plain C++ type name."
+        min: "-32768",
+        max: "32767",
+        count: "65,536 values",
+        signed: true,
+        meaning: "Signed 16-bit integer",
+        description: "int16_t is a whole number that always uses exactly 16 bits and can be positive or negative.",
+        use: "Raw sensor values that can be negative, such as temperature or acceleration.",
+        note: "",
+        example: `int16_t temperatureTenths = -125;  // -12.5 degrees
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  float temperature = temperatureTenths / 10.0;
+
+  Serial.println(temperature, 1);  // prints -12.5
+  delay(1000);
+}`
       },
       int: {
         label: "int",
-        kind: "int32",
         bytes: 4,
-        min: -2147483648,
-        max: 2147483647,
-        step: 1,
-        defaultValue: -32000,
-        meaning: "Arduino int",
-        rangeLabel: "-2147483648..2147483647",
-        hint: "On ESP32-class boards, int is a signed 32-bit value.",
-        explain: "It is one of the most common classroom types for whole-number calculations and conditions."
+        min: "-2147483648",
+        max: "2147483647",
+        count: "about 4.3 billion values",
+        signed: true,
+        meaning: "Whole number",
+        description: "int is the everyday type for whole numbers. It can be positive or negative and is large enough for most calculations.",
+        use: "Pin numbers, loop counters, and general calculations.",
+        note: "On the ESP32 an int uses 4 bytes. On an Arduino Uno it uses only 2 bytes (-32,768 to 32,767).",
+        example: `const int ledPin = 4;
+
+int blinkCount = 3;
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+
+  for (int i = 0; i < blinkCount; i++) {
+    digitalWrite(ledPin, HIGH);
+    delay(200);
+    digitalWrite(ledPin, LOW);
+    delay(200);
+  }
+}
+
+void loop() {
+}`
       },
-      uint32: {
-        label: "uint32_t",
-        kind: "uint32",
+      uint: {
+        label: "unsigned int",
         bytes: 4,
-        min: 0,
-        max: 4294967295,
-        step: 1,
-        defaultValue: 100000,
-        meaning: "Unsigned 32-bit integer",
-        rangeLabel: "0..4294967295",
-        hint: "Four bytes are ideal for millis counters, timestamps, and packed 32-bit values.",
-        explain: "This is a very common type for timekeeping and large positive counters in embedded systems."
-      },
-      int32: {
-        label: "int32_t",
-        kind: "int32",
-        bytes: 4,
-        min: -2147483648,
-        max: 2147483647,
-        step: 1,
-        defaultValue: -250000,
-        meaning: "Signed 32-bit integer",
-        rangeLabel: "-2147483648..2147483647",
-        hint: "Signed 32-bit storage supports large positive and negative values in the same 4 bytes.",
-        explain: "Useful for encoder positions, accumulated counts, and signed math that can grow large."
-      },
-      ulong: {
-        label: "unsigned long",
-        kind: "uint32",
-        bytes: 4,
-        min: 0,
-        max: 4294967295,
-        step: 1,
-        defaultValue: 250000,
-        meaning: "Arduino unsigned long",
-        rangeLabel: "0..4294967295",
-        hint: "unsigned long is heavily used in Arduino timing code such as millis() comparisons.",
-        explain: "A classic choice for non-blocking timers and long-running counters."
+        min: "0",
+        max: "4294967295",
+        count: "about 4.3 billion values",
+        signed: false,
+        meaning: "Whole number, never negative",
+        description: "unsigned int is a whole number that is never negative, so it can count twice as high as an int.",
+        use: "Counters that only go up, such as the number of button presses.",
+        note: "On the ESP32 an unsigned int uses 4 bytes. On an Arduino Uno it uses only 2 bytes (0 to 65,535).",
+        example: `const int buttonPin = 35;
+
+unsigned int pressCount = 0;
+bool lastButtonState = false;
+
+void setup() {
+  pinMode(buttonPin, INPUT);
+  Serial.begin(115200);
+}
+
+void loop() {
+  bool buttonPressed = digitalRead(buttonPin);
+
+  if (buttonPressed && !lastButtonState) {
+    pressCount++;
+    Serial.println(pressCount);
+  }
+
+  lastButtonState = buttonPressed;
+}`
       },
       long: {
         label: "long",
-        kind: "int32",
         bytes: 4,
-        min: -2147483648,
-        max: 2147483647,
-        step: 1,
-        defaultValue: -123456,
-        meaning: "Arduino long",
-        rangeLabel: "-2147483648..2147483647",
-        hint: "long is the signed counterpart used when values may go below zero.",
-        explain: "Useful for positions, signed accumulators, and calculations larger than 16-bit."
+        min: "-2147483648",
+        max: "2147483647",
+        count: "about 4.3 billion values",
+        signed: true,
+        meaning: "Large whole number",
+        description: "long is a large whole number that can be positive or negative.",
+        use: "Positions, large differences, and totals that can go below zero.",
+        note: "On the ESP32 long and int have the same size. On an Arduino Uno a long is twice as large as an int.",
+        example: `long target = 100000;
+long current = 250000;
+long difference = 0;
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  difference = target - current;
+
+  Serial.println(difference);  // prints -150000
+  delay(1000);
+}`
+      },
+      ulong: {
+        label: "unsigned long",
+        bytes: 4,
+        min: "0",
+        max: "4294967295",
+        count: "about 4.3 billion values",
+        signed: false,
+        meaning: "Large whole number, never negative",
+        description: "unsigned long is a large whole number that is never negative. It is the type returned by millis().",
+        use: "Time measured with millis() and non-blocking timers.",
+        note: "A millis() counter stored in an unsigned long wraps back to 0 after about 49.7 days.",
+        example: `const int ledPin = 4;
+
+unsigned long previousMillis = 0;
+bool ledState = false;
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousMillis >= 500) {
+    previousMillis = currentMillis;
+    ledState = !ledState;
+    digitalWrite(ledPin, ledState);
+  }
+}`
+      },
+      int32: {
+        label: "int32_t",
+        bytes: 4,
+        min: "-2147483648",
+        max: "2147483647",
+        count: "about 4.3 billion values",
+        signed: true,
+        meaning: "Signed 32-bit integer",
+        description: "int32_t is a whole number that always uses exactly 32 bits and can be positive or negative. The name tells you the size, on every board.",
+        use: "Encoder positions and totals that can become large in both directions.",
+        note: "",
+        example: `int32_t position = 0;
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  position = position - 40000;  // moving backwards
+
+  Serial.println(position);
+  delay(500);
+}`
+      },
+      uint32: {
+        label: "uint32_t",
+        bytes: 4,
+        min: "0",
+        max: "4294967295",
+        count: "about 4.3 billion values",
+        signed: false,
+        meaning: "Unsigned 32-bit integer",
+        description: "uint32_t is a whole number that always uses exactly 32 bits and is never negative. The name tells you the size, on every board.",
+        use: "Timestamps, large counters, and 32-bit data values.",
+        note: "",
+        example: `uint32_t lastPrint = 0;
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  uint32_t now = millis();
+
+  if (now - lastPrint >= 1000) {
+    lastPrint = now;
+    Serial.println(now);
+  }
+}`
       },
       float32: {
         label: "float",
-        kind: "float32",
         bytes: 4,
-        min: -10,
-        max: 10,
-        step: 0.1,
-        defaultValue: 3.3,
-        meaning: "IEEE-754 float",
-        rangeLabel: "demo range -10.0..10.0",
-        hint: "A float reserves four bytes and stores sign, exponent, and fraction instead of a simple integer count.",
-        explain: "Useful for engineering units such as voltage, temperature, or filtered values with fractional parts."
+        min: "-3.4 × 10³⁸",
+        max: "3.4 × 10³⁸",
+        count: "about 6 to 7 significant digits",
+        signed: true,
+        meaning: "Number with decimals",
+        description: "A float stores numbers with a fractional part, such as 3.3 or -12.5. It is precise to about 6 or 7 digits, so very small differences can be lost.",
+        use: "Physical quantities such as voltage, temperature, or speed.",
+        note: "Avoid comparing two floats with ==. Small rounding errors can make equal-looking values differ.",
+        example: `const int potPin = 32;
+
+float voltage = 0.0;
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  int raw = analogRead(potPin);  // 0 to 4095
+  voltage = raw * (3.3 / 4095.0);
+
+  Serial.println(voltage, 2);  // two decimals
+  delay(200);
+}`
       }
     };
 
-    const BASE_ADDRESS = 0x2000;
-    const state = {
-      typeId: "uint16",
-      value: TYPE_CONFIGS.uint16.defaultValue
-    };
+    const state = { typeId: "int" };
 
-    const statusPill = document.getElementById("statusPill");
-    const typeSelect = document.getElementById("typeSelect");
-    const valueSlider = document.getElementById("valueSlider");
-    const valueInput = document.getElementById("valueInput");
-    const valueLabel = document.getElementById("valueLabel");
-    const valueReadout = document.getElementById("valueReadout");
-    const presetButtons = document.getElementById("presetButtons");
-    const typeHint = document.getElementById("typeHint");
-    const summaryType = document.getElementById("summaryType");
-    const summarySize = document.getElementById("summarySize");
-    const summaryRange = document.getElementById("summaryRange");
-    const summaryMeaning = document.getElementById("summaryMeaning");
-    const typeExplanation = document.getElementById("typeExplanation");
-    const memoryStrip = document.getElementById("memoryStrip");
-    const hexValue = document.getElementById("hexValue");
-    const binaryValue = document.getElementById("binaryValue");
-    const bytesUsed = document.getElementById("bytesUsed");
-    const memoryNote = document.getElementById("memoryNote");
-    const bitGrid = document.getElementById("bitGrid");
+    const typeList = document.getElementById("typeList");
+    const typeName = document.getElementById("typeName");
+    const typeMeaning = document.getElementById("typeMeaning");
+    const factSize = document.getElementById("factSize");
+    const factBits = document.getElementById("factBits");
+    const factMin = document.getElementById("factMin");
+    const factMax = document.getElementById("factMax");
+    const factCount = document.getElementById("factCount");
+    const factSign = document.getElementById("factSign");
+    const factSame = document.getElementById("factSame");
+    const typeDescription = document.getElementById("typeDescription");
+    const typeUse = document.getElementById("typeUse");
+    const boardNote = document.getElementById("boardNote");
     const codeBlock = document.getElementById("codeBlock");
     const copyCodeBtn = document.getElementById("copyCodeBtn");
-
-    function clamp(value, min, max) {
-      return Math.min(max, Math.max(min, value));
-    }
 
     function escapeHtml(value) {
       return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
@@ -506,241 +637,88 @@
       }).join("");
     }
 
-    function getCurrentConfig() {
-      return TYPE_CONFIGS[state.typeId];
+    // 1234567 -> "1,234,567"; text such as "true (1)" is returned unchanged.
+    function formatNumber(text) {
+      return /^-?\d+$/.test(text) ? text.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : text;
     }
 
-    function formatDecimal(value, config) {
-      return config.kind === "float32" ? Number(value).toFixed(2) : String(value);
+    function formatSize(bytes) {
+      return `${bytes} byte${bytes > 1 ? "s" : ""}`;
     }
 
-    function getPrintableAscii(byte) {
-      return byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : ".";
-    }
-
-    function getDisplayValue(value, config) {
-      if (config.kind === "bool") return value ? "true (1)" : "false (0)";
-      if (config.kind === "char") {
-        const printable = getPrintableAscii(value & 0xFF);
-        return printable === "." ? `${value} (non-printable)` : `${value} ('${printable}')`;
-      }
-      return formatDecimal(value, config);
-    }
-
-    function getCodeLiteral(value, config) {
-      if (config.kind === "bool") return value ? "true" : "false";
-      if (config.kind === "float32") return `${Number(value).toFixed(2)}f`;
-      if (config.kind === "char") {
-        const printable = getPrintableAscii(value & 0xFF);
-        if (printable !== "." && printable !== "'" && printable !== "\\") return `'${printable}'`;
-      }
-      return String(value);
-    }
-
-    function normalizeValue(typeId, rawValue) {
+    // Other types that take the same space and hold the same values on the ESP32.
+    function getEquivalentTypes(typeId) {
       const config = TYPE_CONFIGS[typeId];
-      if (config.kind === "bool") return rawValue ? 1 : 0;
-      if (config.kind === "float32") return Number(clamp(Number(rawValue) || 0, config.min, config.max).toFixed(2));
-      return Math.round(clamp(Number(rawValue) || 0, config.min, config.max));
+      return Object.entries(TYPE_CONFIGS)
+        .filter(([otherId, other]) => otherId !== typeId && other.bytes === config.bytes && other.min === config.min && other.max === config.max)
+        .map(([, other]) => other.label);
     }
 
-    function encodeBytes(typeId, value) {
-      const config = TYPE_CONFIGS[typeId];
-      const buffer = new ArrayBuffer(config.bytes);
-      const view = new DataView(buffer);
-      if (config.kind === "bool" || config.kind === "uint8") view.setUint8(0, value);
-      else if (config.kind === "int8" || config.kind === "char") view.setInt8(0, value);
-      else if (config.kind === "uint16") view.setUint16(0, value, true);
-      else if (config.kind === "int16") view.setInt16(0, value, true);
-      else if (config.kind === "uint32") view.setUint32(0, value, true);
-      else if (config.kind === "int32") view.setInt32(0, value, true);
-      else if (config.kind === "float32") view.setFloat32(0, value, true);
-      return Array.from(new Uint8Array(buffer));
+    // The lines of the example that declare a variable of the selected type.
+    function getDeclarationLines(config) {
+      const pattern = new RegExp(`^\\s*(?:const\\s+)?${config.label}\\s+\\w+`);
+      return config.example.split("\n")
+        .map((line, index) => pattern.test(line) ? index + 1 : 0)
+        .filter(Boolean);
     }
 
-    function getFullHex(bytes) {
-      return `0x${bytes.slice().reverse().map(byte => byte.toString(16).toUpperCase().padStart(2, "0")).join("")}`;
+    function renderTypeList() {
+      typeList.innerHTML = TYPE_GROUPS.map(group => {
+        const buttons = group.types.map(typeId => {
+          const config = TYPE_CONFIGS[typeId];
+          return `<button class="type-btn ${typeId === state.typeId ? "active" : ""}" type="button" data-type-id="${typeId}" aria-pressed="${typeId === state.typeId}">${config.label}<small>${formatSize(config.bytes)}</small></button>`;
+        }).join("");
+        return `<div class="type-group"><div class="type-group-title">${group.title}</div>${buttons}</div>`;
+      }).join("");
     }
 
-    function getFullBinary(bytes) {
-      return bytes.slice().reverse().map(byte => byte.toString(2).padStart(8, "0")).join(" ");
+    function renderInfo() {
+      const config = TYPE_CONFIGS[state.typeId];
+      const equivalents = getEquivalentTypes(state.typeId);
+      typeName.textContent = config.label;
+      typeMeaning.textContent = config.meaning;
+      factSize.textContent = formatSize(config.bytes);
+      factBits.textContent = `${config.bytes * 8} bits`;
+      factMin.textContent = formatNumber(config.min);
+      factMax.textContent = formatNumber(config.max);
+      factCount.textContent = config.count;
+      factSign.textContent = config.signed ? "Yes (signed)" : "No (unsigned)";
+      factSame.textContent = equivalents.length ? `Same size and range as: ${equivalents.join(", ")}` : "";
+      typeDescription.textContent = config.description;
+      typeUse.innerHTML = `<strong>Typical use:</strong> ${escapeHtml(config.use)}`;
+      boardNote.textContent = config.note;
     }
 
-    function getPresetDefinitions(config) {
-      if (config.kind === "bool") {
-        return [
-          { label: "False", value: 0 },
-          { label: "True", value: 1 }
-        ];
-      }
-      if (config.kind === "char") {
-        return [
-          { label: "NUL", value: 0 },
-          { label: "Space", value: 32 },
-          { label: "A", value: 65 },
-          { label: "a", value: 97 }
-        ];
-      }
-      if (config.kind === "float32") {
-        return [
-          { label: "Min", value: config.min },
-          { label: "Zero", value: 0 },
-          { label: "3.3 V", value: 3.3 },
-          { label: "Max", value: config.max }
-        ];
-      }
-      return [
-        { label: "Min", value: config.min },
-        { label: "Zero", value: 0 },
-        { label: "Max", value: config.max }
-      ];
-    }
-
-    function renderTypeOptions() {
-      typeSelect.innerHTML = Object.entries(TYPE_CONFIGS).map(([typeId, config]) => `<option value="${typeId}">${config.label}</option>`).join("");
-      typeSelect.value = state.typeId;
-    }
-
-    function renderPresets(config) {
-      presetButtons.innerHTML = "";
-      getPresetDefinitions(config).forEach(preset => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "action-btn";
-        button.textContent = preset.label;
-        button.addEventListener("click", () => {
-          state.value = normalizeValue(state.typeId, preset.value);
-          renderAll();
-        });
-        presetButtons.appendChild(button);
-      });
-    }
-
-    function renderControls() {
-      const config = getCurrentConfig();
-      if (config.kind === "bool") valueLabel.textContent = "Stored value";
-      else if (config.kind === "char") valueLabel.textContent = "Stored value / ASCII (â† â†’)";
-      else valueLabel.textContent = "Stored value (â† â†’)";
-      valueSlider.min = String(config.min);
-      valueSlider.max = String(config.max);
-      valueSlider.step = String(config.step);
-      valueSlider.value = String(state.value);
-      valueInput.min = String(config.min);
-      valueInput.max = String(config.max);
-      valueInput.step = String(config.step);
-      valueInput.value = String(state.value);
-      valueReadout.textContent = getDisplayValue(state.value, config);
-      renderPresets(config);
-    }
-
-    function renderSummary(bytes) {
-      const config = getCurrentConfig();
-      statusPill.textContent = `${config.label} | ${config.bytes} byte${config.bytes > 1 ? "s" : ""}`;
-      typeHint.textContent = config.hint;
-      summaryType.textContent = config.label;
-      summarySize.textContent = `${config.bytes} B`;
-      summaryRange.textContent = config.rangeLabel;
-      summaryMeaning.textContent = config.meaning;
-      typeExplanation.textContent = config.explain;
-      hexValue.textContent = getFullHex(bytes);
-      binaryValue.textContent = getFullBinary(bytes);
-      bytesUsed.textContent = String(config.bytes);
-      memoryNote.innerHTML = config.kind === "float32"
-        ? `These 4 bytes are the IEEE-754 encoding of <code class="inline-chip">${getDisplayValue(state.value, config)}</code>. The byte at <code class="inline-chip">0x${BASE_ADDRESS.toString(16).toUpperCase()}</code> is the least significant byte in memory.`
-        : `The value <code class="inline-chip">${getDisplayValue(state.value, config)}</code> occupies ${config.bytes} byte${config.bytes > 1 ? "s" : ""}. In little-endian order, the least significant byte is written to the lowest address first.`;
-    }
-
-    function renderMemory(bytes) {
-      memoryStrip.innerHTML = "";
-      bitGrid.innerHTML = "";
-
-      for (let index = 0; index < 4; index++) {
-        const byte = bytes[index];
-        const isUsed = index < bytes.length;
-        const byteCard = document.createElement("div");
-        byteCard.className = `memory-byte${isUsed ? "" : " empty"}`;
-        byteCard.innerHTML = isUsed
-          ? `<strong>Byte ${index}</strong><div class="address">0x${(BASE_ADDRESS + index).toString(16).toUpperCase()}</div><div class="hex">${byte.toString(16).toUpperCase().padStart(2, "0")}</div><div class="ascii">ASCII ${getPrintableAscii(byte)}</div>`
-          : `<strong>Byte ${index}</strong><div class="address">0x${(BASE_ADDRESS + index).toString(16).toUpperCase()}</div><div class="hex">--</div><div class="ascii">unused</div>`;
-        memoryStrip.appendChild(byteCard);
-
-        const row = document.createElement("div");
-        row.className = "control-row";
-        const label = document.createElement("div");
-        label.className = "field-label";
-        label.textContent = `Bits in byte ${index}${isUsed ? "" : " (unused)"}`;
-        row.appendChild(label);
-
-        const bits = document.createElement("div");
-        bits.className = "bit-row";
-        if (isUsed) {
-          byte.toString(2).padStart(8, "0").split("").forEach(bit => {
-            const chip = document.createElement("div");
-            chip.className = `bit-chip${bit === "1" ? " one" : ""}`;
-            chip.textContent = bit;
-            bits.appendChild(chip);
-          });
-        } else {
-          for (let bitIndex = 0; bitIndex < 8; bitIndex++) {
-            const chip = document.createElement("div");
-            chip.className = "bit-chip";
-            chip.textContent = "-";
-            bits.appendChild(chip);
-          }
-        }
-        row.appendChild(bits);
-        bitGrid.appendChild(row);
-      }
-    }
-
-    function renderCode(bytes) {
-      const config = getCurrentConfig();
-      const declaration = `${config.label} sample = ${getCodeLiteral(state.value, config)};`;
-      const printValueLine = config.kind === "float32"
-        ? `  Serial.println(sample, 2);`
-        : config.kind === "char"
-          ? `  Serial.println((int)sample);`
-          : `  Serial.println(sample);`;
-      const charExtra = config.kind === "char"
-        ? `\n  Serial.print("char = ");\n  Serial.println(sample);\n`
-        : "";
-      const codeText = `#include <Arduino.h>\n\n${declaration}\n\nvoid setup() {\n  Serial.begin(115200);\n\n  Serial.print("sizeof(sample) = ");\n  Serial.println(sizeof(sample));\n\n  Serial.print("value = ");\n${printValueLine}${charExtra}\n  const uint8_t* raw = reinterpret_cast<const uint8_t*>(&sample);\n  for (size_t i = 0; i < sizeof(sample); i++) {\n    Serial.print("byte[");\n    Serial.print(i);\n    Serial.print("] = 0x");\n    if (raw[i] < 16) Serial.print("0");\n    Serial.println(raw[i], HEX);\n  }\n}\n\nvoid loop() {\n}\n\n// Current bytes in memory: ${bytes.map(byte => `0x${byte.toString(16).toUpperCase().padStart(2, "0")}`).join(", ")}`;
-      renderHighlightedCode(codeText, [3, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 27]);
+    function renderCode() {
+      const config = TYPE_CONFIGS[state.typeId];
+      renderHighlightedCode(config.example, getDeclarationLines(config));
     }
 
     function renderAll() {
-      const bytes = encodeBytes(state.typeId, state.value);
-      renderControls();
-      renderSummary(bytes);
-      renderMemory(bytes);
-      renderCode(bytes);
+      renderTypeList();
+      renderInfo();
+      renderCode();
     }
 
-    typeSelect.addEventListener("change", event => {
-      state.typeId = event.target.value;
-      state.value = TYPE_CONFIGS[state.typeId].defaultValue;
+    function selectType(typeId) {
+      if (!TYPE_CONFIGS[typeId] || typeId === state.typeId) return;
+      state.typeId = typeId;
       renderAll();
+    }
+
+    typeList.addEventListener("click", event => {
+      const button = event.target.closest("[data-type-id]");
+      if (button) selectType(button.dataset.typeId);
     });
 
-    valueSlider.addEventListener("input", event => {
-      state.value = normalizeValue(state.typeId, event.target.value);
-      renderAll();
-    });
-
-    valueInput.addEventListener("change", event => {
-      state.value = normalizeValue(state.typeId, event.target.value);
-      renderAll();
-    });
-
+    // Arrow up / down moves through the list of types.
     window.addEventListener("keydown", event => {
       if (document.activeElement && ["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
-      const config = getCurrentConfig();
-      if (config.kind === "bool") return;
-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
       event.preventDefault();
-      const direction = event.key === "ArrowRight" ? 1 : -1;
-      state.value = normalizeValue(state.typeId, Number(state.value) + direction * config.step);
-      renderAll();
+      const order = TYPE_GROUPS.flatMap(group => group.types);
+      const index = order.indexOf(state.typeId) + (event.key === "ArrowDown" ? 1 : -1);
+      selectType(order[Math.min(order.length - 1, Math.max(0, index))]);
     });
 
     copyCodeBtn.addEventListener("click", async () => {
@@ -758,11 +736,8 @@
       }, 1400);
     });
 
-    renderTypeOptions();
     renderAll();
   </script>
   <script src="../shared/sound_fx.js"></script>
 </body>
 </html>
-
-

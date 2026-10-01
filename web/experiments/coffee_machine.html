@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-sync-dashboard-lights="true">
 <head>
   <meta charset="UTF-8" />
@@ -583,6 +583,10 @@
       .state-diagram { grid-template-columns: 1fr; }
       .state-arrow { transform: rotate(90deg); min-height: 28px; }
     }
+    .history-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .history-heading h2 { margin: 0; }
+    .uart-test-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+    #serialToggleBtn { white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -678,31 +682,33 @@
 
       <aside class="log-panel">
         <div class="serial-card">
-          <h3>ESP32 / UART</h3>
+          <h3>UART</h3>
           <div class="serial-controls">
             <label class="field">
               <span>Baud rate</span>
               <select id="baudSelect">
-                <option value="115200">115200</option>
+                <option value="115200" selected>115200</option>
                 <option value="9600">9600</option>
               </select>
             </label>
-            <button class="action-btn" id="serialToggleBtn" type="button">Connect ESP32</button>
+            <button class="action-btn" id="serialToggleBtn" type="button">Connect (Key C)</button>
           </div>
           <div class="serial-meta">
             <div class="serial-state" id="serialStatus">Not connected</div>
-            <div class="footnote" id="serialHint">Use Chrome or Edge with `localhost` or `https` to enable Web Serial.</div>
+            <div class="footnote" id="serialHint"></div>
           </div>
         </div>
         <div class="serial-card">
-          <h3>History tools</h3>
-          <div class="tool-row">
+          <h3>UART test</h3>
+          <div class="tool-row uart-test-row">
             <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example STATE:CUSTOMIZE, then press Enter" />
-            <button class="action-btn" id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
           </div>
           <div class="footnote">Use this field to simulate a UART line locally and check how the machine reacts.</div>
         </div>
-        <h2>Machine messages</h2>
+        <div class="history-heading">
+          <h2>History</h2>
+          <button class="action-btn" id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
+        </div>
         <div class="log-list" id="logList"></div>
         <p class="footnote">When connected, the page mirrors the UART protocol from the original pygame coffee machine.</p>
       </aside>
@@ -828,7 +834,7 @@
       }
 
       serialToggleBtn.disabled = false;
-      serialToggleBtn.textContent = state.serialConnected ? "Disconnect" : "Connect ESP32";
+      serialToggleBtn.textContent = state.serialConnected ? "Disconnect (Key C)" : "Connect (Key C)";
       serialStatus.textContent = state.serialConnected ? `Connected at ${baudSelect.value} baud` : "Not connected";
       serialHint.textContent = state.serialConnected
         ? "ESP32 lines now drive the machine state exactly like the pygame version."

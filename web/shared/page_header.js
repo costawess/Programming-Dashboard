@@ -8,6 +8,19 @@
     }
   };
 
+  // Every page with this header also gets Arduino syntax colours in its code blocks.
+  const highlightScriptSrc = document.currentScript
+    ? new URL("ino_highlight.js", document.currentScript.src).href
+    : "../shared/ino_highlight.js";
+
+  function loadCodeHighlighter() {
+    if (typeof window.highlightIno === "function" || document.getElementById("inoHighlightScript")) return;
+    const script = document.createElement("script");
+    script.id = "inoHighlightScript";
+    script.src = highlightScriptSrc;
+    document.head.appendChild(script);
+  }
+
   function getBaseName() {
     const parts = window.location.pathname.split("/");
     return parts[parts.length - 1] || "";
@@ -32,6 +45,17 @@
       .header.ep-page-header .back {
         justify-self: end;
       }
+      .ep-header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+      .ep-header-actions .back { font: inherit; font-weight: 800; cursor: pointer; text-align: center; }
+      #epInstructions { position: fixed; inset: 0; margin: auto; width: min(620px, calc(100% - 32px)); max-height: 85vh; overflow: auto; padding: 26px; border: 2px solid var(--line, #526779); border-radius: 22px; background: var(--bg, #142431); color: var(--text, #edf7fb); line-height: 1.6; }
+      #epInstructions::backdrop { background: rgba(0, 0, 0, .65); }
+      #epInstructions h2 { margin: 0 0 16px; }
+      #epInstructions p { margin: 12px 0; }
+      #epInstructions h3 { margin: 22px 0 8px; }
+      #epInstructions pre { margin: 12px 0; padding: 14px 16px; border: 1px solid #526779; border-radius: 12px; background: #161b22; color: #e6edf3; overflow-x: auto; text-align: left; line-height: 1.7; }
+      #epInstructions .uart-command { color: #ff7b72; }
+      #epInstructions .uart-bits { color: #79c0ff; }
+      #epInstructions button { margin-top: 16px; }
       .ep-page-title-wrap {
         display: grid;
         grid-template-columns: 72px minmax(0, 1fr);
@@ -57,6 +81,7 @@
         margin: 0;
       }
       @media (max-width: 760px) {
+        .header.ep-page-header { grid-template-columns: 1fr; }
         .ep-page-title-wrap {
           grid-template-columns: 56px minmax(0, 1fr);
           gap: 12px;
@@ -69,6 +94,12 @@
         }
       }
     `;
+    // Simulations no longer show the coloured status pill under the topic title.
+    if (window.location.pathname.includes("/simulations/")) {
+      style.textContent += `
+      #statusPill.status-pill, #topicStatus.status-pill:not(.has-select):not(.has-toggle) { display: none !important; }
+      `;
+    }
     document.head.appendChild(style);
   }
 
@@ -125,11 +156,107 @@
     wrap.appendChild(copy);
     titleHost.appendChild(wrap);
     titleHost.dataset.headerEnhanced = "true";
+    if (backLink && window.location.pathname.includes("/experiments/")) {
+      const experiment = baseName.replace(/\.html$/i, "");
+      const actions = document.createElement("nav");
+      actions.className = "ep-header-actions";
+      actions.setAttribute("aria-label", "Experiment resources");
+      const instructions = document.createElement("button");
+      instructions.type = "button";
+      instructions.className = "back";
+      instructions.textContent = "Instructions";
+      const example = document.createElement("a");
+      example.className = "back";
+      example.textContent = "Example code";
+      example.href = `../shared/example_code.html?experiment=${encodeURIComponent(experiment)}`;
+      example.target = "_blank";
+      example.rel = "noopener";
+      actions.append(instructions, example, backLink);
+      header.appendChild(actions);
+
+      const dialog = document.createElement("dialog");
+      dialog.id = "epInstructions";
+      dialog.setAttribute("aria-labelledby", "epInstructionsTitle");
+      const heading = document.createElement("h2");
+      heading.id = "epInstructionsTitle";
+      heading.textContent = `${titleText} — Instructions`;
+      dialog.appendChild(heading);
+      const addParagraph = text => {
+        if (!text) return;
+        const paragraph = document.createElement("p");
+        paragraph.textContent = text;
+        dialog.appendChild(paragraph);
+      };
+      addParagraph(descriptionText);
+      const existing = document.getElementById("instructions");
+      if (existing) {
+        const copy = existing.cloneNode(true);
+        copy.removeAttribute("id");
+        copy.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
+        dialog.appendChild(copy);
+      }
+      if (document.getElementById("serialToggleBtn")) {
+        addParagraph("Open Example code to view the Arduino sketch for this experiment. Upload it to your ESP32, select the matching baud rate, then use Connect to select the serial port. Close other serial monitors before connecting (for instance, the Arduino IDE's Serial Monitor).");
+        addParagraph(document.getElementById("serialHint")?.textContent);
+      }
+      const testInput = document.getElementById("uartTestInput");
+      if (experiment === "dual_seven_segment") {
+        const addSection = title => {
+          const h3 = document.createElement("h3");
+          h3.textContent = title;
+          dialog.appendChild(h3);
+        };
+        const addFrames = frames => {
+          const pre = document.createElement("pre");
+          const code = document.createElement("code");
+          frames.forEach(([command, bits], index) => {
+            if (index) code.appendChild(document.createTextNode("\n"));
+            const label = document.createElement("span");
+            label.className = "uart-command";
+            label.textContent = `${command}:`;
+            const payload = document.createElement("span");
+            payload.className = "uart-bits";
+            payload.textContent = bits;
+            code.append(label, payload);
+          });
+          pre.appendChild(code);
+          dialog.appendChild(pre);
+        };
+        addSection("UART message format");
+        addParagraph("Select 1, 2, or 4 displays on the page. Send exactly 8 bits per display in ABCDEFGDP order: 1 turns a segment on and 0 turns it off. Keep leading zeros. End every command with a newline (Serial.println).");
+        addSection("1. Update individual displays");
+        addParagraph("Use D1:, D2:, D3:, or D4: followed by the segment bits. Each command updates only that display. These two lines show 01 when 2 displays are selected:");
+        addFrames([["D1", "11111100"], ["D2", "01100000"]]);
+        addParagraph("Aliases: LEFT: or DISPLAY1: for D1; RIGHT: or DISPLAY2: for D2; DISPLAY3: and DISPLAY4: for D3 and D4. DISPLAY: on its own is not accepted.");
+        addSection("2. Update all displays in one line");
+        addParagraph("Use DISPLAYS: followed by comma-separated groups of 8 bits. The number of groups must match the selected display count.");
+        addParagraph("1 display — shows 1:");
+        addFrames([["DISPLAYS", "01100000"]]);
+        addParagraph("2 displays — shows 01:");
+        addFrames([["DISPLAYS", "11111100,01100000"]]);
+        addParagraph("4 displays — shows 0123:");
+        addFrames([["DISPLAYS", "11111100,01100000,11011010,11110010"]]);
+        addParagraph("Send segment bits, not decimal numbers. NUMBER:42 is not supported. Serial.println(value, BIN) omits leading zeros, so send all 8 bits explicitly.");
+      }
+      if (testInput) addParagraph(`You can also test without hardware using the UART test field. ${testInput.placeholder}`);
+      const close = document.createElement("button");
+      close.type = "button";
+      close.textContent = "Close";
+      close.addEventListener("click", () => dialog.close());
+      dialog.appendChild(close);
+      document.body.appendChild(dialog);
+      // Keep experiment keyboard shortcuts from running while reading instructions.
+      window.addEventListener("keydown", event => {
+        if (dialog.open) event.stopImmediatePropagation();
+      }, true);
+      instructions.addEventListener("click", () => dialog.showModal());
+    }
   }
 
   function boot() {
     injectStyles();
     enhanceHeader();
+    loadCodeHighlighter();
   }
 
   if (document.readyState === "loading") {

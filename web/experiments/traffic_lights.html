@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-sync-dashboard-lights="true">
 <head>
   <meta charset="UTF-8" />
@@ -506,6 +506,10 @@
         padding-bottom: 130px;
       }
     }
+    .history-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .history-heading h2 { margin: 0; }
+    .uart-test-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+    #serialToggleBtn { white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -549,32 +553,34 @@
 
       <aside class="side-panel">
         <div class="serial-card">
-          <h3>ESP32 / UART</h3>
+          <h3>UART</h3>
           <div class="serial-controls">
             <label class="field">
               <span>Baud rate</span>
               <select id="baudSelect">
-                <option value="115200">115200</option>
+                <option value="115200" selected>115200</option>
                 <option value="9600">9600</option>
               </select>
             </label>
-            <button id="serialToggleBtn" type="button">Connect ESP32<small class="shortcut-hint">(Key C)</small></button>
+            <button id="serialToggleBtn" type="button">Connect (Key C)</button>
           </div>
           <div class="serial-state" id="serialStatus">Not connected</div>
           <div class="serial-hint" id="serialHint">Accepted UART lines: `RED`, `YELLOW`, `GREEN`, and also `AMBER` as an alias for yellow.</div>
         </div>
 
         <div class="utility-card">
-          <h3>History tools</h3>
-          <div class="tool-row">
+          <h3>UART test</h3>
+          <div class="tool-row uart-test-row">
             <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example RED, then press Enter" />
-            <button id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
           </div>
           <div class="muted">Every finished color interval is stored with milliseconds when the next valid color arrives.</div>
         </div>
 
         <div class="history-card">
-          <h2>History</h2>
+          <div class="history-heading">
+            <h2>History</h2>
+            <button id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
+          </div>
           <div class="history-list" id="historyList"></div>
         </div>
       </aside>
@@ -714,7 +720,7 @@
       }
 
       serialToggleBtn.disabled = false;
-      serialToggleBtn.innerHTML = `${state.serialConnected ? "Disconnect" : "Connect ESP32"}<small class="shortcut-hint">(Key C)</small>`;
+      serialToggleBtn.textContent = `${state.serialConnected ? "Disconnect" : "Connect"} (Key C)`;
       serialStatus.textContent = state.serialConnected ? `Connected at ${baudSelect.value} baud` : "Not connected";
       serialHint.textContent = state.serialConnected
         ? "Incoming UART lines now control the active traffic light state."

@@ -1,32 +1,49 @@
 window.DASHBOARD_FLAGS = Object.freeze({
-  robotSortingLogicLab: false,
-  foundationsLab: true,
+
+  // ----------------------------------------
+  // Simulations
+  // ----------------------------------------
+  functionsLab: true, // pensar numa nova forma de apresentar funcoes, talvez com um flowchart
   pullResistorsLab: true,
-  buttonDebouncingLab: false,
+  uartLab: true,
+  foundationsLab: true,
+  conditionalsLab: true,
+  adcLab: true,
   variablesLab: true,
   variableTypesLab: true,
-  memoryLayoutLab: true,
-  asciiCharLab: true,
-  numberRepresentationLab: false,
-  conditionalsLab: true,
   loopsLab: true,
-  adcLab: true,
   hysteresisLab: true,
-  uartLab: true,
-  i2cLab: true,
-  functionsLab: true,
-  interruptsLab: false,
-  timersLab: true,
   stateMachinesLab: true,
-  arduinoToFlowchart: false,
+  timersLab: true,
 
-  gasWaterHeater: false,
-  maze: true,
+  // ----------------------------------------
+  // not checked yet
+  // ----------------------------------------
+  interruptsLab: false,
+  robotSortingLogicLab: false,
+  buttonDebouncingLab: false,
+  memoryLayoutLab: false,
+  asciiCharLab: false,
+  i2cLab: false,
+  arduinoToFlowchart: false, // precisa de melhoras na conversao
+  numberRepresentationLab: false, // precisa de melhoras na conversao
+
+  // ----------------------------------------
+  // Experiments
+  // ----------------------------------------
   ticTacToe: true,
-  kitchenTimer: true,
-  trafficLights: true,
-  intersectionController: false,
+  maze: true,
   dualSevenSegment: true,
+
+
+  // ----------------------------------------
+  // not checked yet
+  // ----------------------------------------
+  gasWaterHeater: false,
+  realTimeChallenge: false,
+  kitchenTimer: false,
+  trafficLights: false,
+  intersectionController: false,
   coffeeMachine: false,
-  heatingCoolingLab: true
+  heatingCoolingLab: false
 });

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-sync-dashboard-lights="true">
 <head>
   <meta charset="UTF-8" />
@@ -89,6 +89,10 @@
     .shortcut-hint{display:block;margin-top:6px;font-size:12px;color:var(--subtle)} .serial-state{color:var(--accent);font-weight:800}
     .history-list{min-height:360px;display:grid;gap:10px;align-content:start}.history-item{background:rgba(43,55,49,.96);border:1px solid #647a70;display:grid;gap:4px}.history-item span{color:var(--subtle);font-family:Consolas,monospace;font-size:13px}
     @media (max-width:1220px){.layout{grid-template-columns:1fr}} @media (max-width:720px){.header,.serial-controls{grid-template-columns:1fr}}
+    .history-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .history-heading h2 { margin: 0; }
+    .uart-test-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+    #serialToggleBtn { white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -134,24 +138,26 @@
 
       <aside class="side">
         <div class="serial card">
-          <h3>ESP32 / UART</h3>
+          <h3>UART</h3>
           <div class="serial-controls">
-            <label class="field"><span>Baud rate</span><select id="baudSelect"><option value="115200">115200</option><option value="9600">9600</option></select></label>
-            <button id="serialToggleBtn" type="button">Connect ESP32<small class="shortcut-hint">(Key C)</small></button>
+            <label class="field"><span>Baud rate</span><select id="baudSelect"><option value="115200" selected>115200</option><option value="9600">9600</option></select></label>
+            <button id="serialToggleBtn" type="button">Connect (Key C)</button>
           </div>
           <div class="serial-state" id="serialStatus">Not connected</div>
           <div class="serial-hint" id="serialHint">Accepted UART lines: `STATE:*`, `MAIN:*`, `SIDE:*`, `WALK:*`, `BUTTON:*`, `SENSOR:*`.</div>
         </div>
         <div class="tools card">
-          <h3>History tools</h3>
-          <div class="tool-row">
+          <h3>UART test</h3>
+          <div class="tool-row uart-test-row">
             <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example STATE:MAIN_GREEN, then press Enter" />
-            <button id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
           </div>
           <div class="muted">Use complete states or individual commands. Every valid UART command is stored in the history.</div>
         </div>
         <div class="history card">
-          <h2>History</h2>
+          <div class="history-heading">
+            <h2>History</h2>
+            <button id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
+          </div>
           <div class="history-list" id="historyList"></div>
         </div>
       </aside>
@@ -460,7 +466,7 @@
     function updateSerialUi() {
       if (!serialBridge.supported) { serialToggleBtn.disabled = true; serialStatus.textContent = "Web Serial unavailable"; serialHint.textContent = "Open this page in Chrome or Edge on localhost or https."; return; }
       serialToggleBtn.disabled = false;
-      serialToggleBtn.innerHTML = `${state.serialConnected ? "Disconnect" : "Connect ESP32"}<small class="shortcut-hint">(Key C)</small>`;
+      serialToggleBtn.textContent = `${state.serialConnected ? "Disconnect" : "Connect"} (Key C)`;
       serialStatus.textContent = state.serialConnected ? `Connected at ${baudSelect.value} baud` : "Not connected";
       serialHint.textContent = state.serialConnected ? "UART now updates the intersection in real time." : "Accepted UART lines: STATE, MAIN, SIDE, WALK, BUTTON, SENSOR.";
     }
