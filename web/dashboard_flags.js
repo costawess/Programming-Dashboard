@@ -36,7 +36,6 @@ window.DASHBOARD_FLAGS = Object.freeze({
   dualSevenSegment: true,
   trafficLights: true,
 
-
   // ----------------------------------------
   // not checked yet
   // ----------------------------------------

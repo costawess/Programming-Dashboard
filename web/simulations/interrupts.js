@@ -2,8 +2,8 @@
   const code = [
     'const int ON_PIN = 34;', 'const int OFF_PIN = 35;', 'const int LED_PIN = 23;',
     'bool ledRequested = false;', 'bool nextLed = false;', '',
-    'void ARDUINO_ISR_ATTR turnOn() {', '  ledRequested = true;', '}', '',
-    'void ARDUINO_ISR_ATTR turnOff() {', '  ledRequested = false;', '}', '',
+    'void IRAM_ATTR turnOn() {', '  ledRequested = true;', '}', '',
+    'void IRAM_ATTR turnOff() {', '  ledRequested = false;', '}', '',
     'void setup() {', '  pinMode(LED_PIN, OUTPUT);', '  digitalWrite(LED_PIN, LOW);',
     '  pinMode(ON_PIN, INPUT);', '  pinMode(OFF_PIN, INPUT);',
     '  attachInterrupt(ON_PIN, turnOn, RISING);', '  attachInterrupt(OFF_PIN, turnOff, RISING);', '}', '',
@@ -23,7 +23,7 @@
   code.forEach((text, index) => {
     const row = document.createElement('div'); row.className = 'code-line' + (index>=6 && index<=12 ? ' isr' : ''); row.id = `line-${index}`;
     const number = document.createElement('span'); number.className='number'; number.textContent=index+1;
-    row.append(number, document.createTextNode(text)); el('code').append(row);
+    row.append(number, renderArduinoCodeLine(text)); el('code').append(row);
   });
   function save() { history.push(JSON.parse(JSON.stringify(state))); if(history.length>500) history.shift(); }
   function record(text) { state.text=text; state.trace.push(text); if(state.trace.length>60) state.trace.shift(); }
