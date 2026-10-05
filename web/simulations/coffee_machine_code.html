@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Coffee Machine — ESP32 code</title>
-  <script>try { if ((localStorage.getItem('embedded-dashboard-lights-on') ?? localStorage.getItem('embedded-lights-on')) === 'false') document.documentElement.classList.add('theme-dark'); } catch(e) {}</script>
+  <script>try { if ((localStorage.getItem('embedded-dashboard-lights-on') ?? localStorage.getItem('embedded-lights-on')) !== 'true') document.documentElement.classList.add('theme-dark'); } catch(e) { document.documentElement.classList.add('theme-dark'); }</script>
   <link rel="stylesheet" href="interrupts.css">
   <link rel="stylesheet" href="../shared/arduino_code.css">
   <style>
@@ -17,6 +17,7 @@
     <div class="code-actions"><button id="copy" type="button">Copy code</button><a id="download" class="back" download="coffee_machine.ino">Download .ino</a><span id="copyStatus" role="status"></span></div>
     <section class="panel"><div id="code" class="code" aria-label="Coffee Machine Arduino code"></div></section>
   </main>
+  <script src="../shared/sound_fx.js"></script>
   <script src="../shared/arduino_code.js"></script>
   <script src="coffee_machine_step_code.js"></script>
   <script>
