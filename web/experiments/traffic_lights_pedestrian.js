@@ -22,7 +22,7 @@
   panel.setAttribute('aria-labelledby', 'pedestrianTab');
   panel.innerHTML = `<h2>Cars &amp; pedestrians</h2>
     <div class="ped-alert" id="pedSafety" role="alert" hidden></div>
-    <div class="ped-signal"><button type="button" id="pedDemo">Pedestrian button</button><p class="muted">Simulate a pedestrian crossing request.</p></div>
+    <div class="ped-signal" id="pedSimulation"><button type="button" id="pedDemo">Pedestrian button</button><p class="muted">Simulate a pedestrian crossing request.</p></div>
     <div class="ped-signals">${['Car','Pedestrian'].map((name,i)=>`<div class="ped-signal"><h3>${name}</h3><div class="ped-housing">${(i?['RED','GREEN']:['RED','YELLOW','GREEN']).map(color=>`<div class="ped-lamp" id="ped${name}${color}" style="--signal-color:var(--${color.toLowerCase()})" role="img" aria-label="${name} ${color.toLowerCase()} off"></div>`).join('')}</div><strong id="ped${name}Label">Waiting</strong></div>`).join('')}</div>
     <div id="pedMeasurementsContent"><div class="timer-card"><span>Time in current state</span><strong class="ped-time" id="pedBrowserTime">0.000 s</strong><span id="pedFreshness">No telemetry received.</span></div>
     <p id="pedButtonState">Pedestrian button: waiting</p><p id="pedSequence" role="status">Sequence: waiting for transitions.</p>
@@ -130,9 +130,19 @@
   // The bridge captured the original function before this extension loaded.
   serialBridge.onLine = handleSerialLine;
   const originalStatusHandler = serialBridge.onStatus;
-  serialBridge.onStatus = status => { originalStatusHandler(status); selectTab(activeTab); };
+  function updateSimulationVisibility() {
+    el('pedSimulation').hidden = state.serialConnected;
+    if (state.serialConnected) stopDemo();
+  }
+  serialBridge.onStatus = status => {
+    originalStatusHandler(status);
+    selectTab(activeTab);
+    updateSimulationVisibility();
+  };
+  updateSimulationVisibility();
   el('pedClear').onclick = () => { el('pedIntervals').replaceChildren(); incidents = unsafe ? 1 : 0; el('pedViolations').textContent = `Simultaneous green incidents: ${incidents}`; };
   el('pedDemo').onclick = () => {
+    if (state.serialConnected) return;
     stopDemo(); demoRunning = true;
     const send = (car,pedestrian,button=false) => accept({car,pedestrian,button});
     send('GREEN','RED');
