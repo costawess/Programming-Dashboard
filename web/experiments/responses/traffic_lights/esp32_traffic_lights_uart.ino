@@ -14,7 +14,7 @@ bool lastGreenBtn = HIGH;
 
 void sendColor(const String& color) {
   currentColor = color;
-  Serial.println(color);
+  Serial.println(color == "RED" ? "r" : color == "YELLOW" ? "y" : "g");
 }
 
 void setup() {

@@ -565,24 +565,17 @@
             <button id="serialToggleBtn" type="button">Connect (Key C)</button>
           </div>
           <div class="serial-state" id="serialStatus">Not connected</div>
-          <div class="serial-hint" id="serialHint">Accepted UART lines: `RED`, `YELLOW`, and `GREEN`.</div>
+          <div class="serial-hint" id="serialHint">Accepted UART lines: r (red), y (yellow), g (green).</div>
         </div>
 
         <div class="utility-card">
           <h3>UART test</h3>
           <div class="tool-row uart-test-row">
-            <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example RED, then press Enter" />
+            <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type r, y, or g, then press Enter" />
           </div>
           <div class="muted">Every finished color interval is stored with milliseconds when the next valid color arrives.</div>
         </div>
 
-        <div class="history-card">
-          <div class="history-heading">
-            <h2>History</h2>
-            <button id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
-          </div>
-          <div class="history-list" id="historyList"></div>
-        </div>
       </aside>
     </section>
   </div>
@@ -634,9 +627,9 @@
 
     function normalizeColor(input) {
       const raw = String(input || "").trim().toUpperCase();
-      if (raw === "RED") return "RED";
-      if (raw === "YELLOW") return "YELLOW";
-      if (raw === "GREEN") return "GREEN";
+      if (raw === "R") return "RED";
+      if (raw === "Y") return "YELLOW";
+      if (raw === "G") return "GREEN";
       return null;
     }
 
@@ -663,6 +656,7 @@
     }
 
     function renderHistory() {
+      if (!historyList) return;
       historyList.innerHTML = "";
       for (const item of [...state.history].reverse()) {
         const card = document.createElement("div");
@@ -724,7 +718,7 @@
       serialStatus.textContent = state.serialConnected ? `Connected at ${baudSelect.value} baud` : "Not connected";
       serialHint.textContent = state.serialConnected
         ? "Incoming UART lines now control the active traffic light state."
-        : "Accepted UART lines: RED, YELLOW, and GREEN.";
+        : "Accepted UART lines: r (red), y (yellow), g (green).";
     }
 
     function getTrafficStateCircleMarkup(label, subtitle, x, y, tone, active) {
@@ -767,7 +761,7 @@
     }
 
     function setColor(color, source = "UART") {
-      const normalized = normalizeColor(color);
+      const normalized = ["RED", "YELLOW", "GREEN"].includes(color) ? color : normalizeColor(color);
       if (!normalized) return false;
 
       if (normalized === state.currentColor) return true;
@@ -798,7 +792,7 @@
           color: "SYSTEM",
           durationMs: 0,
           label: `Ignored UART line: ${line}`,
-          meta: "Use RED, YELLOW, or GREEN."
+          meta: "Use r, y, or g."
         });
       }
     }
@@ -865,7 +859,6 @@
     }
 
     serialToggleBtn.addEventListener("click", toggleSerialConnection);
-    clearHistoryBtn.addEventListener("click", clearHistory);
     uartTestInput.addEventListener("keydown", event => {
       if (event.key === "Enter") {
         event.preventDefault();
@@ -892,6 +885,7 @@
     renderActiveState();
     requestAnimationFrame(tick);
   </script>
+  <script src="traffic_lights_pedestrian.js"></script>
 </body>
 </html>
 
