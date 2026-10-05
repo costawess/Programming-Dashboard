@@ -20,7 +20,7 @@ window.DASHBOARD_FLAGS = Object.freeze({
   // ----------------------------------------
   // not checked yet
   // ----------------------------------------
-  interruptsLab: false,
+  interruptsLab: true,
   robotSortingLogicLab: false,
   buttonDebouncingLab: false,
   memoryLayoutLab: false,

@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arduino loop-animatie</title>
+
+  <style>
+    :root {
+      --background: #0b1020;
+      --panel: #151c30;
+      --panel-light: #1d2740;
+      --text: #e8edf7;
+      --muted: #9ca9bf;
+      --accent: #56b6ff;
+      --active: #443d14;
+      --active-border: #ffd54a;
+      --true: #43d17a;
+      --false: #ff6b6b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      min-height: 100vh;
+      background: var(--background);
+      color: var(--text);
+      font-family: system-ui, sans-serif;
+    }
+
+    h1,
+    h2 {
+      margin-top: 0;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    button,
+    select {
+      border: 1px solid #394765;
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: var(--panel-light);
+      color: var(--text);
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:hover,
+    select:hover {
+      border-color: var(--accent);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(420px, 1.5fr) minmax(300px, 1fr);
+      gap: 18px;
+    }
+
+    .panel {
+      padding: 18px;
+      border: 1px solid #2b3650;
+      border-radius: 12px;
+      background: var(--panel);
+    }
+
+    .code {
+      overflow-x: auto;
+      padding: 10px 0;
+      border-radius: 8px;
+      background: #0e1424;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .code-line {
+      display: flex;
+      min-width: max-content;
+      padding: 1px 14px;
+      border-left: 4px solid transparent;
+      white-space: pre;
+    }
+
+    .code-line.active {
+      border-left-color: var(--active-border);
+      background: var(--active);
+    }
+
+    .line-number {
+      width: 36px;
+      margin-right: 14px;
+      color: #66738c;
+      text-align: right;
+      user-select: none;
+    }
+
+    .variables {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .variables th,
+    .variables td {
+      padding: 9px;
+      border-bottom: 1px solid #2d3851;
+      text-align: left;
+    }
+
+    .variables th {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .value {
+      color: #ffd866;
+      font-family: Consolas, monospace;
+    }
+
+    .leds {
+      display: flex;
+      gap: 28px;
+      margin: 22px 0;
+    }
+
+    .led-box {
+      text-align: center;
+    }
+
+    .led {
+      width: 70px;
+      height: 70px;
+      margin-bottom: 8px;
+      border: 4px solid #566178;
+      border-radius: 50%;
+      background: #2a2f3a;
+      box-shadow: inset 0 0 15px #000;
+      transition:
+        background 150ms,
+        box-shadow 150ms;
+    }
+
+    .led.on {
+      border-color: #ffe98a;
+      background: #ffe04d;
+      box-shadow:
+        0 0 12px #ffd900,
+        0 0 30px #ffc400,
+        inset 0 0 10px #fff5a5;
+    }
+
+    .explanation {
+      min-height: 90px;
+      padding: 14px;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+      background: #11192a;
+      line-height: 1.5;
+    }
+
+    .condition {
+      margin-top: 12px;
+      font-family: Consolas, monospace;
+      font-weight: bold;
+    }
+
+    .condition.true {
+      color: var(--true);
+    }
+
+    .condition.false {
+      color: var(--false);
+    }
+
+    .log {
+      max-height: 220px;
+      overflow-y: auto;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #0e1424;
+      color: #bdc8da;
+      font-family: Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .hint {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 850px) {
+      body {
+        padding: 12px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Arduino loop-animatie</h1>
+
+  <p>
+    Elke volledige loop duurt in deze simulatie 50 ms. Met
+    <strong>Volgende regel</strong> kun je precies zien wat iedere
+    instructie met de variabelen en leds doet.
+  </p>
+
+  <div class="controls">
+    <button id="previousButton">Vorige regel</button>
+    <button id="nextButton">Volgende regel</button>
+    <button id="playButton">Automatisch afspelen</button>
+    <button id="resetButton">Reset</button>
+
+    <select id="speedSelect" aria-label="Animatiesnelheid">
+      <option value="1200">Langzaam</option>
+      <option value="700" selected>Normaal</option>
+      <option value="300">Snel</option>
+    </select>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Code</h2>
+      <div id="code" class="code"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Huidige toestand</h2>
+
+      <table class="variables">
+        <thead>
+          <tr>
+            <th>Variabele</th>
+            <th>Waarde</th>
+            <th>Betekenis</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td>millis()</td>
+            <td id="millisValue" class="value"></td>
+            <td>Gesimuleerde klok</td>
+          </tr>
+          <tr>
+            <td>now</td>
+            <td id="nowValue" class="value"></td>
+            <td>Tijd aan het begin van de loop</td>
+          </tr>
+          <tr>
+            <td>t1</td>
+            <td id="t1Value" class="value"></td>
+            <td>Laatste schakelmoment LED1</td>
+          </tr>
+          <tr>
+            <td>t2</td>
+            <td id="t2Value" class="value"></td>
+            <td>Laatste schakelmoment LED2</td>
+          </tr>
+          <tr>
+            <td>s1</td>
+            <td id="s1Value" class="value"></td>
+            <td>Status LED1</td>
+          </tr>
+          <tr>
+            <td>s2</td>
+            <td id="s2Value" class="value"></td>
+            <td>Status LED2</td>
+          </tr>
+          <tr>
+            <td>loop</td>
+            <td id="loopValue" class="value"></td>
+            <td>Aantal begonnen loops</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="leds">
+        <div class="led-box">
+          <div id="led1" class="led"></div>
+          <strong>LED1</strong>
+          <div id="led1Label">UIT</div>
+        </div>
+
+        <div class="led-box">
+          <div id="led2" class="led"></div>
+          <strong>LED2</strong>
+          <div id="led2Label">UIT</div>
+        </div>
+      </div>
+
+      <h2>Wat gebeurt er?</h2>
+      <div id="explanation" class="explanation"></div>
+      <div id="condition" class="condition"></div>
+
+      <h2 style="margin-top: 22px">Logboek</h2>
+      <div id="log" class="log"></div>
+
+      <div class="hint">
+        Op echte hardware duurt een loop niet standaard 50 ms. Deze vaste stap
+        maakt de werking alleen beter zichtbaar.
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const codeLines = [
+      "void loop() {",
+      "  unsigned long now = millis();",
+      "",
+      "  // LED1: interval van 500 ms",
+      "  if (now - t1 >= 500) {",
+      "    s1 = !s1;",
+      "    digitalWrite(led1, s1);",
+      "    t1 = now;",
+      "  }",
+      "",
+      "  // LED2: interval van 333 ms",
+      "  if (now - t2 >= 333) {",
+      "    s2 = !s2;",
+      "    digitalWrite(led2, s2);",
+      "    t2 = now;",
+      "  }",
+      "",
+      "  // hier kan andere code gewoon draaien",
+      "}"
+    ];
+
+    const state = {
+      millis: 0,
+      now: 0,
+      t1: 0,
+      t2: 0,
+      s1: false,
+      s2: false,
+      led1: false,
+      led2: false,
+      loopCount: 0,
+      stepIndex: 0
+    };
+
+    let history = [];
+    let logEntries = [];
+    let playTimer = null;
+
+    const steps = [
+      {
+        line: 0,
+        execute() {
+          state.loopCount++;
+          return {
+            text:
+              `Loop ${state.loopCount} begint. De timers en ledstatussen ` +
+              "behouden hun waarden uit de vorige loop."
+          };
+        }
+      },
+      {
+        line: 1,
+        execute() {
+          state.now = state.millis;
+
+          return {
+            text:
+              `millis() geeft ${state.millis} ms. Deze waarde wordt ` +
+              "opgeslagen in now."
+          };
+        }
+      },
+      {
+        line: 4,
+        execute() {
+          const difference = state.now - state.t1;
+          const result = difference >= 500;
+
+          return {
+            text:
+              `Voor LED1 wordt berekend: ${state.now} - ${state.t1} ` +
+              `= ${difference} ms.`,
+            condition:
+              `${difference} >= 500 is ${result ? "WAAR" : "ONWAAR"}`,
+            conditionResult: result,
+            jump: result ? 3 : 7
+          };
+        }
+      },
+      {
+        line: 5,
+        execute() {
+          const oldValue = state.s1;
+          state.s1 = !state.s1;
+
+          return {
+            text:
+              `s1 wordt omgekeerd: ${oldValue} wordt ${state.s1}.`
+          };
+        }
+      },
+      {
+        line: 6,
+        execute() {
+          state.led1 = state.s1;
+
+          return {
+            text:
+              `digitalWrite schrijft ${state.s1 ? "HIGH" : "LOW"} ` +
+              `naar pin 6. LED1 gaat ${state.led1 ? "AAN" : "UIT"}.`
+          };
+        }
+      },
+      {
+        line: 7,
+        execute() {
+          state.t1 = state.now;
+
+          return {
+            text:
+              `t1 krijgt de waarde van now. Het nieuwe schakelmoment ` +
+              `van LED1 is ${state.t1} ms.`
+          };
+        }
+      },
+      {
+        line: 8,
+        execute() {
+          return {
+            text: "Het if-blok van LED1 is klaar."
+          };
+        }
+      },
+      {
+        line: 11,
+        execute() {
+          const difference = state.now - state.t2;
+          const result = difference >= 333;
+
+          return {
+            text:
+              `Voor LED2 wordt berekend: ${state.now} - ${state.t2} ` +
+              `= ${difference} ms.`,
+            condition:
+              `${difference} >= 333 is ${result ? "WAAR" : "ONWAAR"}`,
+            conditionResult: result,
+            jump: result ? 8 : 12
+          };
+        }
+      },
+      {
+        line: 12,
+        execute() {
+          const oldValue = state.s2;
+          state.s2 = !state.s2;
+
+          return {
+            text:
+              `s2 wordt omgekeerd: ${oldValue} wordt ${state.s2}.`
+          };
+        }
+      },
+      {
+        line: 13,
+        execute() {
+          state.led2 = state.s2;
+
+          return {
+            text:
+              `digitalWrite schrijft ${state.s2 ? "HIGH" : "LOW"} ` +
+              `naar pin 7. LED2 gaat ${state.led2 ? "AAN" : "UIT"}.`
+          };
+        }
+      },
+      {
+        line: 14,
+        execute() {
+          state.t2 = state.now;
+
+          return {
+            text:
+              `t2 krijgt de waarde van now. Het nieuwe schakelmoment ` +
+              `van LED2 is ${state.t2} ms.`
+          };
+        }
+      },
+      {
+        line: 15,
+        execute() {
+          return {
+            text: "Het if-blok van LED2 is klaar."
+          };
+        }
+      },
+      {
+        line: 17,
+        execute() {
+          return {
+            text:
+              "Hier kan andere code worden uitgevoerd. Er wordt niet " +
+              "gewacht met delay(), dus de controller blijft doorwerken."
+          };
+        }
+      },
+      {
+        line: 18,
+        execute() {
+          const oldMillis = state.millis;
+          state.millis += 50;
+
+          return {
+            text:
+              `De loop eindigt. Voor de visualisatie gaat de klok van ` +
+              `${oldMillis} naar ${state.millis} ms. Daarna begint de ` +
+              "volgende loop.",
+            jump: 0
+          };
+        }
+      }
+    ];
+
+    const codeElement = document.getElementById("code");
+    const explanationElement = document.getElementById("explanation");
+    const conditionElement = document.getElementById("condition");
+    const logElement = document.getElementById("log");
+    const playButton = document.getElementById("playButton");
+    const speedSelect = document.getElementById("speedSelect");
+
+    function renderCode() {
+      codeElement.innerHTML = "";
+
+      codeLines.forEach((line, index) => {
+        const row = document.createElement("div");
+        row.className = "code-line";
+        row.dataset.line = index;
+
+        const number = document.createElement("span");
+        number.className = "line-number";
+        number.textContent = index + 1;
+
+        const content = document.createElement("span");
+        content.textContent = line || " ";
+
+        row.append(number, content);
+        codeElement.appendChild(row);
+      });
+    }
+
+    function formatBoolean(value) {
+      return value ? "true (AAN)" : "false (UIT)";
+    }
+
+    function updateDisplay(result = null) {
+      document.getElementById("millisValue").textContent =
+        `${state.millis} ms`;
+
+      document.getElementById("nowValue").textContent =
+        `${state.now} ms`;
+
+      document.getElementById("t1Value").textContent =
+        `${state.t1} ms`;
+
+      document.getElementById("t2Value").textContent =
+        `${state.t2} ms`;
+
+      document.getElementById("s1Value").textContent =
+        formatBoolean(state.s1);
+
+      document.getElementById("s2Value").textContent =
+        formatBoolean(state.s2);
+
+      document.getElementById("loopValue").textContent =
+        state.loopCount;
+
+      updateLed("led1", "led1Label", state.led1);
+      updateLed("led2", "led2Label", state.led2);
+
+      document.querySelectorAll(".code-line").forEach((element) => {
+        element.classList.remove("active");
+      });
+
+      const currentStep = steps[state.stepIndex];
+      const activeLine = document.querySelector(
+        `[data-line="${currentStep.line}"]`
+      );
+
+      if (activeLine) {
+        activeLine.classList.add("active");
+        activeLine.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest"
+        });
+      }
+
+      if (result) {
+        explanationElement.textContent = result.text;
+        conditionElement.textContent = result.condition || "";
+        conditionElement.className = "condition";
+
+        if (result.conditionResult === true) {
+          conditionElement.classList.add("true");
+        }
+
+        if (result.conditionResult === false) {
+          conditionElement.classList.add("false");
+        }
+      }
+
+      logElement.innerHTML = logEntries
+        .map((entry) => `<div>${escapeHtml(entry)}</div>`)
+        .join("");
+
+      logElement.scrollTop = logElement.scrollHeight;
+    }
+
+    function updateLed(ledId, labelId, isOn) {
+      const led = document.getElementById(ledId);
+      const label = document.getElementById(labelId);
+
+      led.classList.toggle("on", isOn);
+      label.textContent = isOn ? "AAN" : "UIT";
+    }
+
+    function cloneSnapshot() {
+      return {
+        state: { ...state },
+        logEntries: [...logEntries],
+        explanation: explanationElement.textContent,
+        condition: conditionElement.textContent,
+        conditionClass: conditionElement.className
+      };
+    }
+
+    function restoreSnapshot(snapshot) {
+      Object.assign(state, snapshot.state);
+      logEntries = [...snapshot.logEntries];
+
+      updateDisplay();
+
+      explanationElement.textContent = snapshot.explanation;
+      conditionElement.textContent = snapshot.condition;
+      conditionElement.className = snapshot.conditionClass;
+    }
+
+    function nextStep() {
+      history.push(cloneSnapshot());
+
+      const step = steps[state.stepIndex];
+      const result = step.execute();
+
+      logEntries.push(
+        `[${state.now.toString().padStart(4, " ")} ms] ` +
+        `regel ${step.line + 1}: ${result.text}`
+      );
+
+      if (logEntries.length > 100) {
+        logEntries.shift();
+      }
+
+      if (Number.isInteger(result.jump)) {
+        state.stepIndex = result.jump;
+      } else {
+        state.stepIndex = (state.stepIndex + 1) % steps.length;
+      }
+
+      updateDisplay(result);
+    }
+
+    function previousStep() {
+      stopPlaying();
+
+      const snapshot = history.pop();
+
+      if (!snapshot) {
+        return;
+      }
+
+      restoreSnapshot(snapshot);
+    }
+
+    function resetSimulation() {
+      stopPlaying();
+      history = [];
+      logEntries = [];
+
+      Object.assign(state, {
+        millis: 0,
+        now: 0,
+        t1: 0,
+        t2: 0,
+        s1: false,
+        s2: false,
+        led1: false,
+        led2: false,
+        loopCount: 0,
+        stepIndex: 0
+      });
+
+      explanationElement.textContent =
+        "Klik op 'Volgende regel' om de uitvoering te starten.";
+
+      conditionElement.textContent = "";
+      conditionElement.className = "condition";
+
+      updateDisplay();
+    }
+
+    function togglePlaying() {
+      if (playTimer) {
+        stopPlaying();
+        return;
+      }
+
+      playButton.textContent = "Pauzeren";
+      startTimer();
+    }
+
+    function startTimer() {
+      const delay = Number(speedSelect.value);
+
+      playTimer = window.setInterval(() => {
+        nextStep();
+      }, delay);
+    }
+
+    function stopPlaying() {
+      if (playTimer) {
+        clearInterval(playTimer);
+        playTimer = null;
+      }
+
+      playButton.textContent = "Automatisch afspelen";
+    }
+
+    function escapeHtml(value) {
+      return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    document
+      .getElementById("nextButton")
+      .addEventListener("click", nextStep);
+
+    document
+      .getElementById("previousButton")
+      .addEventListener("click", previousStep);
+
+    document
+      .getElementById("resetButton")
+      .addEventListener("click", resetSimulation);
+
+    playButton.addEventListener("click", togglePlaying);
+
+    speedSelect.addEventListener("change", () => {
+      if (playTimer) {
+        stopPlaying();
+        playButton.textContent = "Pauzeren";
+        startTimer();
+      }
+    });
+
+    renderCode();
+    resetSimulation();
+  </script>
+</body>
+</html>
