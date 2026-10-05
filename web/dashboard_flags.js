@@ -15,6 +15,7 @@ window.DASHBOARD_FLAGS = Object.freeze({
   hysteresisLab: true,
   stateMachinesLab: true,
   timersLab: true,
+  i2cLab: true,
 
   // ----------------------------------------
   // not checked yet
@@ -24,7 +25,6 @@ window.DASHBOARD_FLAGS = Object.freeze({
   buttonDebouncingLab: false,
   memoryLayoutLab: false,
   asciiCharLab: false,
-  i2cLab: false,
   arduinoToFlowchart: false, // precisa de melhoras na conversao
   numberRepresentationLab: false, // precisa de melhoras na conversao
 
@@ -34,6 +34,7 @@ window.DASHBOARD_FLAGS = Object.freeze({
   ticTacToe: true,
   maze: true,
   dualSevenSegment: true,
+  trafficLights: true,
 
 
   // ----------------------------------------
@@ -42,7 +43,6 @@ window.DASHBOARD_FLAGS = Object.freeze({
   gasWaterHeater: false,
   realTimeChallenge: false,
   kitchenTimer: false,
-  trafficLights: false,
   intersectionController: false,
   coffeeMachine: false,
   heatingCoolingLab: false

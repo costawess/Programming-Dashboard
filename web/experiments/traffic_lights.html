@@ -565,7 +565,7 @@
             <button id="serialToggleBtn" type="button">Connect (Key C)</button>
           </div>
           <div class="serial-state" id="serialStatus">Not connected</div>
-          <div class="serial-hint" id="serialHint">Accepted UART lines: `RED`, `YELLOW`, `GREEN`, and also `AMBER` as an alias for yellow.</div>
+          <div class="serial-hint" id="serialHint">Accepted UART lines: `RED`, `YELLOW`, and `GREEN`.</div>
         </div>
 
         <div class="utility-card">
@@ -635,7 +635,7 @@
     function normalizeColor(input) {
       const raw = String(input || "").trim().toUpperCase();
       if (raw === "RED") return "RED";
-      if (raw === "YELLOW" || raw === "AMBER") return "YELLOW";
+      if (raw === "YELLOW") return "YELLOW";
       if (raw === "GREEN") return "GREEN";
       return null;
     }
@@ -724,7 +724,7 @@
       serialStatus.textContent = state.serialConnected ? `Connected at ${baudSelect.value} baud` : "Not connected";
       serialHint.textContent = state.serialConnected
         ? "Incoming UART lines now control the active traffic light state."
-        : "Accepted UART lines: RED, YELLOW, GREEN, and AMBER.";
+        : "Accepted UART lines: RED, YELLOW, and GREEN.";
     }
 
     function getTrafficStateCircleMarkup(label, subtitle, x, y, tone, active) {
@@ -798,7 +798,7 @@
           color: "SYSTEM",
           durationMs: 0,
           label: `Ignored UART line: ${line}`,
-          meta: "Use RED, YELLOW, GREEN, or AMBER."
+          meta: "Use RED, YELLOW, or GREEN."
         });
       }
     }
