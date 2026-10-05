@@ -171,7 +171,9 @@
       example.href = `../shared/example_code.html?experiment=${encodeURIComponent(experiment)}`;
       example.target = "_blank";
       example.rel = "noopener";
-      actions.append(instructions, example, backLink);
+      actions.append(instructions);
+      if (experiment !== "traffic_lights") actions.append(example);
+      actions.append(backLink);
       header.appendChild(actions);
 
       const dialog = document.createElement("dialog");
@@ -196,7 +198,7 @@
         dialog.appendChild(copy);
       }
       if (document.getElementById("serialToggleBtn")) {
-        addParagraph("Open Example code to view the Arduino sketch for this experiment. Upload it to your ESP32, select the matching baud rate, then use Connect to select the serial port. Close other serial monitors before connecting (for instance, the Arduino IDE's Serial Monitor).");
+        addParagraph((experiment === "traffic_lights" ? "" : "Open Example code to view the Arduino sketch for this experiment. ") + "Upload your sketch to the ESP32, select the matching baud rate, then use Connect to select the serial port. Close other serial monitors before connecting (for instance, the Arduino IDE's Serial Monitor).");
         addParagraph(document.getElementById("serialHint")?.textContent);
       }
       const testInput = document.getElementById("uartTestInput");

@@ -314,12 +314,12 @@
     const TOPIC_INFO = {
       foundations: { title: "Digital Input & Output", short: "Digital Input & Output", description: "Compare two beginner-friendly patterns: a blinking LED output driven by delay(), and a press-and-hold digital input that directly controls the LED.", codeNote: "Switch between a basic digital output example and a digital input example to show how setup() and loop() change with each case." },
       variables: { title: "Variables", short: "Variables", description: "Track sensor values inside variables, transform them, and map them into another range before sending them to an output.", codeNote: "This sketch highlights assignment, map(), and the idea that variables store values that change over time." },
-      conditionals: { title: "Conditionals", short: "Conditionals", description: "Compare a basic condition, a nested condition, and a threshold comparison. The output LED changes according to the active rule.", codeNote: "The code switches between a basic if, a nested if, and a comparison against a threshold." },
+      conditionals: { title: "Conditionals", short: "Conditionals", description: "Compare a basic condition, a nested condition, and a threshold comparison. Buttons use external pull-downs: released = LOW, pressed = HIGH.", codeNote: "The code switches between a basic if, a nested if, and a comparison against a threshold." },
       loops: { title: "Loops", short: "Loops", description: "Automate repeated actions with a blinking LED sequence. This is useful to explain for-loops, while-loops, do-while loops, and index variables.", codeNote: "The Arduino example shows a for-loop, a while-loop, or a do-while loop scanning a small LED array." },
       adc: { title: "ADC", short: "ADC", description: "Compare a linear ADC model with an ESP32-style nonlinear ADC response. Move the input voltage and watch how the digital word changes.", codeNote: "Use analogRead() to sample the sensor and map() to convert the result into brightness." },
       uart: { title: "UART", short: "UART", description: "Simulate a UART serial exchange between two devices. A transmitted frame creates TX activity, then reaches RX after a short delay.", codeNote: "The code uses Serial.begin(), Serial.println(), and Serial.available() to explain UART communication." },
       i2c: { title: "I2C", short: "I2C", description: "Simulate a master writing one byte to an I2C slave. Watch SDA, SCL, and ACK activity during the transaction.", codeNote: "The code uses Wire.beginTransmission(), Wire.write(), and Wire.endTransmission() to explain an I2C transfer." },
-      functions: { title: "Functions", short: "Functions", description: "Trigger the same behavior with different parameters. Reusing a function makes the code shorter and easier to read.", codeNote: "Select one blinkLed(times, delayMs) call; the other calls are commented out. Press Button to execute it." },
+      functions: { title: "Functions", short: "Functions", description: "Step through a function call, follow its parameters and local loop counter, and return to the caller.", codeNote: "Follow blinkLed(times, delayMs) one instruction at a time." },
       interrupts: { title: "Interrupts", short: "Interrupts", description: "Compare an immediate interrupt-style reaction with a slower polling reaction. The same event is visible on two different response paths.", codeNote: "The code contrasts attachInterrupt() with a slower polling loop that only checks the input periodically." },
       timers: { title: "Timers", short: "Timers", description: "Blink an LED in three ways: a blocking delay(), a non-blocking millis() check, and an ESP32 hardware timer ISR.", codeNote: "Compare delay(), millis(), and an ESP32 hardware timer ISR." },
       state_machines: { title: "State Machines", short: "State Machines", description: "Switch between a traffic-light controller and an elevator controller. The timeline and the state diagram show how each machine moves through its states.", codeNote: "The Arduino example uses an enum plus a switch statement to encode the state machine." }
@@ -1926,12 +1926,12 @@
       }
       if (currentTopicId === "conditionals") {
         if (sim.mode === "basic") {
-          codeText = `const int buttonAPin = 2;\nconst int buttonBPin = 3;\nconst int ledPin = 13;\n\nvoid loop() {\n  bool buttonA = digitalRead(buttonAPin) == LOW;\n  bool buttonB = digitalRead(buttonBPin) == LOW;\n  bool output = ${sim.operation === "or" ? "buttonA || buttonB" : sim.operation === "xor" ? "buttonA != buttonB" : sim.operation === "nand" ? "!(buttonA && buttonB)" : sim.operation === "nor" ? "!(buttonA || buttonB)" : "buttonA && buttonB"};\n\n  if (output) {\n    digitalWrite(ledPin, HIGH);\n  } else {\n    digitalWrite(ledPin, LOW);\n  }\n}`;
+          codeText = `const int buttonAPin = 2;\nconst int buttonBPin = 3;\nconst int ledPin = 13;\n\nvoid loop() {\n  bool buttonA = digitalRead(buttonAPin);\n  bool buttonB = digitalRead(buttonBPin);\n  bool output = ${sim.operation === "or" ? "buttonA || buttonB" : sim.operation === "xor" ? "buttonA != buttonB" : sim.operation === "nand" ? "!(buttonA && buttonB)" : sim.operation === "nor" ? "!(buttonA || buttonB)" : "buttonA && buttonB"};\n\n  if (output) {\n    digitalWrite(ledPin, HIGH);\n  } else {\n    digitalWrite(ledPin, LOW);\n  }\n}`;
           activeLines = sim.led ? [6, 7, 8, 10, 11] : [6, 7, 8, 10, 12, 13];
         } else if (sim.mode === "nested") {
           const nestedSnippet = getNestedLogicSnippet(sim.nestedPattern);
           const nestedSnippetLines = nestedSnippet.split("\n").length;
-          codeText = `const int buttonAPin = 2;\nconst int buttonBPin = 3;\nconst int buttonCPin = 4;\nconst int buttonDPin = 5;\nconst int ledPin = 13;\n\nvoid loop() {\n  bool buttonA = digitalRead(buttonAPin) == LOW;\n  bool buttonB = digitalRead(buttonBPin) == LOW;\n  bool buttonC = digitalRead(buttonCPin) == LOW;\n  bool buttonD = digitalRead(buttonDPin) == LOW;\n  bool output = LOW;\n\n${nestedSnippet}\n\n  digitalWrite(ledPin, output);\n}`;
+          codeText = `const int buttonAPin = 2;\nconst int buttonBPin = 3;\nconst int buttonCPin = 4;\nconst int buttonDPin = 5;\nconst int ledPin = 13;\n\nvoid loop() {\n  bool buttonA = digitalRead(buttonAPin);\n  bool buttonB = digitalRead(buttonBPin);\n  bool buttonC = digitalRead(buttonCPin);\n  bool buttonD = digitalRead(buttonDPin);\n  bool output = LOW;\n\n${nestedSnippet}\n\n  digitalWrite(ledPin, output);\n}`;
           activeLines = [8, 9, 10, 11, 12, ...lineRange(14, 13 + nestedSnippetLines), 15 + nestedSnippetLines];
         } else {
           codeText = `const int sensorPin = A0;\nconst int ledPin = 13;\nconst int threshold = ${sim.threshold};\n\nvoid loop() {\n  int sensorValue = analogRead(sensorPin);\n\n  if (sensorValue ${getComparisonLabel(sim.compareOp)} threshold) {\n    digitalWrite(ledPin, HIGH);\n  } else {\n    digitalWrite(ledPin, LOW);\n  }\n}`;
@@ -2143,5 +2143,6 @@
   </script>
   <script src="../shared/arduino_code.js"></script>
   <script src="timers_steps.js"></script>
+  <script src="learning_steps.js"></script>
 </body>
 </html>

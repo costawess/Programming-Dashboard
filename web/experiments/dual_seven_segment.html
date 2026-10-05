@@ -134,13 +134,16 @@
           <div class="serial-state" id="serialStatus">Not connected</div>
           <div class="serial-hint" id="serialHint" hidden></div>
         </div>
+        <div class="serial-card">
+          <h2>UART test</h2>
+          <div class="tool-row uart-test-row">
+            <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example DISPLAYS:10111111,01100000, then press Enter" />
+          </div>
+        </div>
         <div class="history-card">
           <div class="history-heading">
             <h2>History</h2>
             <button id="clearHistoryBtn" type="button">Clear history<small class="shortcut-hint">(Key H)</small></button>
-          </div>
-          <div class="tool-row uart-test-row">
-            <input class="uart-test-input" id="uartTestInput" type="text" placeholder="Type a UART line, for example DISPLAYS:10111111,01100000, then press Enter" />
           </div>
           <div class="history-list" id="historyList"></div>
         </div>
