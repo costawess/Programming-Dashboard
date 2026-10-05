@@ -151,7 +151,7 @@
   el('play').onclick=()=>autoTimer===null?playCode():pauseCode();el('reset').onclick=reset;
   el('clockToggle').onclick=()=>{clockRunning=!clockRunning;lastTick=performance.now();render();};
   el('codeSpeed').onchange=()=>{if(autoTimer!==null)playCode();};el('clockSpeed').onchange=()=>{lastTick=performance.now();};
-  shadow.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>{mode=button.dataset.mode;shadow.querySelectorAll('[data-mode]').forEach(tab=>tab.setAttribute('aria-selected',String(tab===button)));el('clockSpeed').value=mode==='hardware'?'1':'0.1';el('codeSpeed').value='700';reset();});
+  shadow.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>{mode=button.dataset.mode;shadow.querySelectorAll('[data-mode]').forEach(tab=>tab.setAttribute('aria-selected',String(tab===button)));el('clockSpeed').value=mode==='hardware'?'0.25':'0.1';el('codeSpeed').value='700';reset();});
   el('copy').onclick=async()=>{try{await navigator.clipboard.writeText(source.join('\n'));el('copy').textContent='Copied!';}catch(e){const selection=window.getSelection(),range=document.createRange();range.selectNodeContents(el('code'));selection.removeAllRanges();selection.addRange(range);el('copy').textContent='Press Ctrl+C';}};
   function selectView(steps){visible=steps;overview.hidden=steps;root.hidden=!steps;document.getElementById('timerStepsTab').setAttribute('aria-selected',String(steps));document.getElementById('timerOverviewTab').setAttribute('aria-selected',String(!steps));lastTick=performance.now();if(!steps)pauseCode();}
   document.getElementById('timerStepsTab').onclick=()=>selectView(true);document.getElementById('timerOverviewTab').onclick=()=>selectView(false);
