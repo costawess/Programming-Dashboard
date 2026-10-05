@@ -6,13 +6,13 @@ window.renderArduinoCodeLine = function renderArduinoCodeLine(source) {
   const types = new Set(['void', 'bool', 'int', 'unsigned', 'long', 'const', 'volatile', 'hw_timer_t', 'uint8_t', 'uint32_t']);
   const keywords = new Set(['if', 'else', 'return', 'for', 'while', 'switch', 'case', 'break']);
   const constants = new Set(['true', 'false', 'nullptr', 'NULL', 'HIGH', 'LOW', 'INPUT', 'OUTPUT', 'INPUT_PULLUP', 'RISING', 'FALLING', 'IRAM_ATTR']);
-  const tokens = /\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b\d+(?:\.\d+)?\b|\b[A-Za-z_]\w*\b/g;
+  const tokens = /\/\*.*?\*\/|\/\/[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b\d+(?:\.\d+)?\b|\b[A-Za-z_]\w*\b/g;
   let end = 0;
   for (const match of source.matchAll(tokens)) {
     if (match.index > end) line.append(document.createTextNode(source.slice(end, match.index)));
     const value = match[0];
     let kind = '';
-    if (value.startsWith('//')) kind = 'comment';
+    if (value.startsWith('//') || value.startsWith('/*')) kind = 'comment';
     else if (/^["']/.test(value)) kind = 'string';
     else if (/^\d/.test(value)) kind = 'number';
     else if (types.has(value)) kind = 'type';

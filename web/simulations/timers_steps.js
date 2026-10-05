@@ -33,7 +33,10 @@
       <tr data-hardware><td>Timer counter (1 MHz)</td><td id="counterValue">Not started</td></tr><tr data-hardware><td>Alarm events</td><td id="alarmCount">0</td></tr><tr data-hardware><td>Completed ISRs</td><td id="isrCount">0</td></tr>
       </tbody></table><div id="explanation" class="explanation" role="status"></div>
     </section></div>
-    <div class="controls"><button type="button" id="previous">Previous line</button><button type="button" id="next">Next line</button><button type="button" id="play">Play code</button><button type="button" id="reset">Reset</button><label>Code speed <select id="codeSpeed"><option value="1200">Slow</option><option value="700" selected>Normal</option><option value="250">Fast</option><option value="100">Live</option></select></label></div>`;
+    <div class="controls"><button type="button" id="previous">Previous line</button><button type="button" id="next">Next line</button><button type="button" id="play">Play code</button><button type="button" id="reset">Reset</button><label>Code speed <select id="codeSpeed"><option value="1200">Slow</option><option value="700" selected>Normal</option><option value="250">Fast</option></select></label></div>`;
+  const clockControls=content.querySelector('.clock-controls');
+  content.querySelector('.controls').append(...clockControls.children);
+  clockControls.remove();
   shadow.append(content);
   const parentStyle = document.createElement('style');
   parentStyle.textContent = '.timer-view-tabs{display:flex;gap:12px;flex-wrap:wrap}.timer-view-tabs button{padding:12px 18px;border:2px solid var(--line);border-radius:14px;background:var(--panel);color:var(--text);font:inherit;cursor:pointer}.timer-view-tabs [aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft)}#timerStepPanel[hidden],#timerOverview[hidden]{display:none!important}';
@@ -71,7 +74,7 @@
   function render(follow=false) {
     const index=lineOf[state.active];
     shadow.querySelectorAll('.code-line').forEach((row,i)=>{row.classList.toggle('active',i===index);if(i===index)row.setAttribute('aria-current','step');else row.removeAttribute('aria-current');});
-    if(follow && index!==undefined)el(`line-${index}`).scrollIntoView({block:'center',inline:'nearest',behavior:'smooth'});
+    if(follow && index!==undefined){const panel=el('code'),line=el(`line-${index}`);panel.scrollTop+=line.getBoundingClientRect().top-panel.getBoundingClientRect().top-panel.clientTop-(panel.clientHeight-line.getBoundingClientRect().height)/2;}
     el('stateValue').textContent=String(state.led);el('output').textContent=state.output?'HIGH':'LOW';
     el('led').classList.toggle('on',state.output);el('led').setAttribute('aria-label',state.output?'LED on':'LED off');el('ledLabel').textContent=state.output?'LED ON':'LED OFF';
     el('nowValue').textContent=`${state.now} ms`;el('previousValue').textContent=`${state.previous} ms`;el('elapsedValue').textContent=`${state.now-state.previous} ms`;
@@ -148,7 +151,7 @@
   el('play').onclick=()=>autoTimer===null?playCode():pauseCode();el('reset').onclick=reset;
   el('clockToggle').onclick=()=>{clockRunning=!clockRunning;lastTick=performance.now();render();};
   el('codeSpeed').onchange=()=>{if(autoTimer!==null)playCode();};el('clockSpeed').onchange=()=>{lastTick=performance.now();};
-  shadow.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>{mode=button.dataset.mode;shadow.querySelectorAll('[data-mode]').forEach(tab=>tab.setAttribute('aria-selected',String(tab===button)));el('clockSpeed').value=mode==='hardware'?'1':'0.1';el('codeSpeed').value=mode==='hardware'?'100':'700';reset();});
+  shadow.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>{mode=button.dataset.mode;shadow.querySelectorAll('[data-mode]').forEach(tab=>tab.setAttribute('aria-selected',String(tab===button)));el('clockSpeed').value=mode==='hardware'?'1':'0.1';el('codeSpeed').value='700';reset();});
   el('copy').onclick=async()=>{try{await navigator.clipboard.writeText(source.join('\n'));el('copy').textContent='Copied!';}catch(e){const selection=window.getSelection(),range=document.createRange();range.selectNodeContents(el('code'));selection.removeAllRanges();selection.addRange(range);el('copy').textContent='Press Ctrl+C';}};
   function selectView(steps){visible=steps;overview.hidden=steps;root.hidden=!steps;document.getElementById('timerStepsTab').setAttribute('aria-selected',String(steps));document.getElementById('timerOverviewTab').setAttribute('aria-selected',String(!steps));lastTick=performance.now();if(!steps)pauseCode();}
   document.getElementById('timerStepsTab').onclick=()=>selectView(true);document.getElementById('timerOverviewTab').onclick=()=>selectView(false);

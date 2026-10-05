@@ -15,6 +15,7 @@ window.DASHBOARD_FLAGS = Object.freeze({
   hysteresisLab: true,
   stateMachinesLab: true,
   timersLab: true,
+  coffeeMachineSteps: true,
   i2cLab: true,
 
   // ----------------------------------------

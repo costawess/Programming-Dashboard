@@ -14,6 +14,8 @@
   const loopLines = [23,24,25,26,27,28,29,30];
   const el = id => document.getElementById(id);
   const controls = document.querySelector('.controls');
+  controls.append(el('onButton'), el('offButton'));
+  document.querySelector('.buttons').remove();
   const updateControlsHeight = () => document.documentElement.style.setProperty('--execution-controls-height', `${controls.getBoundingClientRect().height}px`);
   new ResizeObserver(updateControlsHeight).observe(controls);
   updateControlsHeight();
@@ -35,7 +37,7 @@
       const panelBounds = codePanel.getBoundingClientRect();
       const lineBounds = activeLine.getBoundingClientRect();
       codePanel.scrollTop += lineBounds.top - panelBounds.top - codePanel.clientTop - (codePanel.clientHeight - lineBounds.height) / 2;
-      activeLine.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+
     }
     el('requested').textContent=String(state.requested); el('nextLed').textContent=String(state.nextLed); el('output').textContent=state.output?'HIGH':'LOW';
     el('loops').textContent=state.loops; el('pending').textContent=state.pending.join(' → ') || 'None';
