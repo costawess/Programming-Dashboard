@@ -255,9 +255,66 @@
     }
   }
 
+  function compactExperimentSerial() {
+    if (!window.location.pathname.includes("/experiments/")) return;
+    const button = document.getElementById("serialToggleBtn");
+    const baud = document.getElementById("baudSelect");
+    const status = document.getElementById("serialStatus");
+    if (!button || !baud || !status) return;
+    const test = document.getElementById("uartTestInput");
+    const originalParent = button.parentElement;
+    const anchor = document.createComment("Serial connect button position");
+    originalParent.insertBefore(anchor, button);
+    const sourceCard = originalParent.closest(".serial-card, .serial, .uart-card, .card");
+    const separateCard = sourceCard && test && !sourceCard.contains(test) ? sourceCard : null;
+    let testRow = null;
+    if (test) {
+      testRow = document.createElement("div");
+      testRow.className = "ep-connected-uart-test";
+      test.parentElement.insertBefore(testRow, test);
+      testRow.appendChild(test);
+    }
+    const style = document.createElement("style");
+    style.textContent = `
+      .ep-serial-collapsed { display: none !important; }
+      .ep-connected-uart-test { min-width: 0; width: 100%; }
+      .ep-connected-uart-test.is-connected { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+      .ep-connected-uart-test input { min-width: 0; width: 100%; }
+      .ep-connected-uart-test #serialToggleBtn { width: auto; margin: 0; white-space: nowrap; }
+      @media (max-width: 520px) { .ep-connected-uart-test.is-connected { grid-template-columns: minmax(0, 1fr); } }
+    `;
+    document.head.appendChild(style);
+    function update() {
+      // Read the actual baud reported by the page, rather than a changed selector.
+      const match = /^Connected at (\d+) baud/i.exec(status.textContent.trim());
+      const connected = Boolean(match);
+      if (connected) {
+        const label = `Disconnect (${match[1]} baud)`;
+        if (button.textContent !== label) button.textContent = label;
+        button.title = "Disconnect (Key C)";
+        if (testRow && button.parentElement !== testRow) testRow.appendChild(button);
+      } else {
+        if (button.parentElement !== originalParent) originalParent.insertBefore(button, anchor.nextSibling);
+        if (/^Disconnect/.test(button.textContent)) button.textContent = "Connect (Key C)";
+        button.title = "Connect (Key C)";
+      }
+      if (testRow) testRow.classList.toggle("is-connected", connected);
+      // Without a test field, keep Disconnect in its original row and hide only baud.
+      const collapse = testRow ? originalParent : (baud.closest("label, .uart-field, .field") || baud);
+      collapse.classList.toggle("ep-serial-collapsed", connected);
+      status.classList.toggle("ep-serial-collapsed", connected);
+      if (separateCard) separateCard.classList.toggle("ep-serial-collapsed", connected);
+    }
+    const observer = new MutationObserver(update);
+    observer.observe(status, { childList: true, subtree: true, characterData: true });
+    observer.observe(button, { childList: true, subtree: true, characterData: true });
+    update();
+  }
+
   function boot() {
     injectStyles();
     enhanceHeader();
+    compactExperimentSerial();
     loadCodeHighlighter();
   }
 

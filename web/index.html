@@ -711,6 +711,9 @@
         grid-template-columns: 1fr;
       }
     }
+    .menu-card-title-with-tag { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .construction-tag { display: inline-flex; align-items: center; padding: 5px 9px; border: 1px solid #c79532; border-radius: 999px; background: #fff2cc; color: #735016; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    html.theme-dark .construction-tag { background: #493c23; color: #ffe0a1; border-color: #92733b; }
   </style>
 </head>
 <body>
@@ -932,6 +935,7 @@
         <!-- Right column links out to smaller experiments and UART demos. -->
         <section class="menu-column">
           <h2>Experiments</h2>
+
           <article class="menu-card" data-feature-key="gasWaterHeater">
             <img class="menu-card-image" src="./assets/cards/gas_water_heater.svg" alt="Gas Water Heater card image" />
             <div class="menu-card-copy">
@@ -1021,6 +1025,15 @@
               <div class="menu-tags"><span class="menu-tag">delay()</span><span class="menu-tag">millis()</span><span class="menu-tag">interrupts</span><span class="menu-tag">classroom</span></div>
             </div>
             <a class="launch-button" href="./experiments/real_time_challenge.html">Open experiment</a>
+          </article>
+          <article class="menu-card" data-feature-key="dualElevator">
+            <img class="menu-card-image" src="./assets/cards/dual_elevator.svg" alt="Two elevators in a four-floor building" />
+            <div class="menu-card-copy">
+              <h3>Dual Elevator</h3>
+              <p>Control two elevators in a four-floor building with up/down calls, cabin destinations, animated doors, and queued requests.</p>
+              <div class="menu-tags"><span class="menu-tag">state machine</span><span class="menu-tag">control</span><span class="menu-tag">events</span></div>
+            </div>
+            <a class="launch-button" href="./experiments/dual_elevator.html">Open experiment</a>
           </article>
         </section>
       </div>
@@ -1778,6 +1791,20 @@
         const featureKey = card.dataset.featureKey;
         const isEnabled = isFeatureEnabled(featureKey);
         card.classList.toggle("hidden", !isEnabled);
+        const underConstruction = window.DASHBOARD_CONSTRUCTION_FLAGS?.[featureKey] === true;
+        const title = card.querySelector("h3");
+        if (title) {
+          title.classList.toggle("menu-card-title-with-tag", underConstruction);
+          let badge = title.querySelector(".construction-tag");
+          if (underConstruction && !badge) {
+            badge = document.createElement("span");
+            badge.className = "construction-tag";
+            badge.textContent = "\uD83D\uDEA7 Under Construction";
+            title.appendChild(badge);
+          } else if (!underConstruction && badge) {
+            badge.remove();
+          }
+        }
       });
 
       if (!isFeatureEnabled("gasWaterHeater")) {
