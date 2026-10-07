@@ -45,7 +45,7 @@ window.DASHBOARD_FLAGS = Object.freeze({
   realTimeChallenge: false,
   kitchenTimer: true,
   intersectionController: false,
-  coffeeMachine: false,
+  coffeeMachine: true,
   heatingCoolingLab: false
 });
 
